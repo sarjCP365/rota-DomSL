@@ -29,6 +29,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Check secrets are set
+        run: |
+          echo "Checking if secrets are configured..."
+          if [ -z "$VITE_CLIENT_ID" ]; then echo "❌ VITE_CLIENT_ID is NOT set"; else echo "✅ VITE_CLIENT_ID is set (length: ${#VITE_CLIENT_ID})"; fi
+          if [ -z "$VITE_TENANT_ID" ]; then echo "❌ VITE_TENANT_ID is NOT set"; else echo "✅ VITE_TENANT_ID is set (length: ${#VITE_TENANT_ID})"; fi
+          if [ -z "$VITE_DATAVERSE_URL" ]; then echo "❌ VITE_DATAVERSE_URL is NOT set"; else echo "✅ VITE_DATAVERSE_URL is set (length: ${#VITE_DATAVERSE_URL})"; fi
+        env:
+          VITE_CLIENT_ID: ${{ secrets.VITE_CLIENT_ID }}
+          VITE_TENANT_ID: ${{ secrets.VITE_TENANT_ID }}
+          VITE_DATAVERSE_URL: ${{ secrets.VITE_DATAVERSE_URL }}
+      
       - name: Build app
         run: npm run build
         env:
