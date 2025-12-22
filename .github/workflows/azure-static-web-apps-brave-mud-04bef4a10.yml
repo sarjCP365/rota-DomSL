@@ -14,7 +14,7 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
-    environment: production  # Change to 'development' or 'test' to use different secrets
+    environment: Development  # Change to 'Testing' to use test database
     steps:
       - uses: actions/checkout@v3
         with:
