@@ -1,0 +1,2 @@
+export { PatternAssignedStaff } from './PatternAssignedStaff';
+

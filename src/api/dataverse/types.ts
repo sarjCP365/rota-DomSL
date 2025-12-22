@@ -1,0 +1,702 @@
+/**
+ * CarePoint 365 Rota Application - TypeScript Types
+ * Dataverse entity types and API response types
+ * 
+ * Generated from Canvas App source analysis
+ */
+
+// =============================================================================
+// ENUMS (as const objects for erasableSyntaxOnly compatibility)
+// =============================================================================
+
+export const ShiftStatus = {
+  Published: 1001,
+  Unpublished: 1009,
+} as const;
+export type ShiftStatus = (typeof ShiftStatus)[keyof typeof ShiftStatus];
+
+export type ShiftType = 'Day' | 'Night' | 'Sleep In';
+
+export const StaffStatus = {
+  Active: 1,
+  Pending: 2,
+  LeftOrganisation: 3,
+} as const;
+export type StaffStatus = (typeof StaffStatus)[keyof typeof StaffStatus];
+
+export const YesNo = {
+  Yes: 1,
+  No: 0,
+} as const;
+export type YesNo = (typeof YesNo)[keyof typeof YesNo];
+
+export const LocationStatus = {
+  Occupied: 'Occupied',
+  Vacant: 'Vacant',
+} as const;
+export type LocationStatus = (typeof LocationStatus)[keyof typeof LocationStatus];
+
+export const StateCode = {
+  Active: 0,
+  Inactive: 1,
+} as const;
+export type StateCode = (typeof StateCode)[keyof typeof StateCode];
+
+export const ShiftActivityCareType = {
+  StandardCare: 'Standard Care',
+  CommunityCare: 'Community Care',
+  EmergencyCare: 'Emergency Care',
+  NonCare: 'Non-Care',
+} as const;
+export type ShiftActivityCareType = (typeof ShiftActivityCareType)[keyof typeof ShiftActivityCareType];
+
+export type PatternType = 'Daily' | 'Weekly' | 'Weekday' | 'Rotation';
+
+export const PaymentType = {
+  Hourly: 1,
+  Salaried: 2,
+} as const;
+export type PaymentType = (typeof PaymentType)[keyof typeof PaymentType];
+
+export const AgencyWorkerStatus = {
+  Active: 1,
+  Left: 2,
+} as const;
+export type AgencyWorkerStatus = (typeof AgencyWorkerStatus)[keyof typeof AgencyWorkerStatus];
+
+// =============================================================================
+// CORE ENTITIES
+// =============================================================================
+
+export interface Shift {
+  cp365_shiftid: string;
+  cp365_shiftname: string;
+  cp365_shiftdate: string; // ISO date
+  cp365_shiftstarttime: string; // ISO datetime
+  cp365_shiftendtime: string; // ISO datetime
+  cp365_shiftstatus: ShiftStatus;
+  cp365_shifttype: ShiftType;
+  cp365_overtimeshift: boolean;
+  cr1e2_shiftbreakduration?: number; // Note: different publisher prefix
+  cp365_communityhours: number;
+  cp365_sleepin: boolean;
+  cp365_shiftleader: boolean;
+  cp365_actup: boolean;
+  // Note: cp365_senior does NOT exist in Dataverse schema
+
+  // Lookups (navigation properties)
+  _cp365_staffmember_value: string | null;
+  _cp365_rota_value: string;
+  _cp365_shiftreference_value: string | null;
+  _cp365_shiftactivity_value: string | null;
+  _cp365_shiftpattern_value: string | null;
+  _cp365_serviceuser_value: string | null;
+  // Note: _cp365_unit_value does NOT exist on cp365_shift entity
+
+  // Expanded entities
+  cp365_staffmember?: StaffMember;
+  cp365_rota?: Rota;
+  cp365_shiftreference?: ShiftReference;
+  cp365_shiftactivity?: ShiftActivity;
+}
+
+export interface StaffMember {
+  cp365_staffmemberid: string;
+  cp365_staffmembername: string;
+  cp365_forename: string;
+  cp365_surname: string;
+  cp365_staffnumber: string;
+  cp365_workemail: string;
+  cp365_personalemail: string | null;
+  cp365_personalmobile: string | null;
+  cp365_workmobile: string | null;
+  cp365_dateofbirth: string | null;
+  cp365_staffstatus: StaffStatus;
+  cp365_agencyworker: YesNo;
+
+  // Lookups
+  _cp365_defaultlocation_value: string | null;
+  _cp365_linemanager_value: string | null;
+  _cp365_useraccount_value: string | null;
+  _cp365_gender_value: string | null;
+  _cp365_title_value: string | null;
+
+  // Expanded
+  cp365_defaultlocation?: Location;
+  cp365_linemanager?: StaffMember;
+}
+
+export interface Location {
+  cp365_locationid: string;
+  cp365_locationname: string;
+  cp365_locationstatus: LocationStatus;
+  cp365_addressline1: string | null;
+  cp365_addressline2: string | null;
+  cp365_city: string | null;
+  cp365_postcode: string | null;
+}
+
+export interface Sublocation {
+  cp365_sublocationid: string;
+  cp365_sublocationname: string;
+  cp365_allowshiftclashes: YesNo;
+  cp365_visiblefrom: string | null;
+  cp365_visibleto: string | null;
+
+  _cp365_location_value: string;
+  cp365_location?: Location;
+}
+
+export interface Rota {
+  cp365_rotaid: string;
+  cp365_rotaname: string;
+  cp365_rotastartdate: string | null;
+  statecode: StateCode;
+
+  _cp365_sublocation_value: string;
+  cp365_sublocation?: Sublocation;
+}
+
+export interface ShiftReference {
+  cp365_shiftreferenceid: string;
+  cp365_shiftreferencename: string;
+  cp365_shiftreferencestarthour: number;
+  cp365_shiftreferencestartminute: number;
+  cp365_shiftreferenceendhour: number;
+  cp365_shiftreferenceendminute: number;
+  cp365_sleepin: boolean;
+  cp365_endonnextday: boolean;
+  cp365_sleepinstarthour: number | null;
+  cp365_sleepinstartminute: number | null;
+  cp365_sleepineinendhour: number | null;
+  cp365_sleepinendminute: number | null;
+
+  _cp365_location_value: string | null;
+  _cp365_sublocation_value: string | null;
+}
+
+export interface ShiftActivity {
+  cp365_shiftactivityid: string;
+  cp365_shiftactivityname: string;
+  cp365_countstowardscare: YesNo;
+  cp365_shiftactivitycaretype: ShiftActivityCareType;
+}
+
+export interface ShiftPattern {
+  cp365_shiftpatternid: string;
+  cp365_shiftpatternname: string;
+  cp365_patterntype: PatternType;
+  cp365_workingdays: number | null;
+  cp365_restingdays: number | null;
+  cp365_dailyskip: number | null;
+  cp365_weeklyskip: number | null;
+  cp365_monday: boolean;
+  cp365_tuesday: boolean;
+  cp365_wednesday: boolean;
+  cp365_thursday: boolean;
+  cp365_friday: boolean;
+  cp365_saturday: boolean;
+  cp365_sunday: boolean;
+}
+
+export interface StaffContract {
+  cp365_staffcontractid: string;
+  cp365_startdate: string;
+  cp365_enddate: string | null;
+  cp365_active: boolean;
+
+  _cp365_staffmember_value: string;
+  _cp365_contract_value: string;
+
+  cp365_staffmember?: StaffMember;
+  cp365_contract?: Contract;
+}
+
+export interface Contract {
+  cp365_contractid: string;
+  cp365_contractname: string;
+  cp365_requiredhours: number | null;
+  cp365_paymenttype: PaymentType;
+
+  _cp365_location_value: string | null;
+  _cp365_department_value: string | null;
+  _cp365_jobtitle_value: string | null;
+  _cp365_contractcategory_value: string | null;
+
+  cp365_jobtitle?: JobTitle;
+  cp365_department?: Department;
+}
+
+export interface SublocationStaff {
+  cp365_sublocationstaffid: string;
+  cp365_sublocationstaffname: string;
+  cp365_visiblefrom: string | null;
+  cp365_visibleto: string | null;
+
+  _cp365_staffmember_value: string;
+  _cp365_sublocation_value: string;
+
+  cp365_staffmember?: StaffMember;
+  cp365_sublocation?: Sublocation;
+}
+
+export interface StaffAbsenceLog {
+  cp365_staffabsencelogid: string;
+  cp365_startdate: string;
+  cp365_enddate: string;
+  cp365_sensitive: boolean;
+
+  _cp365_staffmember_value: string;
+  _cp365_absencetype_value: string;
+
+  cp365_staffmember?: StaffMember;
+  cp365_absencetype?: AbsenceType;
+}
+
+export interface AbsenceType {
+  cp365_absencetypeid: string;
+  cp365_absencetypename: string;
+  cp365_sensitive: boolean;
+}
+
+export interface AgencyWorker {
+  cp365_agencyworkerid: string;
+  cp365_agencyworkername: string;
+  cp365_status: AgencyWorkerStatus;
+
+  _cp365_agency_value: string;
+  cp365_agency?: Agency;
+}
+
+export interface Agency {
+  cp365_agencyid: string;
+  cp365_agencyname: string;
+}
+
+export interface ServiceUser {
+  cp365_serviceuserid: string;
+  cp365_serviceusername: string;
+  statecode: StateCode;
+}
+
+export interface Department {
+  cp365_departmentid: string;
+  cp365_departmentname: string;
+  _cp365_location_value: string | null;
+}
+
+export interface JobTitle {
+  cp365_jobtitleid: string;
+  cp365_jobtitlename: string;
+}
+
+export interface StaffTeam {
+  cp365_staffteamid: string;
+  cp365_staffteamname: string;
+  
+  // Link to Unit (nullable - teams may not be assigned to a unit)
+  // Teams are linked to Units, and Units are linked to Locations
+  _cp365_unit_value: string | null;
+  
+  // Expanded
+  cp365_unit?: Unit;
+}
+
+// =============================================================================
+// UNIT ENTITY (NEW - for hierarchical rota view)
+// =============================================================================
+
+export const UnitTypeCode = {
+  Dementia: 1,
+  Residential: 2,
+  ComplexCare: 3,
+  Nursing: 4,
+  Other: 99,
+} as const;
+export type UnitTypeCode = (typeof UnitTypeCode)[keyof typeof UnitTypeCode];
+
+export interface Unit {
+  cp365_unitid: string;
+  cp365_unitname: string;
+  statecode: StateCode;
+
+  // Lookups
+  _cp365_location_value: string;            // Parent location
+  
+  // Expanded
+  cp365_location?: Location;
+}
+
+/**
+ * Unit with aggregated statistics for the rota view
+ */
+export interface UnitWithStats extends Unit {
+  totalShifts: number;
+  staffOnLeave: number;
+  vacantPositions: number;
+  teams: TeamWithStats[];
+}
+
+/**
+ * Team with aggregated statistics
+ */
+export interface TeamWithStats extends StaffTeam {
+  unitId: string | null;
+  staffCount: number;
+  onLeave: number;
+  unassigned: number;
+  staffMembers: StaffMemberWithShifts[];
+}
+
+/**
+ * Staff member with their shifts for a period
+ */
+export interface StaffMemberWithShifts extends StaffMember {
+  shifts: Shift[];
+  contractedHours: number;
+  scheduledHours: number;
+  qualifications: Capability[];
+}
+
+export interface StaffTeamMember {
+  cp365_staffteammemberid: string;
+  _cp365_staffteam_value: string;
+  _cp365_staffmember_value: string;
+}
+
+// =============================================================================
+// HIERARCHICAL ROTA DATA TYPES
+// =============================================================================
+
+/**
+ * Complete hierarchical rota data structure
+ * Used by the Team View mode for Unit > Team > Staff hierarchy
+ */
+export interface HierarchicalRotaData {
+  units: UnitWithTeams[];
+  unassignedTeams: TeamWithStaff[];
+  unassignedShifts: Shift[];
+  leaveData: StaffAbsenceLog[];
+  stats: RotaStats;
+}
+
+/**
+ * Unit with nested teams and aggregated stats
+ */
+export interface UnitWithTeams extends Unit {
+  teams: TeamWithStaff[];
+  stats: {
+    totalShifts: number;
+    staffOnLeave: number;
+    vacancies: number;
+  };
+}
+
+/**
+ * Team with nested staff and their shifts
+ */
+export interface TeamWithStaff extends StaffTeam {
+  staffMembers: StaffWithShifts[];
+  unassignedShifts: Shift[];
+  stats: {
+    onLeave: number;
+    unassigned: number;
+  };
+}
+
+/**
+ * Staff member with their shifts for a period
+ */
+export interface StaffWithShifts extends StaffMember {
+  shifts: Shift[];
+  leave: StaffAbsenceLog[];
+  contractedHours: number;
+  scheduledHours: number;
+  qualifications: Capability[];
+}
+
+/**
+ * Rota-level statistics
+ */
+export interface RotaStats {
+  totalShifts: number;
+  totalHours: number;
+  assignedShifts: number;
+  unassignedShifts: number;
+  publishedShifts: number;
+  unpublishedShifts: number;
+  staffOnLeave: number;
+  totalStaff: number;
+  coveragePercentage: number;
+}
+
+export interface Capability {
+  cp365_capabilityid: string;
+  cp365_capabilityname: string;
+  cp365_drivercapability: boolean;
+}
+
+export interface StaffCapability {
+  cp365_staffcapabilityid: string;
+  cp365_capabilitystartdate: string | null;
+  cp365_capabilityenddate: string | null;
+
+  _cp365_staffmember_value: string;
+  _cp365_capability_value: string;
+}
+
+// =============================================================================
+// FLOW RESPONSE TYPES
+// =============================================================================
+
+export interface BuildRotaViewResponse {
+  view: string; // JSON string of ShiftViewData[]
+  sublocationstaff: string; // JSON string of SublocationStaffViewData[]
+  monthlyshifts: string; // JSON string
+  driverskill: string; // JSON string
+}
+
+export interface ShiftViewData {
+  'Shift ID': string;
+  'Shift Name': string;
+  'Shift Date': string;
+  'Shift Start Time': string;
+  'Shift End Time': string;
+  'Shift Status': number;
+  'Shift Type': string;
+  'Staff Member ID': string | null;
+  'Staff Member Name': string;
+  'Staff Status': number | null;
+  'Job Title': string | null;
+  'Staff Teams': string[];
+  'Rota ID': string;
+  'Rota Name': string;
+  'Rota Start Date': string | null;
+  'Sublocation ID': string;
+  'Sublocation Name': string;
+  'Sublocation Visible From': string | null;
+  'Sublocation Visible To': string | null;
+  'Shift Reference': string | null;
+  'Shift Reference Name': string | null;
+  'Shift Reference Start Hour': number | null;
+  'Shift Reference Start Minute': number | null;
+  'Shift Reference End Hour': number | null;
+  'Shift Reference End Minute': number | null;
+  'Shift Reference Sleep In': boolean;
+  'Shift Reference End On Next Day': boolean;
+  'Shift Reference Sleep In Start Hour': number | null;
+  'Shift Reference Sleep In Start Minute': number | null;
+  'Shift Reference Sleep In End Hour': number | null;
+  'Shift Reference Sleep In End Minute': number | null;
+  'Shift Activity': string | null;
+  'Shift Activity Care Type': string | null;
+  'Counts Towards Care': boolean;
+  'Shift Pattern ID': string | null;
+  'Shift Pattern Name': string | null;
+  'Shift Pattern Type': string | null;
+  'Shift Pattern Working Days': number | null;
+  'Shift Pattern Resting Days': number | null;
+  'Shift Pattern Daily Skip': number | null;
+  'Shift Pattern Weekly Skip': number | null;
+  'Pattern Day Selected Monday': boolean;
+  'Pattern Day Selected Tuesday': boolean;
+  'Pattern Day Selected Wednesday': boolean;
+  'Pattern Day Selected Thursday': boolean;
+  'Pattern Day Selected Friday': boolean;
+  'Pattern Day Selected Saturday': boolean;
+  'Pattern Day Selected Sunday': boolean;
+  'Bulk Pattern': boolean;
+  'Bulk Pattern Start Time': string | null;
+  'Bulk Pattern End Time': string | null;
+  'Shift Pattern Activity': string | null;
+  'Overtime Shift': boolean;
+  'Community Hours': number;
+  'Community Hours Note': string | null;
+  'Community Hours Owner': string | null;
+  'Community Hours Last Edit': string | null;
+  'Shift Break Duration': number;
+  'Sleep In': boolean;
+  'Sleep In Start Hour': number | null;
+  'Sleep In Start Minute': number | null;
+  'Sleep In End Hour': number | null;
+  'Sleep In End Minute': number | null;
+  'Shift Leader': boolean;
+  'Act Up': boolean;
+  'Senior': boolean;
+  'Allow Shift Clashes': boolean;
+  'Contract End Date': string | null;
+  'End on the following day': boolean;
+  'Department': string | null;
+  'Shift Setup Type': string | null;
+  /** Flag indicating if this shift belongs to staff from another sublocation */
+  'Is External Staff'?: boolean;
+  /** Flag indicating if this shift is from another rota (dual home staff) */
+  'isFromOtherRota'?: boolean;
+}
+
+export interface SublocationStaffViewData {
+  'Staff Member ID': string;
+  'Staff Member Name': string;
+  'Staff Status': number;
+  'Contract End Date': string | null;
+  'Job Title Name': string | null;
+  'Job Type Name': string | null;
+  'Staff Teams': string[];
+  'Department': string | null;
+  /** Weekly contracted hours (if available from backend) */
+  'Contracted Hours'?: number | null;
+  /** Leave/absence records for this staff member in the current date range */
+  'Leave'?: StaffAbsenceLog[];
+  /** Staff member's date of birth */
+  'Date of Birth'?: string | null;
+}
+
+// =============================================================================
+// FLOW INPUT TYPES
+// =============================================================================
+
+export interface BuildRotaViewParams {
+  shiftStartDate: string; // dd/mm/yyyy format
+  locationId: string; // Sublocation GUID
+  duration: number; // 7, 14, or 28
+  rotaId?: string; // Optional Rota GUID
+}
+
+export interface CreateBulkShiftParams {
+  patternData: PatternData;
+  assignedPeople: AssignedPerson[];
+  staffMembersXml: string;
+}
+
+export interface PatternData {
+  StartDate: string;
+  EndDate: string;
+  RotaID: string;
+  LocationID: string; // Actually Sublocation ID
+  PatternType: PatternType;
+  DailySkip?: number;
+  WeeklySkip?: number;
+  WorkingDays?: number;
+  RestingDays?: number;
+  SelectedDays?: SelectedDays;
+  ShiftReferenceID: string;
+  ShiftActivityID: string;
+  BreakDuration: number;
+  OvertimeShift: boolean;
+  SleepIn: boolean;
+  ShiftLeader: boolean;
+  ActUp: boolean;
+  CommunityHours: number;
+  ShiftSetupType: string;
+}
+
+export interface SelectedDays {
+  Monday?: boolean;
+  Tuesday?: boolean;
+  Wednesday?: boolean;
+  Thursday?: boolean;
+  Friday?: boolean;
+  Saturday?: boolean;
+  Sunday?: boolean;
+}
+
+export interface AssignedPerson {
+  StaffID: string;
+  StaffName: string;
+}
+
+export interface GetTAFWParams {
+  staffMemberIds: string; // XML format
+  startDate: string; // yyyy-mm-dd
+  endDate: string; // yyyy-mm-dd
+}
+
+export interface GetOtherShiftsParams {
+  staffArray: string; // JSON array of staff member IDs
+  startDate: string; // yyyy-mm-dd
+  endDate: string; // yyyy-mm-dd
+  excludeRotaId: string;
+}
+
+// =============================================================================
+// API RESPONSE WRAPPERS
+// =============================================================================
+
+export interface DataverseResponse<T> {
+  '@odata.context': string;
+  '@odata.count'?: number;
+  '@odata.nextLink'?: string;
+  value: T[];
+}
+
+export interface DataverseSingleResponse {
+  '@odata.context': string;
+  '@odata.etag': string;
+}
+
+// =============================================================================
+// UI STATE TYPES
+// =============================================================================
+
+export interface RotaGridCell {
+  zone: string; // Format: "{dayIndex}|{staffMemberId}" or "{dayIndex}|unassigned"
+  day: number;
+  staffMemberId: string | null;
+  shifts: ProcessedShift[];
+  isSelected: boolean;
+  hasAbsence: boolean;
+  absenceType?: string;
+}
+
+export interface ProcessedShift extends ShiftViewData {
+  zone: string;
+  day: number;
+  backgroundColor: string;
+  icon: string;
+  timeLabel: string;
+  publishedIndicator: string;
+  isSelected: boolean;
+}
+
+export interface StaffRow {
+  staffMemberId: string;
+  staffMemberName: string;
+  staffStatus: number;
+  jobTitle: string | null;
+  staffTeams: string;
+  department: string | null;
+  contractEndDate: string | null;
+  days: RotaGridCell[];
+  weekTotals?: string;
+  periodTotals?: string;
+}
+
+export interface UnassignedRow {
+  staffMemberId: null;
+  staffMemberName: 'Unassigned';
+  days: RotaGridCell[];
+}
+
+// =============================================================================
+// CONFIGURATION TYPES
+// =============================================================================
+
+export interface CP365Configuration {
+  cp365_cp365configurationid: string;
+  cp365_cp365configurationname: string;
+  cp365_value: string;
+  cp365_description: string;
+  cp365_productcategory: string;
+}
+
+// =============================================================================
+// NAVIGATION TYPES
+// =============================================================================
+
+export interface NavItem {
+  name: string;
+  type: 'heading' | 'childlink';
+  disabled: boolean;
+  route?: string;
+  action?: string;
+}

@@ -1,0 +1,49 @@
+Table Schema Name,Table Display Name,Column Schema Name,Column Display Name,Data Type,Required,Default Value,Min Value,Max Value,Choice Values,Related Table,Delete Behaviour,Notes
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_name,Pattern Name,Text (Single line),Yes,,,,,,Primary Column
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_description,Description,Text (Multiple lines),No,,,,,,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_rotationcycleweeks,Rotation Cycle (Weeks),Whole Number,Yes,1,1,8,,,,"How many weeks in the rotation cycle"
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_averageweeklyhours,Average Weekly Hours,Decimal (2 places),No,,,,,,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_totalrotationhours,Total Rotation Hours,Decimal (2 places),No,,,,,,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_isstandardtemplate,Is Standard Template,Yes/No,Yes,No,,,,,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_defaultpublishstatus,Default Publish Status,Choice,Yes,Unpublished,,,"Published=1001, Unpublished=1009",,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_generationwindowweeks,Generation Window (Weeks),Choice,Yes,2 Weeks,,,"1 Week=1, 2 Weeks=2, 4 Weeks=4",,,
+cp365_shiftpatterntemplate,Shift Pattern Template,cp365_sp_patternstatus,Pattern Status,Choice,Yes,Active,,,"Active=1, Inactive=2, Archived=3",,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_name,Day Name,Text (Single line),Yes,,,,,,Primary Column
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_weeknumber,Week Number,Whole Number,Yes,,1,8,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_dayofweek,Day of Week,Choice,Yes,,,,"Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6, Sunday=7",,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_starttime,Start Time,Time,No,,,,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_endtime,End Time,Time,No,,,,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_breakminutes,Break Duration (Minutes),Whole Number,No,0,0,480,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_isrestday,Is Rest Day,Yes/No,Yes,No,,,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_isovernight,Is Overnight Shift,Yes/No,Yes,No,,,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_sp_displayorder,Display Order,Whole Number,No,,,,,,,
+cp365_shiftpatternday,Shift Pattern Day,cp365_shiftpatterntemplate,Pattern Template,Lookup,Yes,,,,cp365_shiftpatterntemplate,Cascade,Parent pattern - CASCADE delete
+cp365_shiftpatternday,Shift Pattern Day,cp365_shiftreference,Shift Reference,Lookup,No,,,,cp365_shiftreference,Remove Link,Existing table
+cp365_shiftpatternday,Shift Pattern Day,cp365_shiftactivity,Shift Activity,Lookup,No,,,,cp365_shiftactivity,Remove Link,Existing table
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_name,Assignment Name,Text (Single line),Yes,,,,,,Primary Column
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_startdate,Start Date,Date Only,Yes,,,,,,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_enddate,End Date,Date Only,No,,,,,,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_rotationstartweek,Rotation Start Week,Whole Number,Yes,1,1,8,,,,"Which week of the rotation to start on"
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_priority,Priority,Whole Number,Yes,1,1,99,,,,"1 = highest priority"
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_appliestodays,Applies to Days,Text (Multiple lines),No,,,,,,,"JSON array e.g. [""Monday"",""Tuesday""]"
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_overridepublishstatus,Override Publish Status,Yes/No,No,No,,,,,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_publishstatus,Publish Status,Choice,No,,,,"Published=1001, Unpublished=1009",,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_lastgenerateddate,Last Generated Date,Date Only,No,,,,,,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_sp_assignmentstatus,Assignment Status,Choice,Yes,Active,,,"Active=1, Ended=2, Superseded=3",,,
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_staffmember,Staff Member,Lookup,Yes,,,,cp365_staffmember,Restrict,Existing table - RESTRICT delete
+cp365_staffpatternassignment,Staff Pattern Assignment,cp365_shiftpatterntemplate,Pattern Template,Lookup,Yes,,,,cp365_shiftpatterntemplate,Restrict,RESTRICT delete
+cp365_shiftgenerationlog,Shift Generation Log,cp365_name,Log Name,Text (Single line),Yes,,,,,,Primary Column
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_generationdate,Generation Date,Date and Time,Yes,,,,,,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_periodstart,Period Start,Date Only,Yes,,,,,,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_periodend,Period End,Date Only,Yes,,,,,,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_shiftsgenerated,Shifts Generated,Whole Number,Yes,0,,,,,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_conflictsdetected,Conflicts Detected,Whole Number,Yes,0,,,,,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_conflictdetails,Conflict Details,Text (Multiple lines),No,,,,,,,"JSON data for conflict details"
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_generationtype,Generation Type,Choice,Yes,,,,"Manual=1, Scheduled=2, On Demand=3",,,
+cp365_shiftgenerationlog,Shift Generation Log,cp365_staffpatternassignment,Pattern Assignment,Lookup,Yes,,,,cp365_staffpatternassignment,Cascade,CASCADE delete
+cp365_shiftgenerationlog,Shift Generation Log,cp365_sp_generatedby,Generated By,Lookup,No,,,,User (systemuser),Remove Link,System User table
+cp365_shift (MODIFY),Shift,cp365_sp_isgeneratedfrompattern,Is Generated from Pattern,Yes/No,No,No,,,,,,
+cp365_shift (MODIFY),Shift,cp365_sp_patternweek,Pattern Week,Whole Number,No,,,,,,,
+cp365_shift (MODIFY),Shift,cp365_sp_patterndayofweek,Pattern Day of Week,Whole Number,No,,,,,,,
+cp365_shift (MODIFY),Shift,cp365_staffpatternassignment,Staff Pattern Assignment,Lookup,No,,,,cp365_staffpatternassignment,Remove Link,
+
