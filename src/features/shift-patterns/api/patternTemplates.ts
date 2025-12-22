@@ -14,6 +14,7 @@ import type {
   PatternAssignmentSummary,
 } from '../types';
 import { PatternStatus as PatternStatusEnum, DayOfWeek } from '../types';
+import { fetchPatternDays, bulkCreatePatternDays } from './patternDays';
 
 /**
  * Entity set name for pattern templates
@@ -514,98 +515,6 @@ export async function getPatternAssignmentSummaries(): Promise<PatternAssignment
     console.error('[PatternTemplates] Error fetching summaries:', error);
     throw error;
   }
-}
-
-// =============================================================================
-// PATTERN DAYS FUNCTIONS (imported here for convenience)
-// =============================================================================
-
-/**
- * Fetch pattern days for a template
- */
-export async function fetchPatternDays(templateId: string): Promise<ShiftPatternDay[]> {
-  if (!isDataverseClientInitialised()) {
-    return [];
-  }
-
-  try {
-    const client = getDataverseClient();
-    console.log('[PatternDays] Fetching days for template:', templateId);
-
-    // Fetch all columns without specifying select (to avoid column name mismatch issues)
-    // We'll filter down to what we need after fetching
-    const days = await client.get<ShiftPatternDay>('cp365_shiftpatterndaies', {
-      filter: `_cp365_shiftpatterntemplate_value eq '${templateId}'`,
-      orderby: 'cp365_sp_displayorder asc, cp365_sp_weeknumber asc, cp365_sp_dayofweek asc',
-    });
-
-    console.log('[PatternDays] Fetched', days.length, 'days');
-    return days;
-  } catch (error) {
-    console.error('[PatternDays] Error fetching days:', error);
-    throw error;
-  }
-}
-
-/**
- * Create multiple pattern days at once
- */
-export async function bulkCreatePatternDays(
-  templateId: string,
-  days: PatternDayFormData[]
-): Promise<ShiftPatternDay[]> {
-  if (!isDataverseClientInitialised()) {
-    throw new Error('Dataverse client not initialised');
-  }
-
-  const client = getDataverseClient();
-  console.log('[PatternDays] Bulk creating', days.length, 'days for template:', templateId);
-
-  const createdDays: ShiftPatternDay[] = [];
-
-  for (const day of days) {
-    try {
-      // IMPORTANT: Navigation property names MUST be lowercase for @odata.bind in Dataverse
-      const dayData: Record<string, unknown> = {
-        cp365_name: `Week ${day.weekNumber} - ${getDayName(day.dayOfWeek)}`,
-        'cp365_shiftpatterntemplate@odata.bind': `/cp365_shiftpatterntemplatenews(${templateId})`,
-        cp365_sp_weeknumber: day.weekNumber,
-        cp365_sp_dayofweek: day.dayOfWeek,
-        cp365_sp_isrestday: day.isRestDay,
-        cp365_sp_isovernight: day.isOvernight,
-        cp365_sp_displayorder: (day.weekNumber * 10) + day.dayOfWeek,
-      };
-
-      if (day.shiftReferenceId) {
-        dayData['cp365_shiftreference@odata.bind'] = `/cp365_shiftreferences(${day.shiftReferenceId})`;
-      }
-
-      if (day.startTime) {
-        dayData.cp365_sp_starttime = createDateTimeWithDummyDate(day.startTime);
-      }
-
-      if (day.endTime) {
-        dayData.cp365_sp_endtime = createDateTimeWithDummyDate(day.endTime);
-      }
-
-      if (day.breakMinutes !== undefined) {
-        dayData.cp365_sp_breakminutes = day.breakMinutes;
-      }
-
-      if (day.shiftActivityId) {
-        dayData['cp365_shiftactivity@odata.bind'] = `/cp365_shiftactivities(${day.shiftActivityId})`;
-      }
-
-      const created = await client.create<ShiftPatternDay>('cp365_shiftpatterndaies', dayData);
-      createdDays.push(created);
-    } catch (error) {
-      console.error('[PatternDays] Error creating day:', day, error);
-      // Continue with other days
-    }
-  }
-
-  console.log('[PatternDays] Created', createdDays.length, 'of', days.length, 'days');
-  return createdDays;
 }
 
 // =============================================================================

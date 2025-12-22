@@ -15,10 +15,10 @@ import {
 } from '../types';
 import {
   createPatternTemplate,
-  bulkCreatePatternDays,
   fetchPatternTemplates,
   updatePatternTemplate,
 } from '../api/patternTemplates';
+import { bulkCreatePatternDays } from '../api/patternDays';
 
 // =============================================================================
 // STANDARD PATTERN DEFINITIONS

@@ -389,15 +389,15 @@ export async function getShiftsFromOtherRotas(
 }
 
 /**
- * Get staff members assigned to a sublocation.
+ * Get staff view data for a sublocation (for rota grid).
  * 
  * @deprecated This function is now a thin wrapper around getStaffViewDataForSublocation
  * from the staff module. Use that function directly for new code.
  * 
  * @see {@link import('./staff').getStaffViewDataForSublocation}
  */
-export async function getStaffForSublocation(sublocationId: string): Promise<SublocationStaffViewData[]> {
-  console.log('[Shifts] getStaffForSublocation delegating to staff module');
+async function getStaffForSublocationInternal(sublocationId: string): Promise<SublocationStaffViewData[]> {
+  console.log('[Shifts] getStaffForSublocationInternal delegating to staff module');
   return getStaffViewDataForSublocation(sublocationId);
 }
 
@@ -454,7 +454,7 @@ export async function getRotaGridData(
   // Note: Shifts require a rotaId - if no rota exists, we'll get 0 shifts
   const [allShifts, staffWithoutContracts, absenceTypes] = await Promise.all([
     getShiftsForRota(rotaId, startDate, endDate),
-    getStaffForSublocation(sublocationId),
+    getStaffForSublocationInternal(sublocationId),
     fetchAbsenceTypes(),
   ]);
 

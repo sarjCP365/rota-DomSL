@@ -5,7 +5,7 @@
 // Types
 export * from './types';
 
-// API
+// API - primary source for most functions
 export * from './api';
 
 // Hooks
@@ -14,8 +14,13 @@ export * from './hooks';
 // Pages
 export * from './pages';
 
-// Utils (including standard patterns)
-export * from './utils';
+// Utils - export only non-conflicting utilities
+export { 
+  checkStandardPatternsExist, 
+  seedStandardPatterns, 
+  standardPatterns,
+  calculateAnnualLeaveEntitlement,
+} from './utils';
 
 // Components
 export * from './components';

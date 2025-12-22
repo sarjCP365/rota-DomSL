@@ -3,6 +3,9 @@
  * Re-exports all API operations
  */
 
+// Re-export dataverse as primary source
 export * from './dataverse';
-export * from './flows';
+
+// Re-export flows with namespace to avoid conflicts
+export * as flows from './flows';
 

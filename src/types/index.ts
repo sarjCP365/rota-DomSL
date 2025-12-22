@@ -11,7 +11,7 @@ export type {
   Sublocation,
   Rota,
   ShiftReference,
-  StaffAbsence,
+  StaffAbsenceLog,
   AgencyWorker,
   ServiceUser,
   Unit,
