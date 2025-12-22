@@ -22,6 +22,7 @@ import { UnitsManagement } from './pages/admin/UnitsManagement';
 import { PatternLibraryPage, PatternBuilderPage, PatternAssignmentPage } from './features/shift-patterns';
 import { UnpublishedShiftsPage } from './pages/UnpublishedShiftsPage';
 import { useAuth } from './hooks/useAuth';
+import { EnvironmentIndicator } from './components/common/EnvironmentIndicator';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -78,38 +79,41 @@ function AuthenticatedApp() {
   }
 
   return (
-    <Routes>
-      {/* Dashboard */}
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/dashboard" element={<Navigate to="/" replace />} />
+    <>
+      <EnvironmentIndicator />
+      <Routes>
+        {/* Dashboard */}
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
 
-      {/* Rota Views */}
-      <Route path="/rota/:duration" element={<RotaView />} />
-      <Route path="/daily" element={<DailyView />} />
+        {/* Rota Views */}
+        <Route path="/rota/:duration" element={<RotaView />} />
+        <Route path="/daily" element={<DailyView />} />
 
-      {/* Staff Management */}
-      <Route path="/staff-capabilities" element={<StaffManagement />} />
-      <Route path="/admin/staff" element={<StaffManagement />} />
-      <Route path="/admin/staff/:staffId" element={<StaffManagement />} />
+        {/* Staff Management */}
+        <Route path="/staff-capabilities" element={<StaffManagement />} />
+        <Route path="/admin/staff" element={<StaffManagement />} />
+        <Route path="/admin/staff/:staffId" element={<StaffManagement />} />
 
-      {/* Units Management */}
-      <Route path="/admin/units" element={<UnitsManagement />} />
+        {/* Units Management */}
+        <Route path="/admin/units" element={<UnitsManagement />} />
 
-      {/* Shift Patterns */}
-      <Route path="/patterns" element={<PatternLibraryPage />} />
-      <Route path="/patterns/new" element={<PatternBuilderPage />} />
-      <Route path="/patterns/:id" element={<PatternBuilderPage />} />
-      <Route path="/patterns/assign" element={<PatternAssignmentPage />} />
+        {/* Shift Patterns */}
+        <Route path="/patterns" element={<PatternLibraryPage />} />
+        <Route path="/patterns/new" element={<PatternBuilderPage />} />
+        <Route path="/patterns/:id" element={<PatternBuilderPage />} />
+        <Route path="/patterns/assign" element={<PatternAssignmentPage />} />
 
-      {/* Shift Management */}
-      <Route path="/shifts/unpublished" element={<UnpublishedShiftsPage />} />
+        {/* Shift Management */}
+        <Route path="/shifts/unpublished" element={<UnpublishedShiftsPage />} />
 
-      {/* Settings */}
-      <Route path="/settings" element={<Settings />} />
+        {/* Settings */}
+        <Route path="/settings" element={<Settings />} />
 
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 
