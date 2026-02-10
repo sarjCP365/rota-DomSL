@@ -1,9 +1,9 @@
 /**
  * AssignmentModal Component
- * 
+ *
  * Modal dialog for assigning staff to vacant shifts.
  * Shows available staff filtered and sorted by suitability.
- * 
+ *
  * Features:
  * - Shift details header
  * - Search and filter available staff
@@ -16,11 +16,11 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { 
-  X, 
-  Search, 
-  Clock, 
-  Users, 
+import {
+  X,
+  Search,
+  Clock,
+  Users,
   User,
   Check,
   Building2,
@@ -28,7 +28,7 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
-import type { Shift, StaffMember, Capability } from '../../api/dataverse/types';
+import type { Shift, StaffMember, Capability } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -98,12 +98,12 @@ function calculateDuration(shift: Shift): number {
 
 function getShiftTypeLabel(shift: Shift): string {
   if (shift.cp365_sleepin) return 'Sleep In';
-  
+
   if (shift.cp365_shiftstarttime) {
     const startHour = new Date(shift.cp365_shiftstarttime).getHours();
     if (startHour >= 20 || startHour < 6) return 'Night Shift';
   }
-  
+
   return 'Day Shift';
 }
 
@@ -129,7 +129,8 @@ export function AssignmentModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset state when modal opens/closes
+  // Reset state when modal opens/closes - intentional reset for clean modal state
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
@@ -139,6 +140,7 @@ export function AssignmentModal({
       setTimeout(() => searchInputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Handle escape key
   useEffect(() => {
@@ -153,11 +155,14 @@ export function AssignmentModal({
   }, [isOpen, onClose]);
 
   // Click outside to close
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   // Filter and sort staff
   const { recommendedStaff, otherStaff } = useMemo(() => {
@@ -181,7 +186,7 @@ export function AssignmentModal({
     for (const staff of filtered) {
       const isSameTeam = teamId ? staff.teamIds.includes(teamId) : false;
       const isUnderHours = staff.scheduledHours < staff.contractedHours;
-      
+
       // Build recommendation reason
       const reasons: string[] = [];
       if (isSameTeam) reasons.push('Same team');
@@ -207,11 +212,11 @@ export function AssignmentModal({
     recommended.sort((a, b) => {
       if (a.isSameTeam && !b.isSameTeam) return -1;
       if (!a.isSameTeam && b.isSameTeam) return 1;
-      return (b.contractedHours - b.scheduledHours) - (a.contractedHours - a.scheduledHours);
+      return b.contractedHours - b.scheduledHours - (a.contractedHours - a.scheduledHours);
     });
 
     // Sort other alphabetically
-    other.sort((a, b) => 
+    other.sort((a, b) =>
       (a.cp365_staffmembername || '').localeCompare(b.cp365_staffmembername || '')
     );
 
@@ -238,8 +243,8 @@ export function AssignmentModal({
   };
 
   // Get selected staff details
-  const selectedStaff = selectedStaffId 
-    ? availableStaff.find(s => s.cp365_staffmemberid === selectedStaffId)
+  const selectedStaff = selectedStaffId
+    ? availableStaff.find((s) => s.cp365_staffmemberid === selectedStaffId)
     : null;
 
   if (!isOpen || !shift) return null;
@@ -267,7 +272,8 @@ export function AssignmentModal({
               Assign Staff to Shift
             </h2>
             <p className="mt-1 text-sm text-gray-600">
-              {format(shiftDate, 'EEEE d MMMM')} • {formatTime(shift.cp365_shiftstarttime)}-{formatTime(shift.cp365_shiftendtime)} ({duration}h)
+              {format(shiftDate, 'EEEE d MMMM')} • {formatTime(shift.cp365_shiftstarttime)}-
+              {formatTime(shift.cp365_shiftendtime)} ({duration}h)
             </p>
           </div>
           <button
@@ -312,7 +318,8 @@ export function AssignmentModal({
                 Assign {selectedStaff.cp365_staffmembername}?
               </h3>
               <p className="mt-2 text-sm text-gray-600">
-                This will assign {selectedStaff.cp365_staffmembername} to the {shiftType.toLowerCase()} on {format(shiftDate, 'd MMMM')}.
+                This will assign {selectedStaff.cp365_staffmembername} to the{' '}
+                {shiftType.toLowerCase()} on {format(shiftDate, 'd MMMM')}.
               </p>
               <div className="mt-6 flex gap-3">
                 <button
@@ -421,7 +428,7 @@ export function AssignmentModal({
           <span className="text-xs text-gray-500">
             {recommendedStaff.length + otherStaff.length} staff available
           </span>
-          
+
           {onRequestAgency && (
             <button
               onClick={onRequestAgency}
@@ -448,11 +455,12 @@ interface StaffCardProps {
 }
 
 function StaffCard({ staff, onSelect, isRecommended }: StaffCardProps) {
-  const displayName = staff.cp365_staffmembername || 
-    `${staff.cp365_forename || ''} ${staff.cp365_surname || ''}`.trim() || 
+  const displayName =
+    staff.cp365_staffmembername ||
+    `${staff.cp365_forename || ''} ${staff.cp365_surname || ''}`.trim() ||
     'Unknown';
   const initial = displayName.charAt(0).toUpperCase();
-  
+
   const hoursText = `${Math.round(staff.scheduledHours * 10) / 10}h / ${staff.contractedHours}h`;
   const isUnderHours = staff.scheduledHours < staff.contractedHours;
   const isOverHours = staff.scheduledHours > staff.contractedHours;
@@ -470,10 +478,12 @@ function StaffCard({ staff, onSelect, isRecommended }: StaffCardProps) {
     >
       <div className="flex items-center gap-3">
         {/* Avatar */}
-        <div className={`
+        <div
+          className={`
           flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium
           ${isRecommended ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary'}
-        `}>
+        `}
+        >
           {initial}
         </div>
 
@@ -487,11 +497,13 @@ function StaffCard({ staff, onSelect, isRecommended }: StaffCardProps) {
               </span>
             )}
           </div>
-          
+
           {/* Hours */}
-          <div className={`text-xs ${
-            isUnderHours ? 'text-green-600' : isOverHours ? 'text-amber-600' : 'text-gray-500'
-          }`}>
+          <div
+            className={`text-xs ${
+              isUnderHours ? 'text-green-600' : isOverHours ? 'text-amber-600' : 'text-gray-500'
+            }`}
+          >
             {hoursText}
             {staff.recommendationReason && (
               <span className="ml-2 text-gray-400">• {staff.recommendationReason}</span>
@@ -525,9 +537,10 @@ function StaffCard({ staff, onSelect, isRecommended }: StaffCardProps) {
         onClick={onSelect}
         className={`
           rounded-lg px-4 py-2 text-sm font-medium transition-colors
-          ${isRecommended 
-            ? 'bg-green-600 text-white hover:bg-green-700' 
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          ${
+            isRecommended
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }
         `}
       >
@@ -542,4 +555,3 @@ function StaffCard({ staff, onSelect, isRecommended }: StaffCardProps) {
 // =============================================================================
 
 export type { AssignmentModalProps, StaffMemberForAssignment };
-

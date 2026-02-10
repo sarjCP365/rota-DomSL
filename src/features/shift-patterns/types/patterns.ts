@@ -1,14 +1,20 @@
 /**
  * CarePoint 365 - Shift Patterns Feature Types
  * TypeScript interfaces for the Shift Patterns feature
- * 
+ *
  * Naming Convention:
  * - All custom columns use the `cp365_sp_` prefix (sp = shift pattern)
  * - Primary columns use `cp365_name` (Dataverse convention)
  * - Lookup columns use the related table name (e.g., `cp365_staffmember`)
  */
 
-import type { ShiftReference, ShiftActivity, StaffMember, Shift, StaffAbsenceLog, Location } from '../../../api/dataverse/types';
+import type {
+  ShiftReference,
+  ShiftActivity,
+  StaffMember,
+  Shift,
+  Location,
+} from '@/api/dataverse/types';
 
 // =============================================================================
 // ENUMS (as const objects for erasableSyntaxOnly compatibility)
@@ -97,10 +103,10 @@ export interface ShiftPatternTemplate {
  * Shift Pattern Day - Individual day definitions within a pattern
  * Table: cp365_shiftpatternday
  * EntitySet: cp365_shiftpatterndaies
- * 
- * Note: cp365_sp_starttime and cp365_sp_endtime are DateTime fields with a fixed 
- * dummy date (e.g., 1900-01-01). When displaying or using these values, extract 
- * only the time portion. When generating actual shifts, combine the time with 
+ *
+ * Note: cp365_sp_starttime and cp365_sp_endtime are DateTime fields with a fixed
+ * dummy date (e.g., 1900-01-01). When displaying or using these values, extract
+ * only the time portion. When generating actual shifts, combine the time with
  * the real shift date.
  */
 export interface ShiftPatternDay {
@@ -110,8 +116,8 @@ export interface ShiftPatternDay {
   cp365_sp_weeknumber: number;
   cp365_sp_dayofweek: DayOfWeek;
   _cp365_shiftreference_value?: string;
-  cp365_sp_starttime?: string;  // DateTime with dummy date - extract time only
-  cp365_sp_endtime?: string;    // DateTime with dummy date - extract time only
+  cp365_sp_starttime?: string; // DateTime with dummy date - extract time only
+  cp365_sp_endtime?: string; // DateTime with dummy date - extract time only
   cp365_sp_breakminutes?: number;
   cp365_sp_isrestday: boolean;
   cp365_sp_isovernight: boolean;
@@ -183,7 +189,7 @@ export interface ShiftWithPattern extends Shift {
   cr482_sp_patternweek?: number;
   cr482_sp_patterndayofweek?: number;
   _cp365_staffpatternassignment_value?: string;
-  
+
   // Expanded lookup - Dataverse navigation property names are ALWAYS lowercase
   cp365_staffpatternassignment?: StaffPatternAssignment;
 }
@@ -216,7 +222,7 @@ export interface PatternDayFormData {
   isRestDay: boolean;
   shiftReferenceId?: string;
   startTime?: string; // HH:mm format
-  endTime?: string;   // HH:mm format
+  endTime?: string; // HH:mm format
   breakMinutes?: number;
   isOvernight: boolean;
   shiftActivityId?: string;
@@ -416,4 +422,3 @@ export const GenerationWindowLabels: Record<GenerationWindow, string> = {
   [GenerationWindow.TwoWeeks]: '2 Weeks',
   [GenerationWindow.FourWeeks]: '4 Weeks',
 };
-

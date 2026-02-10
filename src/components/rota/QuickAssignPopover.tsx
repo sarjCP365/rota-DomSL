@@ -1,14 +1,14 @@
 /**
  * QuickAssignPopover Component
- * 
+ *
  * A compact popover for quickly assigning staff to unassigned shifts.
  * Shows a searchable list of available staff members.
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, X, User, Settings, Loader2 } from 'lucide-react';
-import { useUpdateShift } from '../../hooks/useShifts';
-import type { SublocationStaffViewData } from '../../api/dataverse/types';
+import { Search, X, Settings, Loader2 } from 'lucide-react';
+import { useUpdateShift } from '@/hooks/useShifts';
+import type { SublocationStaffViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -83,9 +83,10 @@ export function QuickAssignPopover({
 
     const query = searchQuery.toLowerCase();
     return staff
-      .filter(s => 
-        s['Staff Member Name']?.toLowerCase().includes(query) ||
-        s['Job Title Name']?.toLowerCase().includes(query)
+      .filter(
+        (s) =>
+          s['Staff Member Name']?.toLowerCase().includes(query) ||
+          s['Job Title Name']?.toLowerCase().includes(query)
       )
       .slice(0, 10);
   }, [staff, searchQuery]);
@@ -93,9 +94,8 @@ export function QuickAssignPopover({
   // Handle staff selection
   const handleSelectStaff = async (staffMember: SublocationStaffViewData) => {
     setIsAssigning(true);
-    
+
     try {
-      console.log('[QuickAssign] Assigning shift', shiftId, 'to staff', staffMember['Staff Member ID']);
       // IMPORTANT: For cp365_shifts, navigation property names MUST be PascalCase for @odata.bind
       await updateShiftMutation.mutateAsync({
         shiftId,
@@ -103,8 +103,7 @@ export function QuickAssignPopover({
           'cp365_StaffMember@odata.bind': `/cp365_staffmembers(${staffMember['Staff Member ID']})`,
         },
       });
-      
-      console.log('[QuickAssign] Assignment successful');
+
       onAssigned?.();
       onClose();
     } catch (error) {
@@ -244,4 +243,3 @@ export function QuickAssignPopover({
 }
 
 export default QuickAssignPopover;
-

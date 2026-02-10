@@ -6,4 +6,3 @@ export * from './patternTemplates';
 export * from './patternDays';
 export * from './patternAssignments';
 export * from './patternGeneration';
-

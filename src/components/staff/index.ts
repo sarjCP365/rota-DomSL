@@ -6,4 +6,4 @@
 export * from './StaffList';
 export * from './StaffDetail';
 export * from './StaffForm';
-
+export * from './availability';

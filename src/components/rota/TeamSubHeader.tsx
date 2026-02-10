@@ -1,9 +1,9 @@
 /**
  * TeamSubHeader Component
- * 
+ *
  * Displays a collapsible sub-header for a Team within a Unit.
  * Shows team name, staff count, and statistics.
- * 
+ *
  * Features:
  * - Collapsible independent of parent Unit
  * - Team name with staff count
@@ -14,16 +14,16 @@
  */
 
 import { useState, useCallback } from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Users, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Users,
   UserPlus,
   Plus,
   ExternalLink,
   AlertTriangle,
 } from 'lucide-react';
-import type { TeamWithStaff } from '../../api/dataverse/types';
+import type { TeamWithStaff } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -59,12 +59,15 @@ export function TeamSubHeader({
   const [isHovered, setIsHovered] = useState(false);
 
   // Handle keyboard interaction
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onToggle();
-    }
-  }, [onToggle]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggle();
+      }
+    },
+    [onToggle]
+  );
 
   // Calculate stats
   const staffCount = team.staffMembers.length;
@@ -112,9 +115,7 @@ export function TeamSubHeader({
 
           {/* Team name and staff count */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-800">
-              {team.cp365_staffteamname}
-            </span>
+            <span className="text-sm font-semibold text-gray-800">{team.cp365_staffteamname}</span>
             <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
               {staffCount} {staffCount === 1 ? 'staff' : 'staff'}
             </span>
@@ -148,9 +149,7 @@ export function TeamSubHeader({
             )}
 
             {/* No issues indicator */}
-            {!hasIssues && staffCount > 0 && (
-              <span className="text-gray-400">All covered</span>
-            )}
+            {!hasIssues && staffCount > 0 && <span className="text-gray-400">All covered</span>}
           </div>
 
           {/* Quick actions - visible on hover */}
@@ -225,9 +224,7 @@ export function TeamEmptyState({ teamName, onAddStaff }: TeamEmptyStateProps) {
       <div className="flex items-center justify-between rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-500">
-            No staff members in {teamName}
-          </span>
+          <span className="text-sm text-gray-500">No staff members in {teamName}</span>
         </div>
         {onAddStaff && (
           <button
@@ -261,12 +258,15 @@ export function UnassignedTeamsHeader({
   isExpanded,
   onToggle,
 }: UnassignedTeamsHeaderProps) {
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onToggle();
-    }
-  }, [onToggle]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggle();
+      }
+    },
+    [onToggle]
+  );
 
   return (
     <div className="mb-2">
@@ -295,12 +295,8 @@ export function UnassignedTeamsHeader({
 
           {/* Title */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700">
-              Unassigned Teams
-            </h3>
-            <p className="text-xs text-gray-500">
-              Teams not linked to any unit
-            </p>
+            <h3 className="text-sm font-semibold text-gray-700">Unassigned Teams</h3>
+            <p className="text-xs text-gray-500">Teams not linked to any unit</p>
           </div>
         </div>
 
@@ -318,4 +314,3 @@ export function UnassignedTeamsHeader({
 // =============================================================================
 
 export type { TeamSubHeaderProps, TeamEmptyStateProps, UnassignedTeamsHeaderProps };
-

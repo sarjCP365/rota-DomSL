@@ -15,11 +15,7 @@ import {
   bulkAssignPattern,
   getAssignmentsNeedingGeneration,
 } from '../api/patternAssignments';
-import type {
-  StaffPatternAssignment,
-  AssignmentFormData,
-  BulkAssignmentOptions,
-} from '../types';
+import type { AssignmentFormData, BulkAssignmentOptions } from '../types';
 import { patternTemplateKeys } from './usePatternTemplates';
 // Note: Add react-toastify or similar library for proper notifications
 
@@ -29,13 +25,13 @@ import { patternTemplateKeys } from './usePatternTemplates';
 export const patternAssignmentKeys = {
   all: ['patternAssignments'] as const,
   lists: () => [...patternAssignmentKeys.all, 'list'] as const,
-  byStaff: (staffId: string, includeEnded?: boolean) => 
+  byStaff: (staffId: string, includeEnded?: boolean) =>
     [...patternAssignmentKeys.lists(), 'staff', staffId, includeEnded] as const,
-  byPattern: (patternId: string, activeOnly?: boolean) => 
+  byPattern: (patternId: string, activeOnly?: boolean) =>
     [...patternAssignmentKeys.lists(), 'pattern', patternId, activeOnly] as const,
   details: () => [...patternAssignmentKeys.all, 'detail'] as const,
   detail: (id: string) => [...patternAssignmentKeys.details(), id] as const,
-  activeForDate: (staffId: string, date: string) => 
+  activeForDate: (staffId: string, date: string) =>
     [...patternAssignmentKeys.all, 'activeForDate', staffId, date] as const,
   needingGeneration: () => [...patternAssignmentKeys.all, 'needingGeneration'] as const,
 };
@@ -85,12 +81,9 @@ export function usePatternAssignment(id: string | undefined) {
 /**
  * Hook to get the active pattern for a staff member on a specific date
  */
-export function useActivePatternForDate(
-  staffMemberId: string | undefined,
-  date: Date | undefined
-) {
+export function useActivePatternForDate(staffMemberId: string | undefined, date: Date | undefined) {
   const dateStr = date ? date.toISOString().split('T')[0] : '';
-  
+
   return useQuery({
     queryKey: patternAssignmentKeys.activeForDate(staffMemberId!, dateStr),
     queryFn: () => getActivePatternForDate(staffMemberId!, date!),
@@ -120,30 +113,26 @@ export function useCreatePatternAssignment() {
     mutationFn: (data: AssignmentFormData) => createPatternAssignment(data),
     onSuccess: (newAssignment, data) => {
       // Invalidate staff assignments
-      queryClient.invalidateQueries({ 
-        queryKey: patternAssignmentKeys.byStaff(data.staffMemberId) 
+      queryClient.invalidateQueries({
+        queryKey: patternAssignmentKeys.byStaff(data.staffMemberId),
       });
-      
+
       // Invalidate pattern assignments
-      queryClient.invalidateQueries({ 
-        queryKey: patternAssignmentKeys.byPattern(data.patternTemplateId) 
+      queryClient.invalidateQueries({
+        queryKey: patternAssignmentKeys.byPattern(data.patternTemplateId),
       });
-      
+
       // Invalidate pattern summaries
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
-      
+
       // Add to cache
       queryClient.setQueryData(
         patternAssignmentKeys.detail(newAssignment.cp365_staffpatternassignmentid),
         newAssignment
       );
-      
-      console.log('[PatternAssignments] Pattern assigned successfully');
     },
     onError: (error) => {
-      console.error('[useCreatePatternAssignment] Error:', error);
-      console.error(`[PatternAssignments] Failed to assign pattern: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to assign pattern: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternAssignments] Failed to assign:', error);
     },
   });
 }
@@ -155,21 +144,17 @@ export function useUpdatePatternAssignment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<AssignmentFormData> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<AssignmentFormData> }) =>
       updatePatternAssignment(id, data),
     onSuccess: (_, { id }) => {
       // Invalidate the specific assignment
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
-      
+
       // Invalidate all assignment lists (we don't know which staff/pattern this belongs to)
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
-      
-      console.log('[PatternAssignments] Assignment updated successfully');
     },
     onError: (error) => {
-      console.error('[useUpdatePatternAssignment] Error:', error);
-      console.error(`[PatternAssignments] Failed to update assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to update assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternAssignments] Failed to update:', error);
     },
   });
 }
@@ -181,24 +166,20 @@ export function useEndPatternAssignment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, endDate }: { id: string; endDate: string }) => 
+    mutationFn: ({ id, endDate }: { id: string; endDate: string }) =>
       endPatternAssignment(id, endDate),
     onSuccess: (_, { id }) => {
       // Invalidate the specific assignment
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
-      
+
       // Invalidate all assignment lists
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
-      
+
       // Invalidate pattern summaries
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
-      
-      console.log('[PatternAssignments] Assignment ended successfully');
     },
     onError: (error) => {
-      console.error('[useEndPatternAssignment] Error:', error);
-      console.error(`[PatternAssignments] Failed to end assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to end assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternAssignments] Failed to end:', error);
     },
   });
 }
@@ -214,19 +195,15 @@ export function useDeletePatternAssignment() {
     onSuccess: (_, id) => {
       // Remove from cache
       queryClient.removeQueries({ queryKey: patternAssignmentKeys.detail(id) });
-      
+
       // Invalidate all assignment lists
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
-      
+
       // Invalidate pattern summaries
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
-      
-      console.log('[PatternAssignments] Assignment deleted successfully');
     },
     onError: (error) => {
-      console.error('[useDeletePatternAssignment] Error:', error);
-      console.error(`[PatternAssignments] Failed to delete assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to delete assignment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternAssignments] Failed to delete:', error);
     },
   });
 }
@@ -239,25 +216,19 @@ export function useBulkAssignPattern() {
 
   return useMutation({
     mutationFn: (options: BulkAssignmentOptions) => bulkAssignPattern(options),
-    onSuccess: (result, options) => {
+    onSuccess: (result, _options) => {
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
-      
-      if (result.errors.length === 0) {
-        console.log(`[PatternAssignments] Successfully assigned pattern to ${result.created.length} staff members`);
-      } else {
+
+      if (result.errors.length > 0) {
         console.warn(
-          `[PatternAssignments] Assigned to ${result.created.length} staff members. ${result.errors.length} failed.`
+          `[PatternAssignments] Assigned to ${result.created.length}, ${result.errors.length} failed.`
         );
-        alert(`Assigned to ${result.created.length} staff members. ${result.errors.length} failed.`);
       }
     },
     onError: (error) => {
-      console.error('[useBulkAssignPattern] Error:', error);
-      console.error(`[PatternAssignments] Failed to bulk assign pattern: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to bulk assign pattern: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternAssignments] Failed to bulk assign:', error);
     },
   });
 }
-

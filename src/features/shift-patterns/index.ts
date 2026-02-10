@@ -15,13 +15,12 @@ export * from './hooks';
 export * from './pages';
 
 // Utils - export only non-conflicting utilities
-export { 
-  checkStandardPatternsExist, 
-  seedStandardPatterns, 
+export {
+  checkStandardPatternsExist,
+  seedStandardPatterns,
   standardPatterns,
   calculateAnnualLeaveEntitlement,
 } from './utils';
 
 // Components
 export * from './components';
-

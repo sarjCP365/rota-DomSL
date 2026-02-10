@@ -1,14 +1,14 @@
 /**
  * Dataverse Schema Reference for Shift Patterns Feature
- * 
+ *
  * This file documents the exact column names from Dataverse to ensure
  * correct OData queries. The SchemaName is used for navigation properties
  * in $expand and @odata.bind references.
- * 
+ *
  * IMPORTANT: The SchemaName casing varies by table!
  * - Some tables use lowercase (cp365_staffmember)
  * - Some tables use PascalCase (cp365_StaffMember)
- * 
+ *
  * Generated from Dataverse metadata API on 2025-12-21
  */
 
@@ -19,7 +19,7 @@ export const PATTERN_TEMPLATE = {
   entityName: 'cp365_shiftpatterntemplatenews',
   primaryId: 'cp365_shiftpatterntemplatenewid',
   primaryName: 'cp365_name',
-  
+
   // Custom columns
   columns: {
     name: 'cp365_name',
@@ -32,7 +32,7 @@ export const PATTERN_TEMPLATE = {
     averageWeeklyHours: 'cp365_sp_averageweeklyhours',
     totalRotationHours: 'cp365_sp_totalrotationhours',
   },
-  
+
   // Lookup columns - NOTE: cr482_ prefix for location!
   lookups: {
     location: {
@@ -60,7 +60,7 @@ export const PATTERN_DAY = {
   entityName: 'cp365_shiftpatterndays',
   primaryId: 'cp365_shiftpatterndayid',
   primaryName: 'cp365_name',
-  
+
   // Custom columns
   columns: {
     name: 'cp365_name',
@@ -73,7 +73,7 @@ export const PATTERN_DAY = {
     breakMinutes: 'cp365_sp_breakminutes',
     displayOrder: 'cp365_sp_displayorder',
   },
-  
+
   // Lookup columns
   lookups: {
     patternTemplate: {
@@ -91,7 +91,7 @@ export const STAFF_ASSIGNMENT = {
   entityName: 'cp365_staffpatternassignments',
   primaryId: 'cp365_staffpatternassignmentid',
   primaryName: 'cp365_name',
-  
+
   // Custom columns
   columns: {
     name: 'cp365_name',
@@ -105,7 +105,7 @@ export const STAFF_ASSIGNMENT = {
     lastGeneratedDate: 'cp365_sp_lastgenerateddate',
     appliesToDays: 'cp365_sp_appliestodays',
   },
-  
+
   // Lookup columns - ALL LOWERCASE SchemaNames!
   lookups: {
     staffMember: {
@@ -128,14 +128,14 @@ export const SHIFT = {
   entityName: 'cp365_shifts',
   primaryId: 'cp365_shiftid',
   primaryName: 'cp365_name',
-  
+
   // Pattern-related columns - NOTE: cr482_ prefix!
   patternColumns: {
     isGeneratedFromPattern: 'cr482_sp_isgeneratedfrompattern',
     patternDayOfWeek: 'cr482_sp_patterndayofweek',
     patternWeek: 'cr482_sp_patternweek',
   },
-  
+
   // Lookup columns - PascalCase SchemaNames!
   lookups: {
     staffMember: {
@@ -168,7 +168,7 @@ export const SUBLOCATION_STAFF = {
   entityName: 'cp365_sublocationstaffs',
   primaryId: 'cp365_sublocationstaffid',
   primaryName: 'cp365_sublocationstaffname',
-  
+
   // Lookup columns - PascalCase SchemaNames!
   lookups: {
     staffMember: {
@@ -198,8 +198,7 @@ export function getNavigationProperty(
     shift: SHIFT.lookups,
     sublocationStaff: SUBLOCATION_STAFF.lookups,
   };
-  
+
   const tableSchema = schemas[table] as Record<string, { schemaName: string }>;
   return tableSchema[lookup]?.schemaName || lookup;
 }
-

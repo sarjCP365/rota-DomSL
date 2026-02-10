@@ -1,18 +1,13 @@
 /**
  * CarePoint 365 - Standard Pattern Templates
  * Pre-configured shift patterns commonly used in UK care sector settings
- * 
+ *
  * These patterns are marked with cp365_sp_isstandardtemplate = true
  * and can be used as starting points for creating custom patterns.
  */
 
-import type { PatternFormData, PatternDayFormData } from '../types';
-import {
-  DayOfWeek,
-  PatternPublishStatus,
-  GenerationWindow,
-  PatternStatus,
-} from '../types';
+import type { PatternFormData } from '../types';
+import { DayOfWeek, PatternPublishStatus, GenerationWindow } from '../types';
 import {
   createPatternTemplate,
   fetchPatternTemplates,
@@ -31,18 +26,59 @@ import { bulkCreatePatternDays } from '../api/patternDays';
  */
 const standardDaysPattern: PatternFormData = {
   name: 'Standard Days (Mon-Fri)',
-  description: 'Monday to Friday, 09:00-17:00 with 30-minute unpaid break. Typically used for administrative, management, and support roles. 37.5 hours per week.',
+  description:
+    'Monday to Friday, 09:00-17:00 with 30-minute unpaid break. Typically used for administrative, management, and support roles. 37.5 hours per week.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     // Week 1 - Working days (Mon-Fri)
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     // Week 1 - Rest days (Sat-Sun)
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
@@ -56,17 +92,50 @@ const standardDaysPattern: PatternFormData = {
  */
 const fourOnFourOffDaysPattern: PatternFormData = {
   name: '4-on-4-off Day Shifts',
-  description: 'Four consecutive 12-hour day shifts (08:00-20:00) followed by four days off. 48 hours in week 1, 36 hours in week 2. Popular for care staff providing continuity of care.',
+  description:
+    'Four consecutive 12-hour day shifts (08:00-20:00) followed by four days off. 48 hours in week 1, 36 hours in week 2. Popular for care staff providing continuity of care.',
   rotationCycleWeeks: 2,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     // Week 1 - Working days (Mon-Thu)
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
     // Week 1 - Rest days (Fri-Sun)
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
@@ -77,9 +146,33 @@ const fourOnFourOffDaysPattern: PatternFormData = {
     { weekNumber: 2, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
     // Week 2 - Working days (Fri-Sun)
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Sunday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Sunday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
   ],
 };
 
@@ -90,17 +183,50 @@ const fourOnFourOffDaysPattern: PatternFormData = {
  */
 const fourOnFourOffNightsPattern: PatternFormData = {
   name: '4-on-4-off Night Shifts',
-  description: 'Four consecutive 12-hour night shifts (20:00-08:00) followed by four days off. 48 hours in week 1, 36 hours in week 2. Designed for night staff in 24-hour care settings.',
+  description:
+    'Four consecutive 12-hour night shifts (20:00-08:00) followed by four days off. 48 hours in week 1, 36 hours in week 2. Designed for night staff in 24-hour care settings.',
   rotationCycleWeeks: 2,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     // Week 1 - Working nights (Mon-Thu, starting at night)
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
     // Week 1 - Rest days (Fri-Sun)
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
@@ -111,9 +237,33 @@ const fourOnFourOffNightsPattern: PatternFormData = {
     { weekNumber: 2, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
     // Week 2 - Working nights (Fri-Sun)
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Sunday, isRestDay: false, startTime: '20:00', endTime: '08:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Sunday,
+      isRestDay: false,
+      startTime: '20:00',
+      endTime: '08:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
   ],
 };
 
@@ -124,16 +274,41 @@ const fourOnFourOffNightsPattern: PatternFormData = {
  */
 const threeByTwelvePattern: PatternFormData = {
   name: '3x12 Hour Shifts',
-  description: 'Three 12-hour shifts per week (08:00-20:00) on Monday, Tuesday, and Wednesday. 33 hours working time with breaks. Common for staff preferring longer shifts with more days off.',
+  description:
+    'Three 12-hour shifts per week (08:00-20:00) on Monday, Tuesday, and Wednesday. 33 hours working time with breaks. Common for staff preferring longer shifts with more days off.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     // Working days (Mon-Wed)
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
     // Rest days (Thu-Sun)
     { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
@@ -150,26 +325,83 @@ const threeByTwelvePattern: PatternFormData = {
  */
 const twoWeekRotatingPattern: PatternFormData = {
   name: '2-Week Rotating',
-  description: 'Week 1: Mon, Tue, Sat, Sun working. Week 2: Wed, Thu, Fri working. 8-hour shifts (08:00-16:00) with 30-minute break. Provides every-other-weekend off while maintaining coverage.',
+  description:
+    'Week 1: Mon, Tue, Sat, Sun working. Week 2: Wed, Thu, Fri working. 8-hour shifts (08:00-16:00) with 30-minute break. Provides every-other-weekend off while maintaining coverage.',
   rotationCycleWeeks: 2,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     // Week 1 - Working days (Mon, Tue, Sat, Sun)
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Sunday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     // Week 2 - Working days (Wed, Thu, Fri)
     { weekNumber: 2, dayOfWeek: DayOfWeek.Monday, isRestDay: true, isOvernight: false },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Tuesday, isRestDay: true, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '08:00', endTime: '16:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
   ],
@@ -182,44 +414,173 @@ const twoWeekRotatingPattern: PatternFormData = {
  */
 const continentalShiftPattern: PatternFormData = {
   name: 'Continental Rotation',
-  description: 'Complex 4-week rotation with 2 day shifts, 2 night shifts, then 4 days off. Day shifts 07:00-19:00, Night shifts 19:00-07:00. Designed for 24/7 coverage with adequate rest periods.',
+  description:
+    'Complex 4-week rotation with 2 day shifts, 2 night shifts, then 4 days off. Day shifts 07:00-19:00, Night shifts 19:00-07:00. Designed for 24/7 coverage with adequate rest periods.',
   rotationCycleWeeks: 4,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.FourWeeks,
   isStandardTemplate: true,
   days: [
     // Week 1 - Days Mon-Tue, Nights Wed-Thu, Rest Fri-Sun
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
     // Week 2 - Rest Mon, Days Tue-Wed, Nights Thu-Fri, Rest Sat-Sun
     { weekNumber: 2, dayOfWeek: DayOfWeek.Monday, isRestDay: true, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 2, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 2,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 2, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
     // Week 3 - Rest Mon-Tue, Days Wed-Thu, Nights Fri-Sat, Rest Sun
     { weekNumber: 3, dayOfWeek: DayOfWeek.Monday, isRestDay: true, isOvernight: false },
     { weekNumber: 3, dayOfWeek: DayOfWeek.Tuesday, isRestDay: true, isOvernight: false },
-    { weekNumber: 3, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 3, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 3, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 3, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 3,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 3,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 3,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 3,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
     { weekNumber: 3, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
     // Week 4 - Rest Mon-Wed, Days Thu-Fri, Nights Sat-Sun
     { weekNumber: 4, dayOfWeek: DayOfWeek.Monday, isRestDay: true, isOvernight: false },
     { weekNumber: 4, dayOfWeek: DayOfWeek.Tuesday, isRestDay: true, isOvernight: false },
     { weekNumber: 4, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
-    { weekNumber: 4, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 4, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '07:00', endTime: '19:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 4, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
-    { weekNumber: 4, dayOfWeek: DayOfWeek.Sunday, isRestDay: false, startTime: '19:00', endTime: '07:00', breakMinutes: 60, isOvernight: true },
+    {
+      weekNumber: 4,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 4,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 4,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
+    {
+      weekNumber: 4,
+      dayOfWeek: DayOfWeek.Sunday,
+      isRestDay: false,
+      startTime: '19:00',
+      endTime: '07:00',
+      breakMinutes: 60,
+      isOvernight: true,
+    },
   ],
 };
 
@@ -230,16 +591,33 @@ const continentalShiftPattern: PatternFormData = {
  */
 const partTime16HoursPattern: PatternFormData = {
   name: 'Part-Time 16 Hours',
-  description: 'Two 8-hour shifts per week on Tuesday and Thursday (09:00-17:00). 15 hours working time with breaks. Suitable for part-time staff with fixed day availability.',
+  description:
+    'Two 8-hour shifts per week on Tuesday and Thursday (09:00-17:00). 15 hours working time with breaks. Suitable for part-time staff with fixed day availability.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
     { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
@@ -253,17 +631,42 @@ const partTime16HoursPattern: PatternFormData = {
  */
 const partTime24HoursPattern: PatternFormData = {
   name: 'Part-Time 24 Hours',
-  description: 'Three 8-hour shifts per week on Monday, Wednesday, and Friday (09:00-17:00). 22.5 hours working time with breaks. Suitable for part-time staff working alternate days.',
+  description:
+    'Three 8-hour shifts per week on Monday, Wednesday, and Friday (09:00-17:00). 22.5 hours working time with breaks. Suitable for part-time staff working alternate days.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '09:00', endTime: '17:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
   ],
@@ -276,17 +679,58 @@ const partTime24HoursPattern: PatternFormData = {
  */
 const earlyShiftsPattern: PatternFormData = {
   name: 'Early Shifts (Mon-Fri)',
-  description: 'Monday to Friday, 07:00-15:00 with 30-minute unpaid break. 37.5 hours per week. Designed for staff who prefer early morning starts and early finishes.',
+  description:
+    'Monday to Friday, 07:00-15:00 with 30-minute unpaid break. 37.5 hours per week. Designed for staff who prefer early morning starts and early finishes.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '07:00', endTime: '15:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '07:00', endTime: '15:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '07:00', endTime: '15:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '07:00', endTime: '15:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '07:00', endTime: '15:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '15:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '15:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '15:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '15:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '07:00',
+      endTime: '15:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
   ],
@@ -299,17 +743,58 @@ const earlyShiftsPattern: PatternFormData = {
  */
 const lateShiftsPattern: PatternFormData = {
   name: 'Late Shifts (Mon-Fri)',
-  description: 'Monday to Friday, 14:00-22:00 with 30-minute unpaid break. 37.5 hours per week. Designed for staff who prefer later starts and evening work.',
+  description:
+    'Monday to Friday, 14:00-22:00 with 30-minute unpaid break. 37.5 hours per week. Designed for staff who prefer later starts and evening work.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
   isStandardTemplate: true,
   days: [
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Monday, isRestDay: false, startTime: '14:00', endTime: '22:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Tuesday, isRestDay: false, startTime: '14:00', endTime: '22:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: false, startTime: '14:00', endTime: '22:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: false, startTime: '14:00', endTime: '22:00', breakMinutes: 30, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: false, startTime: '14:00', endTime: '22:00', breakMinutes: 30, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Monday,
+      isRestDay: false,
+      startTime: '14:00',
+      endTime: '22:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Tuesday,
+      isRestDay: false,
+      startTime: '14:00',
+      endTime: '22:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isRestDay: false,
+      startTime: '14:00',
+      endTime: '22:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Thursday,
+      isRestDay: false,
+      startTime: '14:00',
+      endTime: '22:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Friday,
+      isRestDay: false,
+      startTime: '14:00',
+      endTime: '22:00',
+      breakMinutes: 30,
+      isOvernight: false,
+    },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: true, isOvernight: false },
   ],
@@ -322,7 +807,8 @@ const lateShiftsPattern: PatternFormData = {
  */
 const weekendWorkerPattern: PatternFormData = {
   name: 'Weekend Worker',
-  description: 'Saturday and Sunday 12-hour shifts (08:00-20:00). 22 hours working time with breaks. Ideal for staff who only work weekends or as supplementary weekend cover.',
+  description:
+    'Saturday and Sunday 12-hour shifts (08:00-20:00). 22 hours working time with breaks. Ideal for staff who only work weekends or as supplementary weekend cover.',
   rotationCycleWeeks: 1,
   defaultPublishStatus: PatternPublishStatus.Unpublished,
   generationWindowWeeks: GenerationWindow.TwoWeeks,
@@ -333,8 +819,24 @@ const weekendWorkerPattern: PatternFormData = {
     { weekNumber: 1, dayOfWeek: DayOfWeek.Wednesday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Thursday, isRestDay: true, isOvernight: false },
     { weekNumber: 1, dayOfWeek: DayOfWeek.Friday, isRestDay: true, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Saturday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
-    { weekNumber: 1, dayOfWeek: DayOfWeek.Sunday, isRestDay: false, startTime: '08:00', endTime: '20:00', breakMinutes: 60, isOvernight: false },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Saturday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
+    {
+      weekNumber: 1,
+      dayOfWeek: DayOfWeek.Sunday,
+      isRestDay: false,
+      startTime: '08:00',
+      endTime: '20:00',
+      breakMinutes: 60,
+      isOvernight: false,
+    },
   ],
 };
 
@@ -364,7 +866,12 @@ export const standardPatterns: PatternFormData[] = [
  */
 export const patternCategories = {
   fullTime: ['Standard Days (Mon-Fri)', 'Early Shifts (Mon-Fri)', 'Late Shifts (Mon-Fri)'],
-  rotating: ['4-on-4-off Day Shifts', '4-on-4-off Night Shifts', '2-Week Rotating', 'Continental Rotation'],
+  rotating: [
+    '4-on-4-off Day Shifts',
+    '4-on-4-off Night Shifts',
+    '2-Week Rotating',
+    'Continental Rotation',
+  ],
   compressed: ['3x12 Hour Shifts'],
   partTime: ['Part-Time 16 Hours', 'Part-Time 24 Hours', 'Weekend Worker'],
 };
@@ -376,23 +883,18 @@ export const patternCategories = {
 /**
  * Check if standard patterns have already been seeded for a specific location
  * Returns the list of existing standard pattern names for that location
- * 
+ *
  * @param locationId - If provided, only checks for patterns at this location
  */
 export async function checkStandardPatternsExist(locationId?: string): Promise<string[]> {
   try {
-    console.log('[StandardPatterns] Checking for existing standard patterns for location:', locationId || 'all');
-    
     const templates = await fetchPatternTemplates({
       type: 'standard',
       status: 'all', // Include inactive/archived
       locationId, // Filter by location if provided
     });
 
-    const existingNames = templates.map((t) => t.cp365_name);
-    console.log('[StandardPatterns] Found', existingNames.length, 'existing standard patterns for location:', locationId || 'all');
-    
-    return existingNames;
+    return templates.map((t) => t.cp365_name);
   } catch (error) {
     console.error('[StandardPatterns] Error checking existing patterns:', error);
     return [];
@@ -402,7 +904,7 @@ export async function checkStandardPatternsExist(locationId?: string): Promise<s
 /**
  * Seed standard patterns into Dataverse
  * Only creates patterns that don't already exist
- * 
+ *
  * @param options.skipExisting - If true, skip patterns that already exist (default: true)
  * @param options.updateExisting - If true, update existing patterns with new definitions (default: false)
  * @returns Summary of seeding operation
@@ -419,15 +921,13 @@ export async function seedStandardPatterns(options?: {
   errors: string[];
 }> {
   const { skipExisting = true, updateExisting = false, locationId } = options || {};
-  
+
   const result = {
     created: [] as string[],
     skipped: [] as string[],
     updated: [] as string[],
     errors: [] as string[],
   };
-
-  console.log('[StandardPatterns] Starting seed operation for location:', locationId || 'unassigned');
 
   try {
     // Get existing standard patterns FOR THIS SPECIFIC LOCATION
@@ -445,17 +945,15 @@ export async function seedStandardPatterns(options?: {
             // Update existing pattern
             const existingTemplate = existingMap.get(pattern.name);
             if (existingTemplate) {
-              console.log(`[StandardPatterns] Updating "${pattern.name}"...`);
               await updatePatternTemplate(existingTemplate.cp365_shiftpatterntemplatenewid, {
                 description: pattern.description,
                 rotationCycleWeeks: pattern.rotationCycleWeeks,
                 defaultPublishStatus: pattern.defaultPublishStatus,
                 generationWindowWeeks: pattern.generationWindowWeeks,
               });
-              
+
               // Also replace pattern days for existing patterns
               if (pattern.days.length > 0) {
-                console.log(`[StandardPatterns] Replacing pattern days for "${pattern.name}"...`);
                 try {
                   // Import replacePatternDays dynamically to avoid circular deps
                   const { replacePatternDays } = await import('../api/patternDays');
@@ -463,25 +961,26 @@ export async function seedStandardPatterns(options?: {
                     existingTemplate.cp365_shiftpatterntemplatenewid,
                     pattern.days
                   );
-                  console.log(`[StandardPatterns] Replaced ${pattern.days.length} days for "${pattern.name}"`);
                 } catch (dayError) {
-                  console.error(`[StandardPatterns] Error replacing days for "${pattern.name}":`, dayError);
-                  result.errors.push(`${pattern.name} days: ${dayError instanceof Error ? dayError.message : 'Unknown error'}`);
+                  console.error(
+                    `[StandardPatterns] Error replacing days for "${pattern.name}":`,
+                    dayError
+                  );
+                  result.errors.push(
+                    `${pattern.name} days: ${dayError instanceof Error ? dayError.message : 'Unknown error'}`
+                  );
                 }
               }
-              
+
               result.updated.push(pattern.name);
             }
           } else if (skipExisting) {
-            console.log(`[StandardPatterns] Skipping "${pattern.name}" (already exists)`);
             result.skipped.push(pattern.name);
           }
           continue;
         }
 
         // Create new pattern
-        console.log(`[StandardPatterns] Creating "${pattern.name}" for location ${locationId || 'unassigned'}...`);
-        
         const template = await createPatternTemplate({
           name: pattern.name,
           description: pattern.description,
@@ -495,28 +994,16 @@ export async function seedStandardPatterns(options?: {
 
         // Create pattern days
         if (pattern.days.length > 0) {
-          await bulkCreatePatternDays(
-            template.cp365_shiftpatterntemplatenewid,
-            pattern.days
-          );
+          await bulkCreatePatternDays(template.cp365_shiftpatterntemplatenewid, pattern.days);
         }
 
         result.created.push(pattern.name);
-        console.log(`[StandardPatterns] Created "${pattern.name}" with ${pattern.days.length} days`);
-        
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`[StandardPatterns] Error with "${pattern.name}":`, errorMessage);
         result.errors.push(`${pattern.name}: ${errorMessage}`);
       }
     }
-
-    console.log('[StandardPatterns] Seed operation complete:', {
-      created: result.created.length,
-      skipped: result.skipped.length,
-      updated: result.updated.length,
-      errors: result.errors.length,
-    });
 
     return result;
   } catch (error) {
@@ -535,7 +1022,9 @@ export function getStandardPatternByName(name: string): PatternFormData | undefi
 /**
  * Get standard patterns by category
  */
-export function getStandardPatternsByCategory(category: keyof typeof patternCategories): PatternFormData[] {
+export function getStandardPatternsByCategory(
+  category: keyof typeof patternCategories
+): PatternFormData[] {
   const names = patternCategories[category];
   return standardPatterns.filter((p) => names.includes(p.name));
 }
@@ -594,9 +1083,10 @@ export function calculatePatternInfo(pattern: PatternFormData): {
   }
 
   const totalRotationHours = Math.round((totalMinutes / 60) * 100) / 100;
-  const averageWeeklyHours = pattern.rotationCycleWeeks > 0
-    ? Math.round((totalRotationHours / pattern.rotationCycleWeeks) * 100) / 100
-    : 0;
+  const averageWeeklyHours =
+    pattern.rotationCycleWeeks > 0
+      ? Math.round((totalRotationHours / pattern.rotationCycleWeeks) * 100) / 100
+      : 0;
 
   return {
     totalRotationHours,
@@ -615,4 +1105,3 @@ function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return (hours || 0) * 60 + (minutes || 0);
 }
-

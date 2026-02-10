@@ -52,133 +52,133 @@ interface UIState {
   // =========================================================================
   // NAVIGATION
   // =========================================================================
-  
+
   /** Whether sidebar is open (desktop: always, mobile: toggleable) */
   sidebarOpen: boolean;
-  
+
   /** Whether sidebar is collapsed (desktop only) */
   sidebarCollapsed: boolean;
 
   // =========================================================================
   // LOADING STATES
   // =========================================================================
-  
+
   /** Global loading overlay */
   isLoading: boolean;
-  
+
   /** Loading message */
   loadingMessage: string;
-  
+
   /** Map of loading states by key */
   loadingStates: Map<string, boolean>;
 
   // =========================================================================
   // MODALS
   // =========================================================================
-  
+
   /** Currently active modal */
   activeModal: ModalConfig | null;
-  
+
   /** Confirmation dialog state */
   confirmDialog: ConfirmDialogConfig | null;
 
   // =========================================================================
   // NOTIFICATIONS
   // =========================================================================
-  
+
   /** Active notifications */
   notifications: Notification[];
 
   // =========================================================================
   // PREFERENCES
   // =========================================================================
-  
+
   /** Theme preference */
   theme: 'light' | 'dark' | 'system';
-  
+
   /** Compact mode for dense data display */
   compactMode: boolean;
-  
+
   /** Show weekend columns */
   showWeekends: boolean;
 
   // =========================================================================
   // ACTIONS - NAVIGATION
   // =========================================================================
-  
+
   /** Toggle sidebar open/closed */
   toggleSidebar: () => void;
-  
+
   /** Set sidebar open state */
   setSidebarOpen: (open: boolean) => void;
-  
+
   /** Toggle sidebar collapsed (desktop) */
   toggleSidebarCollapsed: () => void;
 
   // =========================================================================
   // ACTIONS - LOADING
   // =========================================================================
-  
+
   /** Set global loading state */
   setLoading: (isLoading: boolean, message?: string) => void;
-  
+
   /** Set named loading state */
   setLoadingState: (key: string, isLoading: boolean) => void;
-  
+
   /** Check if any loading state is active */
   isAnyLoading: () => boolean;
 
   // =========================================================================
   // ACTIONS - MODALS
   // =========================================================================
-  
+
   /** Open a modal */
   openModal: (config: ModalConfig) => void;
-  
+
   /** Close the active modal */
   closeModal: () => void;
-  
+
   /** Show confirmation dialog */
   showConfirmDialog: (config: ConfirmDialogConfig) => void;
-  
+
   /** Close confirmation dialog */
   closeConfirmDialog: () => void;
 
   // =========================================================================
   // ACTIONS - NOTIFICATIONS
   // =========================================================================
-  
+
   /** Add a notification */
   addNotification: (notification: Omit<Notification, 'id'>) => string;
-  
+
   /** Remove a notification */
   removeNotification: (id: string) => void;
-  
+
   /** Clear all notifications */
   clearNotifications: () => void;
-  
+
   /** Helper: Show success notification */
   showSuccess: (title: string, message?: string) => void;
-  
+
   /** Helper: Show error notification */
   showError: (title: string, message?: string) => void;
-  
+
   /** Helper: Show warning notification */
   showWarning: (title: string, message?: string) => void;
-  
+
   /** Helper: Show info notification */
   showInfo: (title: string, message?: string) => void;
 
   // =========================================================================
   // ACTIONS - PREFERENCES
   // =========================================================================
-  
+
   /** Set theme */
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  
+
   /** Toggle compact mode */
   toggleCompactMode: () => void;
-  
+
   /** Toggle show weekends */
   toggleShowWeekends: () => void;
 }
@@ -215,13 +215,11 @@ export const useUIStore = create<UIState>()(
       // NAVIGATION ACTIONS
       // =====================================================================
 
-      toggleSidebar: () =>
-        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
-      toggleSidebarCollapsed: () =>
-        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
       // =====================================================================
       // LOADING ACTIONS
@@ -314,11 +312,9 @@ export const useUIStore = create<UIState>()(
 
       setTheme: (theme) => set({ theme }),
 
-      toggleCompactMode: () =>
-        set((state) => ({ compactMode: !state.compactMode })),
+      toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
 
-      toggleShowWeekends: () =>
-        set((state) => ({ showWeekends: !state.showWeekends })),
+      toggleShowWeekends: () => set((state) => ({ showWeekends: !state.showWeekends })),
     }),
     {
       name: 'carepoint-ui',

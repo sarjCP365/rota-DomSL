@@ -1,6 +1,6 @@
 /**
  * Leave Entitlement Card Component
- * 
+ *
  * Displays annual leave entitlement for a staff member based on their
  * assigned patterns. Shows total, used, and remaining leave with
  * breakdown by calculation period.
@@ -10,13 +10,11 @@ import { useState, useMemo } from 'react';
 import { format, getYear, parseISO } from 'date-fns';
 import {
   Calendar,
-  Clock,
   ChevronDown,
   ChevronRight,
   Info,
   CheckCircle2,
   AlertTriangle,
-  Calculator,
   TrendingUp,
   Loader2,
 } from 'lucide-react';
@@ -28,12 +26,8 @@ import {
   type PublicHolidayEntitlement,
   UK_STATUTORY_LEAVE_WEEKS,
 } from '../../utils/leaveCalculations';
-import type {
-  StaffPatternAssignment,
-  ShiftPatternTemplate,
-  ShiftPatternDay,
-} from '../../types';
-import type { StaffAbsenceLog, Contract } from '../../../../api/dataverse/types';
+import type { StaffPatternAssignment, ShiftPatternTemplate, ShiftPatternDay } from '../../types';
+import type { StaffAbsenceLog, Contract } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -71,7 +65,12 @@ interface ProgressRingProps {
   className?: string;
 }
 
-function ProgressRing({ percentage, size = 80, strokeWidth = 8, className = '' }: ProgressRingProps) {
+function ProgressRing({
+  percentage,
+  size = 80,
+  strokeWidth = 8,
+  className = '',
+}: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (Math.min(100, Math.max(0, percentage)) / 100) * circumference;
@@ -100,11 +99,7 @@ function ProgressRing({ percentage, size = 80, strokeWidth = 8, className = '' }
         strokeDashoffset={offset}
         strokeLinecap="round"
         className={
-          percentage > 80
-            ? 'text-emerald-500'
-            : percentage > 40
-            ? 'text-amber-500'
-            : 'text-red-500'
+          percentage > 80 ? 'text-emerald-500' : percentage > 40 ? 'text-amber-500' : 'text-red-500'
         }
         style={{
           transform: 'rotate(-90deg)',
@@ -140,9 +135,7 @@ function PeriodBreakdown({ periods }: PeriodBreakdownProps) {
             </p>
           </div>
           <div className="ml-3 text-right">
-            <p className="text-sm font-medium text-slate-700">
-              {period.leaveHours.toFixed(1)} hrs
-            </p>
+            <p className="text-sm font-medium text-slate-700">{period.leaveHours.toFixed(1)} hrs</p>
             <p className="text-xs text-slate-500">{period.weeklyHours}h/week</p>
           </div>
         </div>
@@ -195,16 +188,14 @@ function BankHolidaySummary({ entitlement }: BankHolidaySummaryProps) {
                 <span>{holiday.name}</span>
                 <span className="text-xs">
                   {format(parseISO(holiday.date), 'd MMM')}
-                  {holiday.isWorkingDay && holiday.shiftHours && (
-                    <> ({holiday.shiftHours}h)</>
-                  )}
+                  {holiday.isWorkingDay && holiday.shiftHours && <> ({holiday.shiftHours}h)</>}
                 </span>
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            {entitlement.entitlementHours} hours of bank holiday entitlement based on
-            working days pattern.
+            {entitlement.entitlementHours} hours of bank holiday entitlement based on working days
+            pattern.
           </p>
         </div>
       )}
@@ -229,12 +220,7 @@ export function LeaveEntitlementCard({
 
   // Calculate leave entitlement
   const entitlement = useMemo<LeaveEntitlement>(() => {
-    return calculateAnnualLeaveEntitlement(
-      year,
-      assignments,
-      leaveRecords,
-      contract
-    );
+    return calculateAnnualLeaveEntitlement(year, assignments, leaveRecords, contract);
   }, [year, assignments, leaveRecords, contract]);
 
   // Calculate public holiday entitlement
@@ -269,9 +255,7 @@ export function LeaveEntitlementCard({
             <p className="text-xs text-slate-500">{year}</p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold text-emerald-600">
-              {entitlement.remainingDays}
-            </p>
+            <p className="text-lg font-bold text-emerald-600">{entitlement.remainingDays}</p>
             <p className="text-xs text-slate-500">days left</p>
           </div>
         </div>
@@ -281,8 +265,8 @@ export function LeaveEntitlementCard({
               remainingPercentage > 50
                 ? 'bg-emerald-500'
                 : remainingPercentage > 20
-                ? 'bg-amber-500'
-                : 'bg-red-500'
+                  ? 'bg-amber-500'
+                  : 'bg-red-500'
             }`}
             style={{ width: `${remainingPercentage}%` }}
           />
@@ -314,9 +298,7 @@ export function LeaveEntitlementCard({
           <div className="relative">
             <ProgressRing percentage={remainingPercentage} size={90} strokeWidth={10} />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-lg font-bold text-slate-700">
-                {entitlement.remainingDays}
-              </span>
+              <span className="text-lg font-bold text-slate-700">{entitlement.remainingDays}</span>
               <span className="text-xs text-slate-500">days</span>
             </div>
           </div>
@@ -350,8 +332,8 @@ export function LeaveEntitlementCard({
             <span className="font-medium">Calculation: </span>
             {entitlement.calculationMethod === 'pattern' ? (
               <>
-                Based on pattern ({entitlement.averageShiftHours}h avg shift × {UK_STATUTORY_LEAVE_WEEKS}{' '}
-                weeks statutory)
+                Based on pattern ({entitlement.averageShiftHours}h avg shift ×{' '}
+                {UK_STATUTORY_LEAVE_WEEKS} weeks statutory)
               </>
             ) : entitlement.calculationMethod === 'contract' ? (
               <>Based on contract hours (no active pattern)</>
@@ -412,12 +394,9 @@ export function LeaveEntitlementCard({
               Low leave balance
             </span>
           )}
-          <span className="text-slate-500">
-            1 day = {entitlement.averageShiftHours} hours
-          </span>
+          <span className="text-slate-500">1 day = {entitlement.averageShiftHours} hours</span>
         </div>
       </div>
     </div>
   );
 }
-

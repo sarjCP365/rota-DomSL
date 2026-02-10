@@ -5,12 +5,11 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  CalendarClock, 
-  Clock, 
+import {
+  Plus,
+  Search,
+  CalendarClock,
+  Clock,
   Users,
   MoreHorizontal,
   Edit2,
@@ -26,15 +25,21 @@ import {
   AlertCircle,
   UserPlus,
 } from 'lucide-react';
-import { usePatternTemplates, useDeletePatternTemplate, useClonePatternTemplate, useArchivePatternTemplate, useRestorePatternTemplate, usePatternAssignmentSummaries } from '../hooks/usePatternTemplates';
-import { usePatternAssignments } from '../hooks/usePatternAssignments';
+import {
+  usePatternTemplates,
+  useDeletePatternTemplate,
+  useClonePatternTemplate,
+  useArchivePatternTemplate,
+  useRestorePatternTemplate,
+  usePatternAssignmentSummaries,
+} from '../hooks/usePatternTemplates';
 import type { ShiftPatternTemplate, PatternTemplateFilters, PatternStatus } from '../types';
-import { PatternStatus as PatternStatusEnum, PatternStatusLabels, GenerationWindowLabels } from '../types';
-import { SideNav, useSideNav } from '../../../components/common/SideNav';
+import { PatternStatus as PatternStatusEnum, PatternStatusLabels } from '../types';
+import { SideNav, useSideNav } from '@/components/common/SideNav';
 import { seedStandardPatterns, standardPatterns } from '../utils/standardPatterns';
 import { IndividualAssignment } from '../components/PatternAssignment';
-import { useLocations } from '../../../hooks/useLocations';
-import { useLocationSettings } from '../../../store/settingsStore';
+import { useLocations } from '@/hooks/useLocations';
+import { useLocationSettings } from '@/store/settingsStore';
 import { MapPin } from 'lucide-react';
 
 /**
@@ -74,7 +79,7 @@ function PatternCard({
   const isArchived = pattern.cp365_sp_patternstatus === PatternStatusEnum.Archived;
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-pointer"
       onClick={() => onEdit(pattern.cp365_shiftpatterntemplatenewid)}
     >
@@ -83,10 +88,12 @@ function PatternCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 truncate">{pattern.cp365_name}</h3>
           {pattern.cp365_sp_description && (
-            <p className="mt-1 text-sm text-gray-500 line-clamp-2">{pattern.cp365_sp_description}</p>
+            <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+              {pattern.cp365_sp_description}
+            </p>
           )}
         </div>
-        
+
         {/* Actions Menu */}
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
@@ -95,13 +102,10 @@ function PatternCard({
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
-          
+
           {showMenu && (
             <>
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setShowMenu(false)} 
-              />
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
               <div className="absolute right-0 top-8 z-20 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                 {!isArchived && (
                   <button
@@ -185,7 +189,9 @@ function PatternCard({
 
       {/* Badges */}
       <div className="mb-3 flex flex-wrap gap-2">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[pattern.cp365_sp_patternstatus]}`}>
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[pattern.cp365_sp_patternstatus]}`}
+        >
           {PatternStatusLabels[pattern.cp365_sp_patternstatus]}
         </span>
         {pattern.cp365_sp_isstandardtemplate && (
@@ -219,16 +225,18 @@ function PatternCard({
 export function PatternLibraryPage() {
   const navigate = useNavigate();
   const { isOpen: isSideNavOpen, toggle: toggleSideNav, close: closeSideNav } = useSideNav();
-  
+
   // Location data
   const { data: locations = [], isLoading: isLoadingLocations } = useLocations();
   const { selectedLocationId, setSelectedLocationId } = useLocationSettings();
-  
+
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PatternStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<'standard' | 'custom' | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'created_desc' | 'usage'>('name_asc');
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'created_desc' | 'usage'>(
+    'name_asc'
+  );
 
   // Seed standard patterns state
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
@@ -245,31 +253,34 @@ export function PatternLibraryPage() {
   const [assignPatternId, setAssignPatternId] = useState<string | null>(null);
 
   // Queries - filter by selected location
-  const filters: PatternTemplateFilters = useMemo(() => ({
-    searchTerm: searchTerm || undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-    type: typeFilter !== 'all' ? typeFilter : undefined,
-    sortBy,
-    locationId: selectedLocationId || undefined,
-  }), [searchTerm, statusFilter, typeFilter, sortBy, selectedLocationId]);
+  const filters: PatternTemplateFilters = useMemo(
+    () => ({
+      searchTerm: searchTerm || undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      type: typeFilter !== 'all' ? typeFilter : undefined,
+      sortBy,
+      locationId: selectedLocationId || undefined,
+    }),
+    [searchTerm, statusFilter, typeFilter, sortBy, selectedLocationId]
+  );
 
   const { data: patterns, isLoading, isError, refetch } = usePatternTemplates(filters);
-  
+
   // Fetch assignment summaries for pattern cards
   const { data: assignmentSummaries = [] } = usePatternAssignmentSummaries();
-  
+
   // Create a lookup map from pattern ID to assigned count
   const assignmentCountMap = useMemo(() => {
     const map = new Map<string, number>();
-    assignmentSummaries.forEach(summary => {
+    assignmentSummaries.forEach((summary) => {
       map.set(summary.patternTemplateId, summary.totalStaffAssigned);
     });
     return map;
   }, [assignmentSummaries]);
-  
+
   // Get selected location name for display
-  const selectedLocation = useMemo(() => 
-    locations.find(l => l.cp365_locationid === selectedLocationId),
+  const selectedLocation = useMemo(
+    () => locations.find((l) => l.cp365_locationid === selectedLocationId),
     [locations, selectedLocationId]
   );
 
@@ -290,14 +301,14 @@ export function PatternLibraryPage() {
       });
       return;
     }
-    
+
     setIsSeeding(true);
     setSeedResult(null);
     try {
       // Use updateExisting: true to also add pattern days to existing templates
       // Pass locationId to assign patterns to the selected location
-      const result = await seedStandardPatterns({ 
-        skipExisting: false, 
+      const result = await seedStandardPatterns({
+        skipExisting: false,
         updateExisting: true,
         locationId: selectedLocationId,
       });
@@ -318,41 +329,59 @@ export function PatternLibraryPage() {
   }, [refetch, selectedLocationId]);
 
   // Handlers
-  const handleEdit = useCallback((id: string) => {
-    navigate(`/patterns/${id}`);
-  }, [navigate]);
+  const handleEdit = useCallback(
+    (id: string) => {
+      navigate(`/patterns/${id}`);
+    },
+    [navigate]
+  );
 
-  const handleClone = useCallback((id: string) => {
-    const pattern = patterns?.find(p => p.cp365_shiftpatterntemplatenewid === id);
-    if (pattern) {
-      const newName = `${pattern.cp365_name} (Copy)`;
-      clonePattern.mutate({ sourceId: id, newName });
-    }
-  }, [patterns, clonePattern]);
+  const handleClone = useCallback(
+    (id: string) => {
+      const pattern = patterns?.find((p) => p.cp365_shiftpatterntemplatenewid === id);
+      if (pattern) {
+        const newName = `${pattern.cp365_name} (Copy)`;
+        clonePattern.mutate({ sourceId: id, newName });
+      }
+    },
+    [patterns, clonePattern]
+  );
 
-  const handleArchive = useCallback((id: string) => {
-    if (confirm('Are you sure you want to archive this pattern? It will be hidden from the library.')) {
-      archivePattern.mutate(id);
-    }
-  }, [archivePattern]);
+  const handleArchive = useCallback(
+    (id: string) => {
+      if (
+        confirm(
+          'Are you sure you want to archive this pattern? It will be hidden from the library.'
+        )
+      ) {
+        archivePattern.mutate(id);
+      }
+    },
+    [archivePattern]
+  );
 
-  const handleRestore = useCallback((id: string) => {
-    restorePattern.mutate(id);
-  }, [restorePattern]);
+  const handleRestore = useCallback(
+    (id: string) => {
+      restorePattern.mutate(id);
+    },
+    [restorePattern]
+  );
 
-  const handleDelete = useCallback((id: string) => {
-    if (confirm('Are you sure you want to delete this pattern? This action cannot be undone.')) {
-      deletePattern.mutate(id);
-    }
-  }, [deletePattern]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (confirm('Are you sure you want to delete this pattern? This action cannot be undone.')) {
+        deletePattern.mutate(id);
+      }
+    },
+    [deletePattern]
+  );
 
   const handleAssign = useCallback((id: string) => {
     setAssignPatternId(id);
     setIsAssignModalOpen(true);
   }, []);
 
-  const handleAssignmentSuccess = useCallback((assignmentId: string) => {
-    console.log('Assignment created:', assignmentId);
+  const handleAssignmentSuccess = useCallback((_assignmentId: string) => {
     setIsAssignModalOpen(false);
     setAssignPatternId(null);
     // Optionally navigate to assignments or show a success message
@@ -500,7 +529,9 @@ export function PatternLibraryPage() {
                 <CalendarClock className="h-8 w-8 text-red-600" />
               </div>
               <h3 className="font-medium text-gray-900">Failed to load patterns</h3>
-              <p className="mt-1 text-sm text-gray-500">There was an error loading the pattern library.</p>
+              <p className="mt-1 text-sm text-gray-500">
+                There was an error loading the pattern library.
+              </p>
               <button
                 onClick={() => refetch()}
                 className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
@@ -532,15 +563,17 @@ export function PatternLibraryPage() {
               {patterns?.map((pattern) => {
                 // Get location name from the locations list using the pattern's location value
                 const patternLocationId = pattern._cr482_location_value;
-                const patternLocation = patternLocationId 
-                  ? locations.find(l => l.cp365_locationid === patternLocationId)
+                const patternLocation = patternLocationId
+                  ? locations.find((l) => l.cp365_locationid === patternLocationId)
                   : null;
-                
+
                 return (
                   <PatternCard
                     key={pattern.cp365_shiftpatterntemplatenewid}
                     pattern={pattern}
-                    assignedCount={assignmentCountMap.get(pattern.cp365_shiftpatterntemplatenewid) || 0}
+                    assignedCount={
+                      assignmentCountMap.get(pattern.cp365_shiftpatterntemplatenewid) || 0
+                    }
                     locationName={patternLocation?.cp365_locationname}
                     onEdit={handleEdit}
                     onAssign={handleAssign}
@@ -568,7 +601,10 @@ export function PatternLibraryPage() {
               {selectedLocation ? (
                 <div className="mt-2 flex items-center gap-2 text-sm text-emerald-600">
                   <MapPin className="h-4 w-4" />
-                  <span>Patterns will be added to: <strong>{selectedLocation.cp365_locationname}</strong></span>
+                  <span>
+                    Patterns will be added to:{' '}
+                    <strong>{selectedLocation.cp365_locationname}</strong>
+                  </span>
                 </div>
               ) : (
                 <div className="mt-2 flex items-center gap-2 text-sm text-amber-600">
@@ -586,7 +622,9 @@ export function PatternLibraryPage() {
                     <div className="rounded-lg bg-emerald-50 p-4">
                       <div className="flex items-center gap-2 text-emerald-700">
                         <CheckCircle2 className="h-5 w-5" />
-                        <span className="font-medium">{seedResult.created.length} patterns created</span>
+                        <span className="font-medium">
+                          {seedResult.created.length} patterns created
+                        </span>
                       </div>
                       <ul className="mt-2 space-y-1 pl-7 text-sm text-emerald-600">
                         {seedResult.created.map((name) => (
@@ -600,7 +638,9 @@ export function PatternLibraryPage() {
                     <div className="rounded-lg bg-amber-50 p-4">
                       <div className="flex items-center gap-2 text-amber-700">
                         <AlertCircle className="h-5 w-5" />
-                        <span className="font-medium">{seedResult.skipped.length} patterns already exist</span>
+                        <span className="font-medium">
+                          {seedResult.skipped.length} patterns already exist
+                        </span>
                       </div>
                       <ul className="mt-2 space-y-1 pl-7 text-sm text-amber-600">
                         {seedResult.skipped.map((name) => (
@@ -614,7 +654,9 @@ export function PatternLibraryPage() {
                     <div className="rounded-lg bg-red-50 p-4">
                       <div className="flex items-center gap-2 text-red-700">
                         <AlertCircle className="h-5 w-5" />
-                        <span className="font-medium">{seedResult.errors.length} errors occurred</span>
+                        <span className="font-medium">
+                          {seedResult.errors.length} errors occurred
+                        </span>
                       </div>
                       <ul className="mt-2 space-y-1 pl-7 text-sm text-red-600">
                         {seedResult.errors.map((err, i) => (
@@ -637,7 +679,8 @@ export function PatternLibraryPage() {
                 // Show pattern list
                 <div>
                   <p className="mb-4 text-sm text-slate-600">
-                    The following {standardPatterns.length} standard patterns will be added to your library:
+                    The following {standardPatterns.length} standard patterns will be added to your
+                    library:
                   </p>
                   <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
                     {standardPatterns.map((pattern) => (
@@ -720,4 +763,3 @@ export function PatternLibraryPage() {
     </div>
   );
 }
-

@@ -1,14 +1,14 @@
 /**
  * ResponsiveRotaGrid Component
- * 
+ *
  * Responsive wrapper for the rota grid that adapts to different screen sizes.
  * Provides mobile-optimized views with day selectors and card-based layouts.
- * 
+ *
  * Breakpoints:
  * - Desktop (>1200px): Full hierarchy visible
  * - Tablet (768-1200px): Condensed 3-4 day view
  * - Mobile (<768px): Single day view with day selector
- * 
+ *
  * Features:
  * - Responsive breakpoint detection
  * - Mobile day selector with swipe support
@@ -18,22 +18,10 @@
  */
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { format, addDays, isSameDay, startOfWeek, isToday } from 'date-fns';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar,
-  Clock,
-  User,
-  Plus,
-  RefreshCw,
-} from 'lucide-react';
-import type { 
-  ShiftViewData, 
-  SublocationStaffViewData,
-  Shift,
-} from '../../api/dataverse/types';
-import type { ViewMode, DetailLevel } from '../../store/rotaStore';
+import { format, addDays, isSameDay, isToday } from 'date-fns';
+import { ChevronLeft, ChevronRight, User, Plus, RefreshCw } from 'lucide-react';
+import type { ShiftViewData, SublocationStaffViewData } from '@/api/dataverse/types';
+import type { ViewMode, DetailLevel } from '@/store/rotaStore';
 
 // =============================================================================
 // TYPES
@@ -151,7 +139,7 @@ export function ResponsiveRotaGrid({
   duration,
   staff,
   shifts,
-  viewMode = 'people',
+  viewMode: _viewMode = 'people',
   detailLevel = 'detailed',
   onShiftClick,
   onCellClick,
@@ -171,8 +159,8 @@ export function ResponsiveRotaGrid({
     return result;
   }, [startDate, duration]);
 
-  // Selected date for mobile view
-  const selectedDate = dates[selectedDayIndex] || dates[0];
+  // Selected date for mobile view (used in rendering)
+  const _selectedDate = dates[selectedDayIndex] || dates[0];
 
   // Navigate days
   const goToNextDay = useCallback(() => {
@@ -186,7 +174,8 @@ export function ResponsiveRotaGrid({
   // Swipe handlers
   const swipeHandlers = useSwipe(goToNextDay, goToPrevDay);
 
-  // Find today's index and auto-select it on mobile
+  // Find today's index and auto-select it on mobile - intentional UX behaviour
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (breakpoint === 'mobile') {
       const todayIndex = dates.findIndex((d) => isToday(d));
@@ -195,18 +184,22 @@ export function ResponsiveRotaGrid({
       }
     }
   }, [breakpoint, dates]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Get shifts for a specific date
-  const getShiftsForDate = useCallback((date: Date, staffId?: string) => {
-    return shifts.filter((shift) => {
-      const shiftDate = new Date(shift['Shift Date']);
-      const dateMatch = isSameDay(shiftDate, date);
-      if (staffId) {
-        return dateMatch && shift['Staff Member ID'] === staffId;
-      }
-      return dateMatch;
-    });
-  }, [shifts]);
+  const getShiftsForDate = useCallback(
+    (date: Date, staffId?: string) => {
+      return shifts.filter((shift) => {
+        const shiftDate = new Date(shift['Shift Date']);
+        const dateMatch = isSameDay(shiftDate, date);
+        if (staffId) {
+          return dateMatch && shift['Staff Member ID'] === staffId;
+        }
+        return dateMatch;
+      });
+    },
+    [shifts]
+  );
 
   // Pull to refresh handler
   const handlePullRefresh = useCallback(() => {
@@ -279,7 +272,7 @@ function MobileView({
   selectedDayIndex,
   onSelectDay,
   staff,
-  shifts,
+  shifts: _shifts,
   getShiftsForDate,
   onShiftClick,
   onCellClick,
@@ -317,17 +310,16 @@ function MobileView({
                     onClick={() => onSelectDay(idx)}
                     className={`
                       flex min-w-[48px] flex-col items-center rounded-lg px-2 py-1.5 transition-colors
-                      ${isSelected 
-                        ? 'bg-primary text-white' 
-                        : isTodayDate 
-                          ? 'bg-primary/10 text-primary' 
-                          : 'text-gray-600 hover:bg-gray-100'
+                      ${
+                        isSelected
+                          ? 'bg-primary text-white'
+                          : isTodayDate
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-gray-600 hover:bg-gray-100'
                       }
                     `}
                   >
-                    <span className="text-[10px] font-medium uppercase">
-                      {format(date, 'EEE')}
-                    </span>
+                    <span className="text-[10px] font-medium uppercase">{format(date, 'EEE')}</span>
                     <span className={`text-sm font-bold ${isSelected ? '' : ''}`}>
                       {format(date, 'd')}
                     </span>
@@ -356,9 +348,7 @@ function MobileView({
               <h2 className="text-lg font-semibold text-gray-900">
                 {format(selectedDate, 'EEEE')}
               </h2>
-              <p className="text-sm text-gray-500">
-                {format(selectedDate, 'd MMMM yyyy')}
-              </p>
+              <p className="text-sm text-gray-500">{format(selectedDate, 'd MMMM yyyy')}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
@@ -379,10 +369,7 @@ function MobileView({
       </div>
 
       {/* Staff cards with swipe */}
-      <div 
-        className="flex-1 overflow-y-auto p-4"
-        {...swipeHandlers}
-      >
+      <div className="flex-1 overflow-y-auto p-4" {...swipeHandlers}>
         {/* Unassigned section */}
         {unassignedShifts.length > 0 && (
           <div className="mb-4">
@@ -407,7 +394,7 @@ function MobileView({
         <div className="space-y-3">
           {staff.map((s) => {
             const staffShifts = getShiftsForDate(selectedDate, s['Staff Member ID']);
-            
+
             return (
               <MobileStaffCard
                 key={s['Staff Member ID']}
@@ -440,7 +427,7 @@ function MobileView({
 function MobileStaffCard({
   staff,
   shifts,
-  date,
+  date: _date,
   onShiftClick,
   onAddShift,
 }: MobileStaffCardProps) {
@@ -453,7 +440,7 @@ function MobileStaffCard({
     const start = new Date(shift['Shift Start Time']);
     const end = new Date(shift['Shift End Time']);
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    return sum + Math.max(0, hours - ((shift['Shift Break Duration'] || 0) / 60));
+    return sum + Math.max(0, hours - (shift['Shift Break Duration'] || 0) / 60);
   }, 0);
 
   return (
@@ -465,9 +452,7 @@ function MobileStaffCard({
         </div>
         <div className="flex-1">
           <h3 className="font-medium text-gray-900">{displayName}</h3>
-          <p className="text-xs text-gray-500">
-            {staff['Job Title Name'] || 'Staff Member'}
-          </p>
+          <p className="text-xs text-gray-500">{staff['Job Title Name'] || 'Staff Member'}</p>
         </div>
         {hasShifts && (
           <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
@@ -515,17 +500,17 @@ interface MobileShiftCardProps {
 function MobileShiftCard({ shift, isUnassigned, onClick }: MobileShiftCardProps) {
   const startTime = format(new Date(shift['Shift Start Time']), 'HH:mm');
   const endTime = format(new Date(shift['Shift End Time']), 'HH:mm');
-  
+
   // Calculate duration
   const start = new Date(shift['Shift Start Time']);
   const end = new Date(shift['Shift End Time']);
   const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
   // Determine shift type
-  const shiftType = shift['Sleep In'] 
-    ? 'sleepIn' 
-    : start.getHours() >= 20 || start.getHours() < 6 
-      ? 'night' 
+  const shiftType = shift['Sleep In']
+    ? 'sleepIn'
+    : start.getHours() >= 20 || start.getHours() < 6
+      ? 'night'
       : 'day';
 
   const bgColors = {
@@ -565,10 +550,14 @@ function MobileShiftCard({ shift, isUnassigned, onClick }: MobileShiftCardProps)
           <span className="rounded bg-gray-900/20 px-1.5 py-0.5 text-[10px] font-bold">*</span>
         )}
         {shift['Shift Leader'] && (
-          <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">SL</span>
+          <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+            SL
+          </span>
         )}
         {shift['Act Up'] && (
-          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">AU</span>
+          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
+            AU
+          </span>
         )}
       </div>
     </button>
@@ -623,7 +612,8 @@ function TabletView({
             <ChevronLeft className="h-5 w-5" />
           </button>
           <span className="text-sm font-medium text-gray-600">
-            {format(visibleDates[0], 'd MMM')} - {format(visibleDates[visibleDates.length - 1], 'd MMM')}
+            {format(visibleDates[0], 'd MMM')} -{' '}
+            {format(visibleDates[visibleDates.length - 1], 'd MMM')}
           </span>
           <button
             onClick={() => onSelectDay(Math.min(dates.length - visibleDays, startIdx + 1))}
@@ -649,7 +639,7 @@ function TabletView({
               {visibleDates.map((date, idx) => {
                 const isTodayDate = isToday(date);
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
+
                 return (
                   <th
                     key={idx}
@@ -657,10 +647,10 @@ function TabletView({
                       isTodayDate ? 'bg-primary/10' : isWeekend ? 'bg-gray-50' : 'bg-elevation-1'
                     }`}
                   >
-                    <div className="text-xs font-medium text-gray-500">
-                      {format(date, 'EEE')}
-                    </div>
-                    <div className={`text-sm font-semibold ${isTodayDate ? 'text-primary' : 'text-gray-900'}`}>
+                    <div className="text-xs font-medium text-gray-500">{format(date, 'EEE')}</div>
+                    <div
+                      className={`text-sm font-semibold ${isTodayDate ? 'text-primary' : 'text-gray-900'}`}
+                    >
                       {format(date, 'd MMM')}
                     </div>
                   </th>
@@ -681,9 +671,7 @@ function TabletView({
                         {s['Staff Member Name']}
                       </div>
                       {detailLevel !== 'hoursOnly' && s['Job Title Name'] && (
-                        <div className="truncate text-xs text-gray-500">
-                          {s['Job Title Name']}
-                        </div>
+                        <div className="truncate text-xs text-gray-500">{s['Job Title Name']}</div>
                       )}
                     </div>
                   </div>
@@ -738,10 +726,10 @@ function TabletShiftCard({ shift, onClick, compact }: TabletShiftCardProps) {
   const endTime = format(new Date(shift['Shift End Time']), 'HH:mm');
   const start = new Date(shift['Shift Start Time']);
 
-  const shiftType = shift['Sleep In'] 
-    ? 'sleepIn' 
-    : start.getHours() >= 20 || start.getHours() < 6 
-      ? 'night' 
+  const shiftType = shift['Sleep In']
+    ? 'sleepIn'
+    : start.getHours() >= 20 || start.getHours() < 6
+      ? 'night'
       : 'day';
 
   const bgColors = {
@@ -775,9 +763,7 @@ function TabletShiftCard({ shift, onClick, compact }: TabletShiftCardProps) {
         </span>
       </div>
       {!compact && shift['Shift Reference Name'] && (
-        <div className="truncate text-[10px] text-gray-600">
-          {shift['Shift Reference Name']}
-        </div>
+        <div className="truncate text-[10px] text-gray-600">{shift['Shift Reference Name']}</div>
       )}
     </button>
   );
@@ -790,6 +776,7 @@ function TabletShiftCard({ shift, onClick, compact }: TabletShiftCardProps) {
 /**
  * Hook to determine if responsive mobile/tablet view should be used
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResponsiveView() {
   const breakpoint = useBreakpoint();
   return {
@@ -847,4 +834,3 @@ export const responsiveGridStyles = `
 // =============================================================================
 
 export type { ResponsiveRotaGridProps, Breakpoint };
-

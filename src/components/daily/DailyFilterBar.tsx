@@ -5,14 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  Search,
-  X,
-  ChevronUp,
-  ChevronDown,
-  RefreshCw,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { Search, X, ChevronUp, ChevronDown, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -116,25 +109,30 @@ export function DailyFilterBar({
   const [searchInput, setSearchInput] = useState(filters.search);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Sync search input with filters
+  // Sync search input with filters - intentional controlled/uncontrolled hybrid for debouncing
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setSearchInput(filters.search);
   }, [filters.search]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Debounced search handler
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchInput(value);
-    
-    // Clear existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value);
 
-    // Set new debounced update
-    searchTimeoutRef.current = setTimeout(() => {
-      onFilterChange({ ...filters, search: value });
-    }, 300);
-  }, [filters, onFilterChange]);
+      // Clear existing timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Set new debounced update
+      searchTimeoutRef.current = setTimeout(() => {
+        onFilterChange({ ...filters, search: value });
+      }, 300);
+    },
+    [filters, onFilterChange]
+  );
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -146,17 +144,26 @@ export function DailyFilterBar({
   }, []);
 
   // Filter change handlers
-  const handleDepartmentChange = useCallback((department: string) => {
-    onFilterChange({ ...filters, department });
-  }, [filters, onFilterChange]);
+  const handleDepartmentChange = useCallback(
+    (department: string) => {
+      onFilterChange({ ...filters, department });
+    },
+    [filters, onFilterChange]
+  );
 
-  const handleStatusChange = useCallback((status: AttendanceStatus) => {
-    onFilterChange({ ...filters, status });
-  }, [filters, onFilterChange]);
+  const handleStatusChange = useCallback(
+    (status: AttendanceStatus) => {
+      onFilterChange({ ...filters, status });
+    },
+    [filters, onFilterChange]
+  );
 
-  const handleShiftTypeChange = useCallback((shiftType: ShiftType) => {
-    onFilterChange({ ...filters, shiftType });
-  }, [filters, onFilterChange]);
+  const handleShiftTypeChange = useCallback(
+    (shiftType: ShiftType) => {
+      onFilterChange({ ...filters, shiftType });
+    },
+    [filters, onFilterChange]
+  );
 
   const clearSearch = useCallback(() => {
     setSearchInput('');
@@ -174,16 +181,16 @@ export function DailyFilterBar({
   }, [onFilterChange]);
 
   // Check if any filters are active
-  const hasActiveFilters = 
-    filters.search || 
-    filters.department !== 'all' || 
-    filters.status !== 'all' || 
+  const hasActiveFilters =
+    filters.search ||
+    filters.department !== 'all' ||
+    filters.status !== 'all' ||
     filters.shiftType !== 'all';
 
   // Build department options
   const departmentOptions = [
     { value: 'all', label: 'All Departments' },
-    ...departments.map(dept => ({ value: dept, label: dept })),
+    ...departments.map((dept) => ({ value: dept, label: dept })),
     { value: 'agency', label: 'Agency Workers' },
     { value: 'other-locations', label: 'Shifts From Other Locations' },
   ];
@@ -236,9 +243,10 @@ export function DailyFilterBar({
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className={`
               relative flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium
-              ${showMobileFilters 
-                ? 'border-primary bg-primary/5 text-primary' 
-                : 'border-border-grey text-gray-700 hover:bg-gray-50'
+              ${
+                showMobileFilters
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border-grey text-gray-700 hover:bg-gray-50'
               }
             `}
           >
@@ -313,7 +321,9 @@ export function DailyFilterBar({
                   className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
                 >
                   {departmentOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -327,7 +337,9 @@ export function DailyFilterBar({
                   className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
                 >
                   {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -342,7 +354,9 @@ export function DailyFilterBar({
                 className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
               >
                 {SHIFT_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -370,10 +384,7 @@ export function DailyFilterBar({
                 )}
               </div>
               {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="text-sm text-primary font-medium"
-                >
+                <button onClick={clearAllFilters} className="text-sm text-primary font-medium">
                   Clear filters
                 </button>
               )}
@@ -384,22 +395,23 @@ export function DailyFilterBar({
         {/* Mobile Active Filters (shown when panel is closed) */}
         {!showMobileFilters && hasActiveFilters && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {filters.search && (
-              <FilterChip label={`"${filters.search}"`} onRemove={clearSearch} />
-            )}
+            {filters.search && <FilterChip label={`"${filters.search}"`} onRemove={clearSearch} />}
             {filters.department !== 'all' && (
-              <FilterChip label={filters.department} onRemove={() => handleDepartmentChange('all')} />
+              <FilterChip
+                label={filters.department}
+                onRemove={() => handleDepartmentChange('all')}
+              />
             )}
             {filters.status !== 'all' && (
-              <FilterChip 
-                label={STATUS_OPTIONS.find(o => o.value === filters.status)?.label || ''} 
-                onRemove={() => handleStatusChange('all')} 
+              <FilterChip
+                label={STATUS_OPTIONS.find((o) => o.value === filters.status)?.label || ''}
+                onRemove={() => handleStatusChange('all')}
               />
             )}
             {filters.shiftType !== 'all' && (
-              <FilterChip 
-                label={SHIFT_TYPE_OPTIONS.find(o => o.value === filters.shiftType)?.label || ''} 
-                onRemove={() => handleShiftTypeChange('all')} 
+              <FilterChip
+                label={SHIFT_TYPE_OPTIONS.find((o) => o.value === filters.shiftType)?.label || ''}
+                onRemove={() => handleShiftTypeChange('all')}
               />
             )}
           </div>
@@ -561,39 +573,33 @@ export function DailyFilterBar({
         {hasActiveFilters && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500">Active filters:</span>
-            
+
             {filters.search && (
-              <FilterChip
-                label={`Search: ${filters.search}`}
-                onRemove={clearSearch}
-              />
+              <FilterChip label={`Search: ${filters.search}`} onRemove={clearSearch} />
             )}
-            
+
             {filters.department !== 'all' && (
               <FilterChip
                 label={`Department: ${filters.department}`}
                 onRemove={() => handleDepartmentChange('all')}
               />
             )}
-            
+
             {filters.status !== 'all' && (
               <FilterChip
-                label={`Status: ${STATUS_OPTIONS.find(o => o.value === filters.status)?.label}`}
+                label={`Status: ${STATUS_OPTIONS.find((o) => o.value === filters.status)?.label}`}
                 onRemove={() => handleStatusChange('all')}
               />
             )}
-            
+
             {filters.shiftType !== 'all' && (
               <FilterChip
-                label={`Type: ${SHIFT_TYPE_OPTIONS.find(o => o.value === filters.shiftType)?.label}`}
+                label={`Type: ${SHIFT_TYPE_OPTIONS.find((o) => o.value === filters.shiftType)?.label}`}
                 onRemove={() => handleShiftTypeChange('all')}
               />
             )}
 
-            <button
-              onClick={clearAllFilters}
-              className="text-xs text-primary hover:underline"
-            >
+            <button onClick={clearAllFilters} className="text-xs text-primary hover:underline">
               Clear all
             </button>
           </div>
@@ -616,8 +622,8 @@ function FilterChip({ label, onRemove }: FilterChipProps) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
       {label}
-      <button 
-        onClick={onRemove} 
+      <button
+        onClick={onRemove}
         className="hover:text-primary-hover"
         aria-label={`Remove filter: ${label}`}
       >
@@ -628,4 +634,3 @@ function FilterChip({ label, onRemove }: FilterChipProps) {
 }
 
 export default DailyFilterBar;
-

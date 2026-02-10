@@ -1,35 +1,23 @@
 /**
  * Coverage Preview Component
- * 
+ *
  * Shows expected coverage after pattern assignments to help managers
  * make informed decisions about staffing levels.
  */
 
 import { useState, useMemo } from 'react';
-import { format, addDays, startOfWeek, parseISO, addWeeks } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 import {
-  Calendar,
   ChevronDown,
   ChevronRight,
-  Download,
   BarChart3,
-  Users,
   AlertTriangle,
-  CheckCircle2,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Building2,
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
-import type {
-  StaffPatternAssignment,
-  ShiftPatternTemplate,
-  ShiftPatternDay,
-} from '../../types';
-import { DayOfWeek, DayOfWeekLabels, DayOfWeekShortLabels } from '../../types';
-import type { ShiftReference, StaffMember } from '../../../../api/dataverse/types';
+import type { StaffPatternAssignment, ShiftPatternTemplate, ShiftPatternDay } from '../../types';
+import { DayOfWeek, DayOfWeekShortLabels } from '../../types';
+import type { ShiftReference, StaffMember } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -61,14 +49,17 @@ interface DailyCoverage {
   date: Date;
   dateStr: string;
   dayOfWeek: DayOfWeek;
-  byShiftReference: Map<string, {
-    current: number;
-    proposed: number;
-    total: number;
-    required: number;
-    variance: number;
-    status: 'covered' | 'under' | 'over';
-  }>;
+  byShiftReference: Map<
+    string,
+    {
+      current: number;
+      proposed: number;
+      total: number;
+      required: number;
+      variance: number;
+      status: 'covered' | 'under' | 'over';
+    }
+  >;
   totalStaff: {
     current: number;
     proposed: number;
@@ -88,14 +79,17 @@ interface WeeklySummary {
 
 interface CoverageSummary {
   weeks: WeeklySummary[];
-  byShiftReference: Map<string, {
-    name: string;
-    required: number;
-    averageAssigned: number;
-    coveragePercent: number;
-    gapDays: number;
-    overDays: number;
-  }>;
+  byShiftReference: Map<
+    string,
+    {
+      name: string;
+      required: number;
+      averageAssigned: number;
+      coveragePercent: number;
+      gapDays: number;
+      overDays: number;
+    }
+  >;
   overall: {
     averageCoverage: number;
     totalGapHours: number;
@@ -127,7 +121,9 @@ function getRotationWeek(
 ): number {
   const startWeekMonday = startOfWeek(assignmentStartDate, { weekStartsOn: 1 });
   const targetWeekMonday = startOfWeek(targetDate, { weekStartsOn: 1 });
-  const weeksSinceStart = Math.floor((targetWeekMonday.getTime() - startWeekMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
+  const weeksSinceStart = Math.floor(
+    (targetWeekMonday.getTime() - startWeekMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)
+  );
   const adjustedWeek = (weeksSinceStart + rotationStartWeek - 1) % totalRotationWeeks;
   return adjustedWeek + 1;
 }
@@ -199,7 +195,14 @@ interface CoverageCellProps {
   compact?: boolean;
 }
 
-function CoverageCell({ current, proposed, required, status, showDelta, compact }: CoverageCellProps) {
+function CoverageCell({
+  current,
+  proposed,
+  required,
+  status,
+  showDelta,
+  compact,
+}: CoverageCellProps) {
   const total = current + proposed;
   const delta = proposed;
   const fillPercent = required > 0 ? Math.min(100, (total / required) * 100) : 100;
@@ -207,9 +210,7 @@ function CoverageCell({ current, proposed, required, status, showDelta, compact 
   return (
     <div className={`relative rounded border p-1.5 ${getCoverageStatusClass(status)}`}>
       <div className="text-center">
-        <span className={`font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-          {total}
-        </span>
+        <span className={`font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>{total}</span>
         {showDelta && delta > 0 && (
           <span className="text-emerald-600 text-xs ml-0.5">+{delta}</span>
         )}
@@ -257,9 +258,7 @@ function WeekRow({
         ) : (
           <ChevronRight className="h-4 w-4 text-slate-400" />
         )}
-        <span className="font-medium text-slate-700">
-          Week {summary.weekNumber}
-        </span>
+        <span className="font-medium text-slate-700">Week {summary.weekNumber}</span>
         <span className="text-xs text-slate-500">
           {format(summary.startDate, 'd MMM')} - {format(summary.endDate, 'd MMM')}
         </span>
@@ -275,8 +274,8 @@ function WeekRow({
               summary.averageCoverage >= 100
                 ? 'bg-emerald-100 text-emerald-700'
                 : summary.averageCoverage >= 80
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-700'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700'
             }`}
           >
             {summary.averageCoverage.toFixed(0)}%
@@ -290,9 +289,7 @@ function WeekRow({
           <table className="w-full text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">
-                  Shift
-                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">Shift</th>
                 {summary.days.map((day) => (
                   <th
                     key={day.dateStr}
@@ -302,9 +299,7 @@ function WeekRow({
                     <div className="text-slate-400">{format(day.date, 'd')}</div>
                   </th>
                 ))}
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500">
-                  Req
-                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500">Req</th>
               </tr>
             </thead>
             <tbody>
@@ -336,9 +331,7 @@ function WeekRow({
                         </td>
                       );
                     })}
-                    <td className="px-3 py-2 text-right font-medium text-slate-600">
-                      {required}
-                    </td>
+                    <td className="px-3 py-2 text-right font-medium text-slate-600">{required}</td>
                   </tr>
                 );
               })}
@@ -356,7 +349,7 @@ function WeekRow({
 
 export function CoveragePreview({
   proposedAssignments,
-  existingAssignments = [],
+  existingAssignments: _existingAssignments = [],
   shiftReferences = [],
   requirements = new Map(),
   startDate = new Date(),
@@ -366,6 +359,7 @@ export function CoveragePreview({
   // State
   const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set([1]));
   const [showDelta, setShowDelta] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [viewMode, setViewMode] = useState<'weekly' | 'summary'>('weekly');
 
   // Calculate coverage data
@@ -382,14 +376,17 @@ export function CoveragePreview({
         const dayOfWeek = getDayOfWeek(date);
         const dateStr = format(date, 'yyyy-MM-dd');
 
-        const byShiftReference = new Map<string, {
-          current: number;
-          proposed: number;
-          total: number;
-          required: number;
-          variance: number;
-          status: 'covered' | 'under' | 'over';
-        }>();
+        const byShiftReference = new Map<
+          string,
+          {
+            current: number;
+            proposed: number;
+            total: number;
+            required: number;
+            variance: number;
+            status: 'covered' | 'under' | 'over';
+          }
+        >();
 
         // Initialize all shift references
         shiftReferences.forEach((ref) => {
@@ -413,18 +410,18 @@ export function CoveragePreview({
             rotationStartWeek
           );
 
-          if (patternDay && !patternDay.cp365_sp_isrestday && patternDay._cp365_shiftreference_value) {
+          if (
+            patternDay &&
+            !patternDay.cp365_sp_isrestday &&
+            patternDay._cp365_shiftreference_value
+          ) {
             const coverage = byShiftReference.get(patternDay._cp365_shiftreference_value);
             if (coverage) {
               coverage.proposed++;
               coverage.total = coverage.current + coverage.proposed;
               coverage.variance = coverage.total - coverage.required;
               coverage.status =
-                coverage.variance >= 0
-                  ? coverage.variance > 0
-                    ? 'over'
-                    : 'covered'
-                  : 'under';
+                coverage.variance >= 0 ? (coverage.variance > 0 ? 'over' : 'covered') : 'under';
             }
           }
         });
@@ -458,10 +455,7 @@ export function CoveragePreview({
 
       days.forEach((day) => {
         day.byShiftReference.forEach((coverage) => {
-          const percent =
-            coverage.required > 0
-              ? (coverage.total / coverage.required) * 100
-              : 100;
+          const percent = coverage.required > 0 ? (coverage.total / coverage.required) * 100 : 100;
           totalCoverage += percent;
           coverageCount++;
           if (coverage.status === 'under') totalGaps++;
@@ -489,14 +483,17 @@ export function CoveragePreview({
     });
 
     // Summary by shift reference
-    const byShiftRef = new Map<string, {
-      name: string;
-      required: number;
-      averageAssigned: number;
-      coveragePercent: number;
-      gapDays: number;
-      overDays: number;
-    }>();
+    const byShiftRef = new Map<
+      string,
+      {
+        name: string;
+        required: number;
+        averageAssigned: number;
+        coveragePercent: number;
+        gapDays: number;
+        overDays: number;
+      }
+    >();
 
     shiftReferences.forEach((ref) => {
       let totalAssigned = 0;
@@ -580,9 +577,7 @@ export function CoveragePreview({
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-emerald-600" />
           <h3 className="font-semibold text-slate-800">Coverage Preview</h3>
-          <span className="text-xs text-slate-500">
-            Next {previewWeeks} weeks
-          </span>
+          <span className="text-xs text-slate-500">Next {previewWeeks} weeks</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -618,9 +613,7 @@ export function CoveragePreview({
           <p className="text-xs text-slate-500">Avg Coverage</p>
         </div>
         <div className="bg-white p-3 text-center">
-          <p className="text-2xl font-bold text-slate-700">
-            {proposedAssignments.length}
-          </p>
+          <p className="text-2xl font-bold text-slate-700">{proposedAssignments.length}</p>
           <p className="text-xs text-slate-500">Staff Assigned</p>
         </div>
         <div className="bg-white p-3 text-center">
@@ -651,8 +644,8 @@ export function CoveragePreview({
                   data.coveragePercent >= 100
                     ? 'border-emerald-200 bg-emerald-50'
                     : data.coveragePercent >= 80
-                    ? 'border-amber-200 bg-amber-50'
-                    : 'border-red-200 bg-red-50'
+                      ? 'border-amber-200 bg-amber-50'
+                      : 'border-red-200 bg-red-50'
                 }`}
               >
                 <p className="text-sm font-medium text-slate-700">{data.name}</p>
@@ -662,8 +655,8 @@ export function CoveragePreview({
                       data.coveragePercent >= 100
                         ? 'text-emerald-600'
                         : data.coveragePercent >= 80
-                        ? 'text-amber-600'
-                        : 'text-red-600'
+                          ? 'text-amber-600'
+                          : 'text-red-600'
                     }
                   >
                     {data.coveragePercent.toFixed(0)}%
@@ -672,9 +665,7 @@ export function CoveragePreview({
                   <span className="text-slate-500">
                     {data.averageAssigned.toFixed(1)} / {data.required}
                   </span>
-                  {data.gapDays > 0 && (
-                    <span className="text-amber-600">{data.gapDays} gaps</span>
-                  )}
+                  {data.gapDays > 0 && <span className="text-amber-600">{data.gapDays} gaps</span>}
                 </div>
               </div>
             ))}
@@ -716,4 +707,3 @@ export function CoveragePreview({
     </div>
   );
 }
-

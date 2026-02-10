@@ -1,39 +1,39 @@
 /**
  * Power Automate Flow Client
- * 
+ *
  * IMPORTANT: Architecture Note
  * ============================
  * The existing CarePoint 365 Power Automate flows use "Power Apps V2" triggers,
  * which are designed to be invoked from Power Apps Canvas applications using
  * the PowerAutomate.Run() connector. These triggers CANNOT be called directly
  * via HTTP from a web application.
- * 
+ *
  * To enable the React web app to call these flows, one of the following
  * approaches is required:
- * 
+ *
  * OPTION 1: Add HTTP Triggers to Existing Flows (Recommended)
  * -----------------------------------------------------------
  * Add an "When an HTTP request is received" trigger to each flow while keeping
  * the existing Power Apps V2 trigger. This allows both Canvas apps and the
  * React web app to use the same flows.
- * 
+ *
  * Steps:
  * 1. Open each flow in Power Automate
  * 2. Add a parallel branch with "When an HTTP request is received" trigger
  * 3. Connect it to the same actions as the Power Apps trigger
  * 4. Copy the HTTP POST URL and add to environment variables
- * 
+ *
  * OPTION 2: Use Direct Dataverse API Calls
  * -----------------------------------------
  * Most flow functionality can be replicated with direct Dataverse Web API calls.
  * This is what we're currently doing for fetching rota data (see shifts.ts).
- * 
+ *
  * Current Implementation Status:
  * - BuildNewRotaView: ✅ Replaced with direct Dataverse queries in shifts.ts
  * - CreateBulkShift: ⏳ Needs HTTP trigger or Dataverse implementation
- * - GetTAFW: ⏳ Needs HTTP trigger or Dataverse implementation  
+ * - GetTAFW: ⏳ Needs HTTP trigger or Dataverse implementation
  * - Other flows: ⏳ Needs HTTP trigger or Dataverse implementation
- * 
+ *
  * Based on specification section 9.3
  */
 
@@ -56,10 +56,10 @@ import type {
 
 /**
  * Flow URLs from environment variables
- * 
+ *
  * These should be the HTTP POST URLs from flows that have
  * "When an HTTP request is received" triggers added.
- * 
+ *
  * If the flows only have Power Apps V2 triggers, these URLs won't work
  * and you'll need to add HTTP triggers to the flows first.
  */
@@ -85,12 +85,7 @@ export class FlowError extends Error {
   public readonly flowName: string;
   public readonly innerError?: unknown;
 
-  constructor(
-    message: string,
-    flowName: string,
-    statusCode: number,
-    innerError?: unknown
-  ) {
+  constructor(message: string, flowName: string, statusCode: number, innerError?: unknown) {
     super(message);
     this.name = 'FlowError';
     this.flowName = flowName;
@@ -99,10 +94,11 @@ export class FlowError extends Error {
   }
 
   static fromResponse(flowName: string, response: Response, body?: unknown): FlowError {
-    const errorMessage = typeof body === 'object' && body !== null && 'error' in body
-      ? (body as { error?: string }).error
-      : `Flow ${flowName} failed with status ${response.status}`;
-    
+    const errorMessage =
+      typeof body === 'object' && body !== null && 'error' in body
+        ? (body as { error?: string }).error
+        : `Flow ${flowName} failed with status ${response.status}`;
+
     return new FlowError(
       errorMessage || `HTTP ${response.status}: ${response.statusText}`,
       flowName,
@@ -114,7 +110,7 @@ export class FlowError extends Error {
   static notConfigured(flowName: string): FlowError {
     return new FlowError(
       `Flow "${flowName}" is not configured. The existing Power Automate flow uses a Power Apps V2 trigger which cannot be called from a web application. ` +
-      `To use this functionality, add an HTTP Request trigger to the flow in Power Automate and set the VITE_FLOW_${flowName.toUpperCase()} environment variable.`,
+        `To use this functionality, add an HTTP Request trigger to the flow in Power Automate and set the VITE_FLOW_${flowName.toUpperCase()} environment variable.`,
       flowName,
       0
     );
@@ -184,7 +180,7 @@ export class FlowClient {
 
   /**
    * Call a Power Automate flow via HTTP trigger
-   * 
+   *
    * IMPORTANT: This only works if the flow has an HTTP Request trigger.
    * If the flow only has a Power Apps V2 trigger, this will fail.
    */
@@ -214,8 +210,6 @@ export class FlowClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      console.log(`[FlowClient] Calling flow: ${flowName}`);
-      
       const response = await fetch(url, {
         method: 'POST',
         headers,
@@ -250,11 +244,7 @@ export class FlowClient {
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new FlowError(
-          `Flow ${flowName} timed out after ${this.timeout}ms`,
-          flowName,
-          408
-        );
+        throw new FlowError(`Flow ${flowName} timed out after ${this.timeout}ms`, flowName, 408);
       }
 
       throw new FlowError(
@@ -272,12 +262,12 @@ export class FlowClient {
 
   /**
    * Build the rota grid data for a given date range and sublocation
-   * 
+   *
    * NOTE: This flow (Component|BuildNewRotaView) has been REPLACED with direct
    * Dataverse queries in src/api/dataverse/shifts.ts for the React web app.
-   * 
+   *
    * Use getRotaGridData() from shifts.ts instead of this method.
-   * 
+   *
    * This method is kept for reference and in case HTTP triggers are added
    * to the existing Power Automate flow.
    */
@@ -285,7 +275,7 @@ export class FlowClient {
     if (!this.isFlowConfigured('buildRotaView')) {
       console.warn(
         '[FlowClient] buildRotaView flow not configured. ' +
-        'Using direct Dataverse queries instead (see shifts.ts).'
+          'Using direct Dataverse queries instead (see shifts.ts).'
       );
       throw FlowError.notConfigured('buildRotaView');
     }
@@ -308,7 +298,7 @@ export class FlowClient {
 
   /**
    * Get Time Away From Work (absences) for staff members
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|GetTAFWforstaffmember flow
    */
   async getTAFW(params: GetTAFWParams): Promise<StaffAbsenceLog[]> {
@@ -321,7 +311,7 @@ export class FlowClient {
 
   /**
    * Get shifts from other rotas for the same staff (dual-location visibility)
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|GetOtherShiftsbyStaffMemberandDate flow
    */
   async getOtherShifts(params: GetOtherShiftsParams): Promise<ShiftViewData[]> {
@@ -339,9 +329,9 @@ export class FlowClient {
 
   /**
    * Create multiple shifts based on pattern/recurrence settings
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Rostering-CreateBulkShift flow
-   * 
+   *
    * Alternative: Use createShift() from shifts.ts to create shifts directly
    * via Dataverse API (one at a time).
    */
@@ -355,7 +345,7 @@ export class FlowClient {
 
   /**
    * Validate and handle shift time conflicts
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|HandleClashingShifts flow
    */
   async handleClashingShifts(params: {
@@ -376,9 +366,9 @@ export class FlowClient {
 
   /**
    * Remove staff assignment from a shift
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|UnassignShift>StaffMemberRelationship flow
-   * 
+   *
    * Alternative: Use updateShift() from shifts.ts to set staff member to null.
    */
   async unassignStaff(shiftId: string): Promise<void> {
@@ -389,7 +379,7 @@ export class FlowClient {
 
   /**
    * Remove agency worker from a shift
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|RemoveShift>AgencyWorkerRelationship flow
    */
   async removeAgencyWorker(shiftId: string): Promise<void> {
@@ -404,7 +394,7 @@ export class FlowClient {
 
   /**
    * Send notifications for published shifts
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to Component|SendRotaNotifications flow
    */
   async sendRotaNotifications(params: {
@@ -427,7 +417,7 @@ export class FlowClient {
 
   /**
    * Generate PDF export of rota
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to GeneratePDF flow
    */
   async generatePDF(params: {
@@ -437,7 +427,7 @@ export class FlowClient {
     sublocationName: string;
   }): Promise<Blob> {
     const url = FLOW_URLS.generatePDF;
-    
+
     if (!url) {
       throw FlowError.notConfigured('generatePDF');
     }
@@ -472,7 +462,7 @@ export class FlowClient {
 
   /**
    * Log errors to the ErrorHandlingCanvasApp flow
-   * 
+   *
    * NOTE: Requires HTTP trigger to be added to ErrorHandlingCanvasApp flow
    */
   async logError(error: {
@@ -572,9 +562,7 @@ export class FlowClient {
   /**
    * Build assigned people array for bulk shift creation
    */
-  static buildAssignedPeople(
-    staff: Array<{ id: string; name: string }>
-  ): AssignedPerson[] {
+  static buildAssignedPeople(staff: Array<{ id: string; name: string }>): AssignedPerson[] {
     return staff.map((s) => ({
       StaffID: s.id,
       StaffName: s.name,
@@ -625,16 +613,17 @@ export function getFlowConfigurationStatus(): {
   const client = getFlowClient();
   const configured = client.getConfiguredFlows();
   const unconfigured = client.getUnconfiguredFlows();
-  
+
   let message: string;
   if (configured.length === 0) {
-    message = 'No Power Automate flows are configured. The app is using direct Dataverse API calls for data operations. ' +
+    message =
+      'No Power Automate flows are configured. The app is using direct Dataverse API calls for data operations. ' +
       'To enable flow-based operations, add HTTP Request triggers to the existing flows and configure the environment variables.';
   } else if (unconfigured.length === 0) {
     message = 'All Power Automate flows are configured and ready to use.';
   } else {
     message = `${configured.length} flows configured, ${unconfigured.length} flows need HTTP triggers added.`;
   }
-  
+
   return { configured, unconfigured, message };
 }

@@ -10,6 +10,7 @@ export * from './PeopleViewGrid';
 // Shift components
 export * from './ShiftCard';
 export * from './ShiftFlyout';
+export * from './OpenShiftCandidatesPanel';
 
 // Navigation and controls
 export * from './WeekNavigator';

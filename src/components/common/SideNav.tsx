@@ -5,14 +5,14 @@
  */
 
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  ChevronRight, 
+import {
   ChevronLeft,
-  Calendar, 
+  Calendar,
   CalendarDays,
   CalendarCheck,
   CalendarClock,
-  Users, 
+  Clock,
+  Users,
   UserCog,
   Building2,
   X,
@@ -21,10 +21,15 @@ import {
   Layers,
   Settings,
   BarChart2,
+  MapPin,
+  ArrowLeftRight,
+  ClipboardList,
+  Sliders,
+  Scale,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useUIStore } from '../../store/uiStore';
-import { useAuth, useUserDisplayName } from '../../hooks/useAuth';
+import { useUIStore } from '@/store/uiStore';
+import { useUserDisplayName } from '@/hooks/useAuth';
 
 /**
  * Navigation item interface
@@ -47,14 +52,104 @@ const navigationItems: NavItem[] = [
   { name: 'Daily', type: 'childlink', disabled: false, route: '/daily', icon: CalendarCheck },
   { name: 'Weekly', type: 'childlink', disabled: false, route: '/rota/7', icon: Calendar },
   { name: 'Monthly', type: 'childlink', disabled: false, route: '/rota/28', icon: CalendarDays },
-  { name: 'Shift Patterns', type: 'childlink', disabled: false, route: '/patterns', icon: CalendarClock },
+  {
+    name: 'Shift Patterns',
+    type: 'childlink',
+    disabled: false,
+    route: '/patterns',
+    icon: CalendarClock,
+  },
+  { name: 'Domiciliary', type: 'heading', disabled: false },
+  {
+    name: 'Service User Rota',
+    type: 'childlink',
+    disabled: false,
+    route: '/domiciliary',
+    icon: UserCog,
+  },
+  {
+    name: 'Staff Availability',
+    type: 'childlink',
+    disabled: false,
+    route: '/staff-availability',
+    icon: CalendarClock,
+  },
+  {
+    name: 'Round Planning',
+    type: 'childlink',
+    disabled: false,
+    route: '/round-planning',
+    icon: MapPin,
+  },
+  {
+    name: 'Staff Schedule',
+    type: 'childlink',
+    disabled: false,
+    route: '/staff-schedule',
+    icon: Clock,
+  },
+  { name: 'Shift Management', type: 'heading', disabled: false },
+  {
+    name: 'Swap Requests',
+    type: 'childlink',
+    disabled: false,
+    route: '/requests',
+    icon: ArrowLeftRight,
+  },
+  {
+    name: 'Open Shifts',
+    type: 'childlink',
+    disabled: false,
+    route: '/open-shifts',
+    icon: ClipboardList,
+  },
+  {
+    name: 'Swap History',
+    type: 'childlink',
+    disabled: false,
+    route: '/reports/swap-history',
+    icon: BarChart2,
+  },
   { name: 'Administration', type: 'heading', disabled: false },
-  { name: 'Employee details', type: 'childlink', disabled: false, route: '/staff-capabilities', icon: Users },
-  { name: 'Service user details', type: 'childlink', disabled: false, route: '/service-users', icon: UserCog },
-  { name: 'Agency Workers', type: 'childlink', disabled: false, route: '/admin/agency-workers', icon: Building2 },
+  {
+    name: 'Employee details',
+    type: 'childlink',
+    disabled: false,
+    route: '/staff-capabilities',
+    icon: Users,
+  },
+  {
+    name: 'Service user details',
+    type: 'childlink',
+    disabled: false,
+    route: '/service-users',
+    icon: UserCog,
+  },
+  {
+    name: 'Agency Workers',
+    type: 'childlink',
+    disabled: false,
+    route: '/admin/agency-workers',
+    icon: Building2,
+  },
   { name: 'Units', type: 'childlink', disabled: false, route: '/admin/units', icon: Layers },
   { name: 'Reports', type: 'childlink', disabled: false, route: '/reports', icon: BarChart2 },
   { name: 'Settings', type: 'childlink', disabled: false, route: '/settings', icon: Settings },
+  { name: 'Configuration', type: 'heading', disabled: false },
+  {
+    name: 'Swap Rules',
+    type: 'childlink',
+    disabled: false,
+    route: '/admin/swap-configuration',
+    icon: Sliders,
+  },
+  {
+    name: 'Matching Weights',
+    type: 'childlink',
+    disabled: false,
+    route: '/admin/matching-configuration',
+    icon: Scale,
+  },
 ];
 
 interface SideNavProps {
@@ -123,7 +218,9 @@ export function SideNav({ isOpen, onClose }: SideNavProps) {
         aria-label="Main navigation"
       >
         {/* Header - Logo */}
-        <div className={`flex h-16 items-center border-b border-slate-700 ${sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <div
+          className={`flex h-16 items-center border-b border-slate-700 ${sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'}`}
+        >
           {!sidebarCollapsed && (
             <div>
               <h1 className="text-lg font-bold">
@@ -132,14 +229,14 @@ export function SideNav({ isOpen, onClose }: SideNavProps) {
               <p className="text-xs text-slate-400">Rota Management</p>
             </div>
           )}
-          <button 
+          <button
             onClick={sidebarCollapsed ? toggleSidebarCollapsed : onClose}
             className="rounded-lg p-1.5 hover:bg-slate-700 lg:hidden"
           >
             {sidebarCollapsed ? <Menu size={20} /> : <X size={20} />}
           </button>
           {/* Desktop toggle */}
-          <button 
+          <button
             onClick={toggleSidebarCollapsed}
             className="hidden rounded-lg p-1.5 hover:bg-slate-700 lg:block"
           >
@@ -168,7 +265,8 @@ export function SideNav({ isOpen, onClose }: SideNavProps) {
               );
             }
 
-            const isActive = item.route === location.pathname || 
+            const isActive =
+              item.route === location.pathname ||
               (item.route && item.route !== '/' && location.pathname.startsWith(item.route));
             const Icon = item.icon;
 
@@ -180,10 +278,7 @@ export function SideNav({ isOpen, onClose }: SideNavProps) {
                 className={`
                   mb-1 flex w-full items-center gap-3 rounded-lg text-sm transition-colors
                   ${sidebarCollapsed ? 'justify-center px-3 py-2.5' : 'px-3 py-2.5'}
-                  ${isActive
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-300 hover:bg-slate-700'
-                  }
+                  ${isActive ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-700'}
                   ${item.disabled ? 'pointer-events-none opacity-50' : ''}
                 `}
                 aria-current={isActive ? 'page' : undefined}
@@ -217,6 +312,7 @@ export function SideNav({ isOpen, onClose }: SideNavProps) {
 /**
  * Hook to manage side navigation state
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSideNav() {
   const [isOpen, setIsOpen] = useState(false);
 

@@ -14,12 +14,7 @@ import {
   restorePatternTemplate,
   getPatternAssignmentSummaries,
 } from '../api/patternTemplates';
-import type {
-  ShiftPatternTemplate,
-  PatternFormData,
-  PatternTemplateFilters,
-  PatternAssignmentSummary,
-} from '../types';
+import type { PatternFormData, PatternTemplateFilters } from '../types';
 // Note: Add react-toastify or similar library for proper notifications
 
 /**
@@ -79,19 +74,15 @@ export function useCreatePatternTemplate() {
     onSuccess: (newTemplate) => {
       // Invalidate the templates list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
+
       // Add the new template to the cache
       queryClient.setQueryData(
         patternTemplateKeys.detail(newTemplate.cp365_shiftpatterntemplatenewid),
         newTemplate
       );
-      
-      console.log('[PatternTemplates] Pattern template created successfully');
     },
     onError: (error) => {
-      console.error('[useCreatePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to create pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to create pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to create:', error);
     },
   });
 }
@@ -103,19 +94,15 @@ export function useUpdatePatternTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PatternFormData> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<PatternFormData> }) =>
       updatePatternTemplate(id, data),
     onSuccess: (_, { id }) => {
       // Invalidate the specific template and the list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
-      console.log('[PatternTemplates] Pattern template updated successfully');
     },
     onError: (error) => {
-      console.error('[useUpdatePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to update pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to update pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to update:', error);
     },
   });
 }
@@ -131,16 +118,12 @@ export function useDeletePatternTemplate() {
     onSuccess: (_, id) => {
       // Remove from cache
       queryClient.removeQueries({ queryKey: patternTemplateKeys.detail(id) });
-      
+
       // Invalidate the list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
-      console.log('[PatternTemplates] Pattern template deleted successfully');
     },
     onError: (error) => {
-      console.error('[useDeletePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to delete pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to delete pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to delete:', error);
     },
   });
 }
@@ -152,24 +135,20 @@ export function useClonePatternTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ sourceId, newName }: { sourceId: string; newName: string }) => 
+    mutationFn: ({ sourceId, newName }: { sourceId: string; newName: string }) =>
       clonePatternTemplate(sourceId, newName),
     onSuccess: (newTemplate) => {
       // Invalidate the list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
+
       // Add the new template to the cache
       queryClient.setQueryData(
         patternTemplateKeys.detail(newTemplate.cp365_shiftpatterntemplatenewid),
         newTemplate
       );
-      
-      console.log('[PatternTemplates] Pattern template cloned successfully');
     },
     onError: (error) => {
-      console.error('[useClonePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to clone pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to clone pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to clone:', error);
     },
   });
 }
@@ -186,13 +165,9 @@ export function useArchivePatternTemplate() {
       // Invalidate both the specific template and the list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
-      console.log('[PatternTemplates] Pattern template archived');
     },
     onError: (error) => {
-      console.error('[useArchivePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to archive pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to archive pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to archive:', error);
     },
   });
 }
@@ -209,14 +184,9 @@ export function useRestorePatternTemplate() {
       // Invalidate both the specific template and the list
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
-      
-      console.log('[PatternTemplates] Pattern template restored');
     },
     onError: (error) => {
-      console.error('[useRestorePatternTemplate] Error:', error);
-      console.error(`[PatternTemplates] Failed to restore pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to restore pattern template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternTemplates] Failed to restore:', error);
     },
   });
 }
-

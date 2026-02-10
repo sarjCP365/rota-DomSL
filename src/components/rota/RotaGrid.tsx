@@ -2,7 +2,7 @@
  * RotaGrid Component
  * Main rota scheduling grid showing staff rows and shift blocks
  * Based on specification section 5.1
- * 
+ *
  * Supports multiple view modes:
  * - 'people': Flat list of staff members (default) - uses PeopleViewGrid
  * - 'team': Hierarchical Unit > Team > Staff grouping (coming soon)
@@ -11,10 +11,21 @@
 
 import { useMemo, useCallback, useState } from 'react';
 import { format, addDays, isSameDay, differenceInDays } from 'date-fns';
-import { AlertCircle, Sun, Moon, Bed, ArrowUpDown, ChevronDown, Clock } from 'lucide-react';
-import type { ShiftViewData, SublocationStaffViewData, ShiftReference, Shift, StaffMember, HierarchicalRotaData } from '../../api/dataverse/types';
-import type { ViewMode, DetailLevel } from '../../store/rotaStore';
-import { PeopleViewGrid, type SortOption, type FilterState } from './PeopleViewGrid';
+import { AlertCircle, ArrowUpDown, ChevronDown, Clock } from 'lucide-react';
+import type {
+  ShiftViewData,
+  SublocationStaffViewData,
+  ShiftReference,
+  Shift,
+  StaffMember,
+  HierarchicalRotaData,
+  ShiftStatus,
+  ShiftType,
+  StaffStatus,
+  YesNo,
+} from '@/api/dataverse/types';
+import type { ViewMode, DetailLevel } from '@/store/rotaStore';
+import { PeopleViewGrid, type SortOption } from './PeopleViewGrid';
 import { ShiftReferenceViewGrid, type StaffingRequirement } from './ShiftReferenceViewGrid';
 import { TeamViewGrid } from './TeamViewGrid';
 
@@ -54,6 +65,8 @@ interface RotaGridProps {
   staffingRequirements?: StaffingRequirement[];
   /** Callback when "Fill Gap" is clicked in Shift Reference View */
   onFillGap?: (shiftReferenceId: string, date: Date) => void;
+  /** Callback when "Add Shift" is clicked in Shift Reference View (empty cell) */
+  onAddShift?: (shiftReferenceId: string, date: Date) => void;
   /** Hierarchical rota data for Team View mode (optional) */
   hierarchicalData?: HierarchicalRotaData | null;
   /** Whether hierarchical data is loading */
@@ -84,14 +97,6 @@ interface StaffRowData {
 // CONSTANTS
 // =============================================================================
 
-const SHIFT_COLORS = {
-  day: '#FCE4B4',
-  night: '#BEDAE3',
-  sleepIn: '#D3C7E6',
-  overtime: '#E3826F',
-  absence: '#EFA18A',
-} as const;
-
 const SHIFT_BG_CLASSES = {
   day: 'bg-[#FCE4B4]',
   night: 'bg-[#BEDAE3]',
@@ -108,15 +113,15 @@ const SHIFT_BG_CLASSES = {
  */
 function getShiftType(shift: ShiftViewData): 'day' | 'night' | 'sleepIn' {
   if (shift['Sleep In']) return 'sleepIn';
-  
+
   const shiftType = shift['Shift Type']?.toLowerCase() || '';
   if (shiftType.includes('night')) return 'night';
   if (shiftType.includes('sleep')) return 'sleepIn';
-  
+
   // Check start hour
-  const startHour = shift['Shift Reference Start Hour'] ?? 
-    new Date(shift['Shift Start Time']).getHours();
-  
+  const startHour =
+    shift['Shift Reference Start Hour'] ?? new Date(shift['Shift Start Time']).getHours();
+
   if (startHour >= 20 || startHour < 6) return 'night';
   return 'day';
 }
@@ -175,6 +180,7 @@ export function RotaGrid({
   shiftReferences = [],
   staffingRequirements = [],
   onFillGap,
+  onAddShift,
   hierarchicalData,
   isHierarchicalDataLoading = false,
   absenceTypes,
@@ -200,7 +206,7 @@ export function RotaGrid({
       const dayIndex = getDayIndex(shiftDate, startDate);
       // Normalize empty string to null for unassigned detection
       const staffMemberId = shift['Staff Member ID'] || null;
-      
+
       return {
         ...shift,
         zone: calculateZone(dayIndex, staffMemberId),
@@ -225,7 +231,7 @@ export function RotaGrid({
     const rows: StaffRowData[] = staff.map((s) => {
       const staffId = s['Staff Member ID'];
       const staffShifts = shiftsByStaff.get(staffId) || [];
-      
+
       // Group shifts by day
       const cells = new Map<number, ProcessedShift[]>();
       for (const shift of staffShifts) {
@@ -272,7 +278,7 @@ export function RotaGrid({
   // Sort staff rows based on selected sort option
   const sortedStaffRows = useMemo(() => {
     const rows = [...staffRows];
-    
+
     switch (sortOption) {
       case 'name-asc':
         return rows.sort((a, b) => a.staffMemberName.localeCompare(b.staffMemberName));
@@ -290,28 +296,34 @@ export function RotaGrid({
   }, [staffRows, sortOption]);
 
   // Handle shift click
-  const handleShiftClick = useCallback((shift: ProcessedShift, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    if (event.ctrlKey || event.metaKey) {
-      // Multi-select
-      const newSelection = new Set(selectedShiftIds);
-      if (newSelection.has(shift['Shift ID'])) {
-        newSelection.delete(shift['Shift ID']);
+  const handleShiftClick = useCallback(
+    (shift: ProcessedShift, event: React.MouseEvent) => {
+      event.stopPropagation();
+
+      if (event.ctrlKey || event.metaKey) {
+        // Multi-select
+        const newSelection = new Set(selectedShiftIds);
+        if (newSelection.has(shift['Shift ID'])) {
+          newSelection.delete(shift['Shift ID']);
+        } else {
+          newSelection.add(shift['Shift ID']);
+        }
+        onSelectionChange?.(newSelection);
       } else {
-        newSelection.add(shift['Shift ID']);
+        // Single select
+        onShiftClick?.(shift);
       }
-      onSelectionChange?.(newSelection);
-    } else {
-      // Single select
-      onShiftClick?.(shift);
-    }
-  }, [selectedShiftIds, onShiftClick, onSelectionChange]);
+    },
+    [selectedShiftIds, onShiftClick, onSelectionChange]
+  );
 
   // Handle cell click
-  const handleCellClick = useCallback((date: Date, staffMemberId: string | null) => {
-    onCellClick?.(date, staffMemberId);
-  }, [onCellClick]);
+  const handleCellClick = useCallback(
+    (date: Date, staffMemberId: string | null) => {
+      onCellClick?.(date, staffMemberId);
+    },
+    [onCellClick]
+  );
 
   // Sort menu options
   const sortOptions: { value: SortOption; label: string }[] = [
@@ -322,7 +334,7 @@ export function RotaGrid({
     { value: 'jobTitle', label: 'Job Title' },
   ];
 
-  const currentSortLabel = sortOptions.find(opt => opt.value === sortOption)?.label || 'Sort';
+  const currentSortLabel = sortOptions.find((opt) => opt.value === sortOption)?.label || 'Sort';
 
   // Team View - Hierarchical Unit > Team > Staff structure
   if (viewMode === 'team') {
@@ -366,7 +378,7 @@ export function RotaGrid({
         shiftReferences={shiftReferences}
         onShiftClick={(shiftId) => {
           // Find the corresponding ShiftViewData and call onShiftClick
-          const shift = shifts.find(s => s['Shift ID'] === shiftId);
+          const shift = shifts.find((s) => s['Shift ID'] === shiftId);
           if (shift && onShiftClick) {
             onShiftClick(shift);
           }
@@ -380,12 +392,12 @@ export function RotaGrid({
 
   if (viewMode === 'shiftReference') {
     // Create a set of staff IDs for this sublocation for filtering
-    const sublocationStaffIds = new Set(staff.map(s => s['Staff Member ID']));
-    
+    const sublocationStaffIds = new Set(staff.map((s) => s['Staff Member ID']));
+
     // Filter shifts to only include:
     // 1. Shifts for staff members assigned to this sublocation
     // 2. Unassigned shifts (no staff member)
-    const filteredShifts = shifts.filter(s => {
+    const filteredShifts = shifts.filter((s) => {
       const staffId = s['Staff Member ID'];
       // Include unassigned shifts or shifts for sublocation staff
       return !staffId || sublocationStaffIds.has(staffId);
@@ -393,46 +405,29 @@ export function RotaGrid({
 
     // Convert ShiftViewData to Shift format for ShiftReferenceViewGrid
     // Include staff member name directly to avoid lookup issues
-    const shiftsForRefView = filteredShifts.map((s) => ({
+    const shiftsForRefView: Shift[] = filteredShifts.map((s) => ({
       cp365_shiftid: s['Shift ID'],
       cp365_shiftname: s['Shift Name'],
       cp365_shiftdate: s['Shift Date'],
       cp365_shiftstarttime: s['Shift Start Time'],
       cp365_shiftendtime: s['Shift End Time'],
-      cp365_shiftstatus: s['Shift Status'] as any,
-      cp365_shifttype: s['Shift Type'] as any,
+      cp365_shiftstatus: s['Shift Status'] as ShiftStatus,
+      cp365_shifttype: s['Shift Type'] as ShiftType,
       cp365_overtimeshift: s['Overtime Shift'],
       cr1e2_shiftbreakduration: s['Shift Break Duration'] || 0,
       cp365_communityhours: s['Community Hours'] || 0,
       cp365_sleepin: s['Sleep In'],
       cp365_shiftleader: s['Shift Leader'],
       cp365_actup: s['Act Up'],
-      cp365_senior: s['Senior'],
       _cp365_staffmember_value: s['Staff Member ID'] || null,
       _cp365_rota_value: s['Rota ID'],
       _cp365_shiftreference_value: s['Shift Reference'] || null,
       _cp365_shiftactivity_value: null,
       _cp365_shiftpattern_value: null,
       _cp365_serviceuser_value: null,
-      _cp365_unit_value: null,
       // Include staff name directly from the view data
       _staffMemberName: s['Staff Member Name'] || null,
     }));
-
-    // Debug: Log the conversion
-    console.log('[RotaGrid -> ShiftRefView] Converting shifts:', {
-      totalShiftsReceived: shifts.length,
-      shiftsForSublocationStaff: filteredShifts.length,
-      totalStaffInSublocation: staff.length,
-      totalShiftRefs: shiftReferences.length,
-      sampleShift: filteredShifts[0] ? {
-        'Shift ID': filteredShifts[0]['Shift ID'],
-        'Shift Date': filteredShifts[0]['Shift Date'],
-        'Shift Reference': filteredShifts[0]['Shift Reference'],
-        'Staff Member ID': filteredShifts[0]['Staff Member ID'],
-        'Staff Member Name': filteredShifts[0]['Staff Member Name'],
-      } : null,
-    });
 
     // Build staff map for name lookup
     const staffMap = new Map<string, StaffMember>();
@@ -448,8 +443,8 @@ export function RotaGrid({
         cp365_personalmobile: null,
         cp365_workmobile: null,
         cp365_dateofbirth: null,
-        cp365_staffstatus: s['Staff Status'] as any,
-        cp365_agencyworker: 0 as any,
+        cp365_staffstatus: s['Staff Status'] as StaffStatus,
+        cp365_agencyworker: 0 as YesNo,
         _cp365_defaultlocation_value: null,
         _cp365_linemanager_value: null,
         _cp365_useraccount_value: null,
@@ -484,11 +479,13 @@ export function RotaGrid({
         staffMembers={staffMap}
         staff={staff}
         onFillGap={onFillGap}
+        onAddShift={onAddShift}
         onShiftClick={(shift) => {
           // Convert back to ShiftViewData for the callback
           const original = shifts.find((s) => s['Shift ID'] === shift.cp365_shiftid);
           if (original) onShiftClick?.(original);
         }}
+        detailLevel={detailLevel}
       />
     );
   }
@@ -520,12 +517,13 @@ export function RotaGrid({
       <div className="flex items-center justify-between border-b border-border-grey bg-elevation-1 px-4 py-2">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">
-            <span className="font-medium text-gray-900">{sortedStaffRows.length}</span> Staff Members
+            <span className="font-medium text-gray-900">{sortedStaffRows.length}</span> Staff
+            Members
           </span>
           <span className="text-sm text-gray-600">
             <span className="font-medium text-gray-900">{shifts.length}</span> Total Shifts
           </span>
-          
+
           {/* Sort dropdown */}
           <div className="relative">
             <button
@@ -534,15 +532,14 @@ export function RotaGrid({
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{currentSortLabel}</span>
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showSortMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${showSortMenu ? 'rotate-180' : ''}`}
+              />
             </button>
-            
+
             {showSortMenu && (
               <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowSortMenu(false)} 
-                />
+                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
                 <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-lg border border-border-grey bg-white py-1 shadow-lg">
                   {sortOptions.map((option) => (
                     <button
@@ -565,9 +562,15 @@ export function RotaGrid({
             )}
           </div>
         </div>
-        <div className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${unassignedCount > 0 ? 'bg-warning/10' : 'bg-gray-100'}`}>
-          <AlertCircle className={`h-4 w-4 ${unassignedCount > 0 ? 'text-warning' : 'text-gray-400'}`} />
-          <span className={`text-sm font-medium ${unassignedCount > 0 ? 'text-warning' : 'text-gray-500'}`}>
+        <div
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${unassignedCount > 0 ? 'bg-warning/10' : 'bg-gray-100'}`}
+        >
+          <AlertCircle
+            className={`h-4 w-4 ${unassignedCount > 0 ? 'text-warning' : 'text-gray-400'}`}
+          />
+          <span
+            className={`text-sm font-medium ${unassignedCount > 0 ? 'text-warning' : 'text-gray-500'}`}
+          >
             Unassigned: {unassignedCount}
           </span>
         </div>
@@ -583,12 +586,12 @@ export function RotaGrid({
               <th className="sticky left-0 z-30 w-56 min-w-56 border-b border-r border-border-grey bg-elevation-1 px-3 py-2 text-left">
                 <span className="text-sm font-semibold text-gray-700">Staff Member</span>
               </th>
-              
+
               {/* Date headers */}
               {dates.map((date, index) => {
                 const isToday = isSameDay(date, new Date());
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
+
                 return (
                   <th
                     key={index}
@@ -596,10 +599,10 @@ export function RotaGrid({
                       isToday ? 'bg-primary/10' : isWeekend ? 'bg-gray-50' : 'bg-elevation-1'
                     }`}
                   >
-                    <div className="text-xs font-medium text-gray-500">
-                      {format(date, 'EEE')}
-                    </div>
-                    <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}>
+                    <div className="text-xs font-medium text-gray-500">{format(date, 'EEE')}</div>
+                    <div
+                      className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}
+                    >
                       {format(date, 'd MMM')}
                     </div>
                   </th>
@@ -636,10 +639,7 @@ export function RotaGrid({
             {/* Empty state */}
             {sortedStaffRows.length === 0 && unassignedCount === 0 && (
               <tr>
-                <td
-                  colSpan={dates.length + 1}
-                  className="px-4 py-12 text-center text-gray-500"
-                >
+                <td colSpan={dates.length + 1} className="px-4 py-12 text-center text-gray-500">
                   No staff members assigned to this sublocation.
                 </td>
               </tr>
@@ -664,14 +664,21 @@ interface StaffRowProps {
   detailLevel: DetailLevel;
 }
 
-function StaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClick, detailLevel }: StaffRowProps) {
+function StaffRow({
+  row,
+  dates,
+  selectedShiftIds,
+  onShiftClick,
+  onCellClick,
+  detailLevel,
+}: StaffRowProps) {
   const displayName = row.staffMemberName || 'Unknown';
   const initial = displayName.charAt(0).toUpperCase();
-  
+
   // Compact mode shows minimal info
   const isCompact = detailLevel === 'compact';
   const isHoursOnly = detailLevel === 'hoursOnly';
-  
+
   return (
     <tr className="group hover:bg-gray-50/50">
       {/* Staff info cell */}
@@ -681,19 +688,17 @@ function StaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClick, det
             {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium text-gray-900">
-              {displayName}
-            </div>
+            <div className="truncate text-sm font-medium text-gray-900">{displayName}</div>
             {!isHoursOnly && row.jobTitle && (
-              <div className="truncate text-xs text-gray-500">
-                {row.jobTitle}
-              </div>
+              <div className="truncate text-xs text-gray-500">{row.jobTitle}</div>
             )}
           </div>
           {/* Hours badge */}
-          <div className={`shrink-0 rounded-md px-1.5 py-0.5 text-xs font-medium ${
-            row.totalHours > 0 ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
-          }`}>
+          <div
+            className={`shrink-0 rounded-md px-1.5 py-0.5 text-xs font-medium ${
+              row.totalHours > 0 ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
+            }`}
+          >
             {row.totalHours}h
           </div>
         </div>
@@ -768,12 +773,12 @@ interface UnassignedRowProps {
   isSticky?: boolean;
 }
 
-function UnassignedRow({ 
-  shifts, 
-  dates, 
+function UnassignedRow({
+  shifts,
+  dates,
   totalCount,
-  selectedShiftIds, 
-  onShiftClick, 
+  selectedShiftIds,
+  onShiftClick,
   onCellClick,
   isSticky,
 }: UnassignedRowProps) {
@@ -786,15 +791,21 @@ function UnassignedRow({
   return (
     <tr className={`bg-[#f5f5f5] ${stickyClass} ${hasUnassigned ? 'shadow-sm' : ''}`}>
       {/* Unassigned label */}
-      <td className={`sticky left-0 z-20 w-56 min-w-56 border-b border-r ${hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'} bg-[#f5f5f5] px-3 py-2`}>
+      <td
+        className={`sticky left-0 z-20 w-56 min-w-56 border-b border-r ${hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'} bg-[#f5f5f5] px-3 py-2`}
+      >
         <div className="flex items-center gap-2">
-          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${hasUnassigned ? 'bg-warning/20' : 'bg-gray-200'}`}>
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${hasUnassigned ? 'bg-warning/20' : 'bg-gray-200'}`}
+          >
             <span className="text-lg" role="img" aria-label="unassigned">
               {hasUnassigned ? '⚠️' : '📋'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${hasUnassigned ? 'text-gray-900' : 'text-gray-600'}`}>
+            <span
+              className={`text-sm font-medium ${hasUnassigned ? 'text-gray-900' : 'text-gray-600'}`}
+            >
               Unassigned
             </span>
             {hasUnassigned && (
@@ -854,14 +865,11 @@ interface ShiftCardProps {
 function ShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact }: ShiftCardProps) {
   const isOvertime = shift['Overtime Shift'];
   const shiftType = shift.shiftType;
-  
+
   // Determine background class
-  const bgClass = isOvertime 
-    ? SHIFT_BG_CLASSES.overtime 
-    : SHIFT_BG_CLASSES[shiftType];
+  const bgClass = isOvertime ? SHIFT_BG_CLASSES.overtime : SHIFT_BG_CLASSES[shiftType];
 
   // Get icon
-  const Icon = shiftType === 'night' ? Moon : shiftType === 'sleepIn' ? Bed : Sun;
   const iconEmoji = shiftType === 'night' ? '🌙' : shiftType === 'sleepIn' ? '🛏️' : '☀️';
 
   // Compact view - minimal info
@@ -881,9 +889,7 @@ function ShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact }: Shif
           <span className="text-sm" role="img" aria-label={shiftType}>
             {iconEmoji}
           </span>
-          <span className="text-xs font-semibold">
-            {shift.timeLabel}
-          </span>
+          <span className="text-xs font-semibold">{shift.timeLabel}</span>
           {!shift.isPublished && (
             <span className="ml-auto text-[9px] font-bold text-gray-600">*</span>
           )}
@@ -920,9 +926,7 @@ function ShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact }: Shif
         <span className="text-base" role="img" aria-label={shiftType}>
           {iconEmoji}
         </span>
-        <span className="text-xs font-semibold">
-          {shift.timeLabel}
-        </span>
+        <span className="text-xs font-semibold">{shift.timeLabel}</span>
       </div>
 
       {/* Shift name/reference */}
@@ -932,29 +936,44 @@ function ShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact }: Shif
         </div>
       )}
 
+      {/* Shift Activity - shows activity type with care/non-care indicator (detailed view only) */}
+      {shift['Shift Activity'] && (
+        <div className="mt-0.5 flex items-center gap-1">
+          <span
+            className={`inline-flex items-center truncate rounded px-1 py-0.5 text-[9px] font-semibold ${
+              shift['Shift Activity Care Type'] === 'Non-Care'
+                ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+            }`}
+            title={`Activity: ${shift['Shift Activity']}${shift['Shift Activity Care Type'] ? ` (${shift['Shift Activity Care Type']})` : ''}`}
+          >
+            {shift['Shift Activity Care Type'] === 'Non-Care' ? '○' : '●'}{' '}
+            {shift['Shift Activity']}
+          </span>
+        </div>
+      )}
+
       {/* Badges row */}
       <div className="mt-1 flex flex-wrap gap-0.5">
         {/* Unpublished indicator */}
         {!shift.isPublished && (
-          <span className="rounded bg-gray-900/20 px-1 text-[9px] font-bold text-gray-800">
-            *
-          </span>
+          <span className="rounded bg-gray-900/20 px-1 text-[9px] font-bold text-gray-800">*</span>
         )}
-        
+
         {/* Shift Leader badge */}
         {shift['Shift Leader'] && (
           <span className="rounded bg-primary/30 px-1 text-[9px] font-medium text-primary-pressed">
             SL
           </span>
         )}
-        
+
         {/* Act Up badge */}
         {shift['Act Up'] && (
           <span className="rounded bg-secondary/30 px-1 text-[9px] font-medium text-secondary-pressed">
             AU
           </span>
         )}
-        
+
         {/* Senior badge */}
         {shift['Senior'] && (
           <span className="rounded bg-gray-500/30 px-1 text-[9px] font-medium text-gray-700">

@@ -4,20 +4,20 @@
  */
 
 import { ReactNode, useEffect, useState } from 'react';
-import { 
-  MsalProvider, 
-  AuthenticatedTemplate, 
+import {
+  MsalProvider,
+  AuthenticatedTemplate,
   UnauthenticatedTemplate,
   useMsal,
 } from '@azure/msal-react';
-import { 
-  PublicClientApplication, 
+import {
+  PublicClientApplication,
   EventType,
   EventMessage,
   AuthenticationResult,
 } from '@azure/msal-browser';
-import { msalConfig, isMsalConfigured, getConfigurationWarnings } from '../../config/msal';
-import { Loading } from '../common/Loading';
+import { msalConfig, isMsalConfigured, getConfigurationWarnings } from '@/config/msal';
+import { Loading } from '@/components/common/Loading';
 
 // Create MSAL instance
 let msalInstance: PublicClientApplication | null = null;
@@ -28,47 +28,37 @@ let msalInitError: Error | null = null;
  * Initialize MSAL instance
  */
 function initializeMsal(): Promise<void> {
-  console.log('[AuthProvider] initializeMsal called');
-  
   if (msalInitPromise) {
-    console.log('[AuthProvider] Returning existing init promise');
     return msalInitPromise;
   }
 
   // Don't initialize if not configured
   if (!isMsalConfigured()) {
-    console.log('[AuthProvider] MSAL not configured, skipping init');
     msalInitPromise = Promise.resolve();
     return msalInitPromise;
   }
 
-  console.log('[AuthProvider] Creating new PublicClientApplication');
   msalInstance = new PublicClientApplication(msalConfig);
-  
-  msalInitPromise = msalInstance.initialize()
+
+  msalInitPromise = msalInstance
+    .initialize()
     .then(() => {
-      console.log('[AuthProvider] MSAL initialized, handling redirect promise...');
       // Handle redirect response
       return msalInstance!.handleRedirectPromise();
     })
     .then((response) => {
-      console.log('[AuthProvider] Redirect handled, response:', response ? 'has response' : 'no response');
       if (response) {
-        console.log('[AuthProvider] Setting active account from response:', response.account?.username);
         msalInstance!.setActiveAccount(response.account);
       }
-      
+
       // Set active account if available
       const accounts = msalInstance!.getAllAccounts();
-      console.log('[AuthProvider] Total accounts:', accounts.length);
       if (accounts.length > 0) {
-        console.log('[AuthProvider] Setting active account:', accounts[0].username);
         msalInstance!.setActiveAccount(accounts[0]);
       }
 
       // Listen for account changes
       msalInstance!.addEventCallback((event: EventMessage) => {
-        console.log('[AuthProvider] MSAL event:', event.eventType);
         if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
           const payload = event.payload as AuthenticationResult;
           msalInstance!.setActiveAccount(payload.account);
@@ -77,7 +67,6 @@ function initializeMsal(): Promise<void> {
     })
     .catch((error) => {
       console.error('[AuthProvider] MSAL initialization error:', error);
-      console.error('[AuthProvider] Error details:', error.message, error.stack);
       msalInitError = error;
     });
 
@@ -165,12 +154,14 @@ function AuthStateHandler({ children }: { children: ReactNode }) {
   const { inProgress } = useMsal();
   const [isInitialising, setIsInitialising] = useState(true);
 
+  // Wait for MSAL to finish initialising - intentional state sync for auth flow
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    // Wait for MSAL to finish initialising
     if (inProgress === 'none') {
       setIsInitialising(false);
     }
   }, [inProgress]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (isInitialising || inProgress !== 'none') {
     return <Loading message="Authenticating..." />;
@@ -184,7 +175,7 @@ function AuthStateHandler({ children }: { children: ReactNode }) {
  */
 function ConfigurationError({ warnings }: { warnings: string[] }) {
   return (
-    <div 
+    <div
       style={{
         display: 'flex',
         minHeight: '100vh',
@@ -195,7 +186,7 @@ function ConfigurationError({ warnings }: { warnings: string[] }) {
         fontFamily: 'Arial, sans-serif',
       }}
     >
-      <div 
+      <div
         style={{
           maxWidth: '28rem',
           borderRadius: '0.5rem',
@@ -209,22 +200,39 @@ function ConfigurationError({ warnings }: { warnings: string[] }) {
         </h1>
         <p style={{ marginTop: '0.5rem', color: '#4b5563' }}>
           The application needs to be configured before it can run. Please create a{' '}
-          <code style={{ backgroundColor: '#e5e7eb', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>
+          <code
+            style={{
+              backgroundColor: '#e5e7eb',
+              padding: '0.125rem 0.25rem',
+              borderRadius: '0.25rem',
+            }}
+          >
             .env.local
           </code>{' '}
           file in the project root.
         </p>
-        
+
         <div style={{ marginTop: '1rem' }}>
-          <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>Missing variables:</p>
-          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem', color: '#6b7280', fontSize: '0.875rem' }}>
+          <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+            Missing variables:
+          </p>
+          <ul
+            style={{
+              marginTop: '0.5rem',
+              paddingLeft: '1.25rem',
+              color: '#6b7280',
+              fontSize: '0.875rem',
+            }}
+          >
             {warnings.map((warning, index) => (
-              <li key={index} style={{ marginBottom: '0.25rem' }}>{warning}</li>
+              <li key={index} style={{ marginBottom: '0.25rem' }}>
+                {warning}
+              </li>
             ))}
           </ul>
         </div>
 
-        <div 
+        <div
           style={{
             marginTop: '1.5rem',
             borderRadius: '0.5rem',
@@ -233,9 +241,19 @@ function ConfigurationError({ warnings }: { warnings: string[] }) {
           }}
         >
           <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
-            Example <code style={{ backgroundColor: '#e5e7eb', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>.env.local</code> file:
+            Example{' '}
+            <code
+              style={{
+                backgroundColor: '#e5e7eb',
+                padding: '0.125rem 0.25rem',
+                borderRadius: '0.25rem',
+              }}
+            >
+              .env.local
+            </code>{' '}
+            file:
           </p>
-          <pre 
+          <pre
             style={{
               marginTop: '0.75rem',
               fontSize: '0.75rem',
@@ -247,7 +265,7 @@ function ConfigurationError({ warnings }: { warnings: string[] }) {
               whiteSpace: 'pre-wrap',
             }}
           >
-{`# Azure AD / Entra ID Configuration
+            {`# Azure AD / Entra ID Configuration
 VITE_CLIENT_ID=your-azure-app-client-id
 VITE_TENANT_ID=your-azure-tenant-id
 
@@ -262,9 +280,25 @@ VITE_FLOW_GET_OTHER_SHIFTS=https://prod-xx.westeurope.logic.azure.com/...`}
           </pre>
         </div>
 
-        <div style={{ marginTop: '1.5rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem' }}>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '0.75rem',
+            backgroundColor: '#fef3c7',
+            borderRadius: '0.5rem',
+          }}
+        >
           <p style={{ fontSize: '0.75rem', color: '#92400e', margin: 0 }}>
-            <strong>Note:</strong> After creating the file, restart the development server with <code style={{ backgroundColor: '#fde68a', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>npm run dev</code>
+            <strong>Note:</strong> After creating the file, restart the development server with{' '}
+            <code
+              style={{
+                backgroundColor: '#fde68a',
+                padding: '0.125rem 0.25rem',
+                borderRadius: '0.25rem',
+              }}
+            >
+              npm run dev
+            </code>
           </p>
         </div>
       </div>
@@ -280,6 +314,7 @@ export { AuthenticatedTemplate, UnauthenticatedTemplate };
 /**
  * Export MSAL instance getter for advanced usage
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getMsalInstance(): PublicClientApplication | null {
   return msalInstance;
 }

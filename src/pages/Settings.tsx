@@ -3,19 +3,22 @@
  * Application settings and configuration
  */
 
-import { Header } from '../components/common/Header';
-import { SideNav } from '../components/common/SideNav';
+import { Header } from '@/components/common/Header';
+import { SideNav } from '@/components/common/SideNav';
+import { FeatureErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useState } from 'react';
 
 export function Settings() {
-  const [sideNavOpen, setSideNavOpen] = useState(true);
+  const [sideNavOpen, _setSideNavOpen] = useState(true);
 
   return (
     <div className="flex h-screen flex-col bg-elevation-1">
       <Header title="Settings" showBackButton onBack={() => window.history.back()} />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideNav isOpen={sideNavOpen} />
+        <FeatureErrorBoundary featureName="Navigation">
+          <SideNav isOpen={sideNavOpen} />
+        </FeatureErrorBoundary>
 
         <main className="flex flex-1 flex-col overflow-auto bg-white p-6">
           <h2 className="mb-6 text-xl font-semibold">Application Settings</h2>
@@ -93,4 +96,3 @@ export function Settings() {
     </div>
   );
 }
-

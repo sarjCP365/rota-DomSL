@@ -2,21 +2,21 @@
  * useAuth Hook
  * Handles Azure AD/Entra ID authentication using MSAL
  * and fetches current user's staff member record from Dataverse
- * 
+ *
  * Based on specification section 8
  */
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useMsal, useAccount, useIsAuthenticated } from '@azure/msal-react';
-import { 
-  InteractionRequiredAuthError,
-  InteractionStatus,
-  AccountInfo,
-} from '@azure/msal-browser';
-import { useAuthStore, type AzureUser } from '../store/authStore';
-import { loginRequest, silentRequest } from '../config/msal';
-import { initDataverseClient, getDataverseClient, isDataverseClientInitialised } from '../api/dataverse/client';
-import type { StaffMember } from '../api/dataverse/types';
+import { InteractionRequiredAuthError, InteractionStatus, AccountInfo } from '@azure/msal-browser';
+import { useAuthStore, type AzureUser } from '@/store/authStore';
+import { loginRequest, silentRequest } from '@/config/msal';
+import {
+  initDataverseClient,
+  getDataverseClient,
+  isDataverseClientInitialised,
+} from '@/api/dataverse/client';
+import type { StaffMember } from '@/api/dataverse/types';
 
 /**
  * Main authentication hook
@@ -79,71 +79,62 @@ export function useAuth() {
    * Initialise the Dataverse client with token provider
    */
   const initialiseDataverseClient = useCallback(() => {
-    console.log('[useAuth] initialiseDataverseClient called');
-    console.log('[useAuth] isDataverseClientInitialised:', isDataverseClientInitialised());
-    console.log('[useAuth] isDataverseReady (store):', isDataverseReady);
-    
     if (!isDataverseClientInitialised()) {
-      console.log('[useAuth] Creating new Dataverse client...');
       initDataverseClient(async () => {
-        console.log('[useAuth] Token provider called, acquiring token...');
         const token = await acquireToken();
         if (!token) {
-          console.error('[useAuth] Failed to acquire access token');
           throw new Error('Failed to acquire access token');
         }
-        console.log('[useAuth] Token acquired successfully');
         return token;
       });
-      console.log('[useAuth] Setting isDataverseReady to true');
       setDataverseReady(true);
     } else if (!isDataverseReady) {
-      console.log('[useAuth] Client exists but store not ready, setting isDataverseReady to true');
       setDataverseReady(true);
-    } else {
-      console.log('[useAuth] Dataverse client already initialized and ready');
     }
   }, [acquireToken, isDataverseReady, setDataverseReady]);
 
   /**
    * Fetch the current user's staff member record from Dataverse
    */
-  const fetchStaffMember = useCallback(async (email: string): Promise<StaffMember | null> => {
-    try {
-      setLoadingStaffMember(true);
-      initialiseDataverseClient();
+  const fetchStaffMember = useCallback(
+    async (email: string): Promise<StaffMember | null> => {
+      try {
+        setLoadingStaffMember(true);
+        initialiseDataverseClient();
 
-      const client = getDataverseClient();
-      const staffMembers = await client.get<StaffMember>('cp365_staffmembers', {
-        filter: `cp365_workemail eq '${email}'`,
-        top: 1,
-        select: [
-          'cp365_staffmemberid',
-          'cp365_staffmembername',
-          'cp365_forename',
-          'cp365_surname',
-          'cp365_staffnumber',
-          'cp365_workemail',
-          'cp365_staffstatus',
-          'cp365_agencyworker',
-          '_cp365_defaultlocation_value',
-        ],
-      });
+        const client = getDataverseClient();
+        const staffMembers = await client.get<StaffMember>('cp365_staffmembers', {
+          filter: `cp365_workemail eq '${email}'`,
+          top: 1,
+          select: [
+            'cp365_staffmemberid',
+            'cp365_staffmembername',
+            'cp365_forename',
+            'cp365_surname',
+            'cp365_staffnumber',
+            'cp365_workemail',
+            'cp365_staffstatus',
+            'cp365_agencyworker',
+            '_cp365_defaultlocation_value',
+          ],
+        });
 
-      if (staffMembers.length > 0) {
-        return staffMembers[0];
+        if (staffMembers.length > 0) {
+          return staffMembers[0];
+        }
+
+        console.warn(`No staff member found for email: ${email}`);
+        return null;
+      } catch (error) {
+        console.error('Failed to fetch staff member:', error);
+        setError('Failed to load user profile from CarePoint');
+        return null;
+      } finally {
+        setLoadingStaffMember(false);
       }
-
-      console.warn(`No staff member found for email: ${email}`);
-      return null;
-    } catch (error) {
-      console.error('Failed to fetch staff member:', error);
-      setError('Failed to load user profile from CarePoint');
-      return null;
-    } finally {
-      setLoadingStaffMember(false);
-    }
-  }, [initialiseDataverseClient, setLoadingStaffMember, setError]);
+    },
+    [initialiseDataverseClient, setLoadingStaffMember, setError]
+  );
 
   /**
    * Convert MSAL account to AzureUser
@@ -238,25 +229,20 @@ export function useAuth() {
       initialisedRef.current = true;
 
       // Initialize Dataverse client FIRST (before fetching staff member)
-      console.log('[useAuth] Initializing Dataverse client...');
       initialiseDataverseClient();
-      console.log('[useAuth] Dataverse client initialized, isDataverseReady should now be true');
 
       // Fetch staff member if not already loaded
       if (!staffMember || staffMember.cp365_workemail !== user.email) {
-        console.log('[useAuth] Fetching staff member for:', user.email);
-        fetchStaffMember(user.email).then((member) => {
-          if (member) {
-            console.log('[useAuth] Staff member found:', member.cp365_staffmembername);
-            setStaffMember(member);
-          } else {
-            console.log('[useAuth] No staff member found for email');
-          }
-          setLoading(false);
-        }).catch((error) => {
-          console.error('[useAuth] Error fetching staff member:', error);
-          setLoading(false);
-        });
+        fetchStaffMember(user.email)
+          .then((member) => {
+            if (member) {
+              setStaffMember(member);
+            }
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       } else {
         setLoading(false);
       }
@@ -307,12 +293,14 @@ export function useAuth() {
  */
 export function useUserDisplayName(): string {
   const { staffMember, azureUser } = useAuthStore();
-  
+
   if (staffMember) {
-    return staffMember.cp365_staffmembername || 
-      `${staffMember.cp365_forename} ${staffMember.cp365_surname}`;
+    return (
+      staffMember.cp365_staffmembername ||
+      `${staffMember.cp365_forename} ${staffMember.cp365_surname}`
+    );
   }
-  
+
   return azureUser?.name || 'User';
 }
 

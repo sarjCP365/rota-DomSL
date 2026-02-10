@@ -10,7 +10,7 @@ interface StaffListProps {
   onSelectStaff?: (staffId: string) => void;
 }
 
-export function StaffList({ onSelectStaff }: StaffListProps) {
+export function StaffList({ onSelectStaff: _onSelectStaff }: StaffListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [includeLeavers, setIncludeLeavers] = useState(false);
 
@@ -73,4 +73,3 @@ export function StaffList({ onSelectStaff }: StaffListProps) {
     </div>
   );
 }
-

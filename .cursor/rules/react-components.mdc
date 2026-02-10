@@ -1,0 +1,43 @@
+---
+description: React component patterns and best practices
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# React Component Standards
+
+## Component Size
+- Split components exceeding ~150-200 lines
+- Extract data logic into custom hooks (container/presenter pattern)
+- If you use "and" to describe what a component does, split it
+
+## Props Design
+- Always define explicit TypeScript prop interfaces
+- Use object destructuring in function parameters
+- Provide sensible defaults for optional props
+
+## State Management
+- Keep state as local as possible
+- Use React Query for server data (not useState + useEffect)
+- Use Zustand stores only for genuinely global client state
+- Prefer `useCallback` and `useMemo` only when measurably needed
+
+## Error Handling
+- Wrap feature sections in `<FeatureErrorBoundary>`
+- Handle async errors with try/catch in mutation callbacks
+- Always show loading and error states to the user
+
+## Patterns to Follow
+```typescript
+// Good: Separate data hook from presentation
+const MyFeature = () => {
+  const { data, isLoading, error } = useMyData();
+  if (isLoading) return <Loading />;
+  if (error) return <ErrorMessage error={error} />;
+  return <MyFeatureView data={data} />;
+};
+
+// Good: Early returns for guard clauses
+// Good: Stable keys on lists (never array index for dynamic lists)
+// Good: Controlled components for form inputs
+```

@@ -11,23 +11,28 @@ import { persist } from 'zustand/middleware';
 // Types
 // =============================================================================
 
-export type ViewMode = 'day' | 'week' | 'month';
+/**
+ * Navigation view mode — which time-period view the user is on.
+ * Distinct from RotaStore's ViewMode which controls grid layout
+ * (team/people/shiftReference).
+ */
+export type NavigationView = 'day' | 'week' | 'month';
 
 interface SettingsState {
   // Location settings
   selectedLocationId: string;
   selectedSublocationId: string;
-  
+
   // View preferences
-  lastViewMode: ViewMode;
+  lastViewMode: NavigationView;
   lastSelectedDate: string; // ISO date string
-  
+
   // Actions
   setSelectedLocationId: (id: string) => void;
   setSelectedSublocationId: (id: string) => void;
-  setLastViewMode: (mode: ViewMode) => void;
+  setLastViewMode: (mode: NavigationView) => void;
   setLastSelectedDate: (date: Date) => void;
-  
+
   // Batch update
   setLocationAndSublocation: (locationId: string, sublocationId: string) => void;
 }
@@ -44,22 +49,24 @@ export const useSettingsStore = create<SettingsState>()(
       selectedSublocationId: '',
       lastViewMode: 'week',
       lastSelectedDate: new Date().toISOString().split('T')[0],
-      
+
       // Actions
       setSelectedLocationId: (id) => set({ selectedLocationId: id }),
-      
+
       setSelectedSublocationId: (id) => set({ selectedSublocationId: id }),
-      
+
       setLastViewMode: (mode) => set({ lastViewMode: mode }),
-      
-      setLastSelectedDate: (date) => set({ 
-        lastSelectedDate: date.toISOString().split('T')[0] 
-      }),
-      
-      setLocationAndSublocation: (locationId, sublocationId) => set({
-        selectedLocationId: locationId,
-        selectedSublocationId: sublocationId,
-      }),
+
+      setLastSelectedDate: (date) =>
+        set({
+          lastSelectedDate: date.toISOString().split('T')[0],
+        }),
+
+      setLocationAndSublocation: (locationId, sublocationId) =>
+        set({
+          selectedLocationId: locationId,
+          selectedSublocationId: sublocationId,
+        }),
     }),
     {
       name: 'carepoint-settings',
@@ -78,17 +85,14 @@ export const useSettingsStore = create<SettingsState>()(
 // Selectors (for performance optimisation)
 // =============================================================================
 
-export const useSelectedLocationId = () => 
-  useSettingsStore((state) => state.selectedLocationId);
+export const useSelectedLocationId = () => useSettingsStore((state) => state.selectedLocationId);
 
-export const useSelectedSublocationId = () => 
+export const useSelectedSublocationId = () =>
   useSettingsStore((state) => state.selectedSublocationId);
 
-export const useLastViewMode = () => 
-  useSettingsStore((state) => state.lastViewMode);
+export const useLastViewMode = () => useSettingsStore((state) => state.lastViewMode);
 
-export const useLastSelectedDate = () => 
-  useSettingsStore((state) => state.lastSelectedDate);
+export const useLastSelectedDate = () => useSettingsStore((state) => state.lastSelectedDate);
 
 // =============================================================================
 // Helper hooks
@@ -103,7 +107,7 @@ export function useLocationSettings() {
   const setSelectedLocationId = useSettingsStore((s) => s.setSelectedLocationId);
   const setSelectedSublocationId = useSettingsStore((s) => s.setSelectedSublocationId);
   const setLocationAndSublocation = useSettingsStore((s) => s.setLocationAndSublocation);
-  
+
   return {
     selectedLocationId,
     selectedSublocationId,
@@ -121,7 +125,7 @@ export function useViewPreferences() {
   const lastSelectedDate = useSettingsStore((s) => s.lastSelectedDate);
   const setLastViewMode = useSettingsStore((s) => s.setLastViewMode);
   const setLastSelectedDate = useSettingsStore((s) => s.setLastSelectedDate);
-  
+
   return {
     lastViewMode,
     lastSelectedDate,
@@ -131,4 +135,3 @@ export function useViewPreferences() {
 }
 
 export default useSettingsStore;
-

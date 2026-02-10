@@ -7,4 +7,3 @@ export * from './dateUtils';
 export * from './shiftUtils';
 export * from './formatters';
 export * from './attendanceStatus';
-

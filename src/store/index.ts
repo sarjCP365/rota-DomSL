@@ -4,7 +4,7 @@
  */
 
 // Auth Store
-export { 
+export {
   useAuthStore,
   selectUserDisplayName,
   selectUserEmail,
@@ -15,9 +15,8 @@ export {
 } from './authStore';
 
 // Rota Store
-export { 
+export {
   useRotaStore,
-  selectHasLocation,
   selectShiftCount,
   selectUnassignedCount,
   selectSelectedCount,
@@ -26,8 +25,20 @@ export {
   type FlyoutMode,
 } from './rotaStore';
 
+// Settings Store
+export {
+  useSettingsStore,
+  useLocationSettings,
+  useViewPreferences,
+  useSelectedLocationId,
+  useSelectedSublocationId,
+  useLastViewMode,
+  useLastSelectedDate,
+  type NavigationView,
+} from './settingsStore';
+
 // UI Store
-export { 
+export {
   useUIStore,
   selectIsSidebarVisible,
   selectNotificationCount,

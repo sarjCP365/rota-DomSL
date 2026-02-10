@@ -42,11 +42,7 @@ export function getDateRange(startDate: Date, days: number): Date[] {
  * Calculate the zone identifier for a shift (used for grid positioning)
  * Zone format: "{dayIndex}|{staffMemberId}" or "{dayIndex}|unassigned"
  */
-export function calculateZone(
-  shiftDate: Date,
-  startDate: Date,
-  staffMemberId?: string
-): string {
+export function calculateZone(shiftDate: Date, startDate: Date, staffMemberId?: string): string {
   const dayIndex = differenceInDays(shiftDate, startDate) + 1;
   return staffMemberId ? `${dayIndex}|${staffMemberId}` : `${dayIndex}|unassigned`;
 }
@@ -126,4 +122,3 @@ export function getPreviousPeriod(currentDate: Date, duration: 7 | 14 | 28): Dat
   const weeks = duration === 28 ? 4 : duration === 14 ? 2 : 1;
   return addWeeks(currentDate, -weeks);
 }
-

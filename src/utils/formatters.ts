@@ -99,11 +99,7 @@ export function formatStaffId(id: string | number, length: number = 6): string {
 /**
  * Pluralise a word
  */
-export function pluralise(
-  count: number,
-  singular: string,
-  plural?: string
-): string {
+export function pluralise(count: number, singular: string, plural?: string): string {
   if (count === 1) return singular;
   return plural || `${singular}s`;
 }
@@ -126,4 +122,3 @@ export function formatRelativeTime(date: Date): string {
 
   return date.toLocaleDateString('en-GB');
 }
-

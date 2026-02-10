@@ -1,40 +1,40 @@
 /**
  * Staff API Operations
  * ===================
- * 
+ *
  * This module provides standardised functions for fetching staff data from Dataverse.
- * 
+ *
  * CRITICAL: UNDERSTANDING STAFF-SUBLOCATION RELATIONSHIPS
  * ========================================================
- * 
+ *
  * Staff members are NOT directly linked to sublocations via a field on the staff entity.
  * Instead, they are assigned through the `cp365_sublocationstaffs` JUNCTION TABLE.
- * 
+ *
  * Schema:
  *   cp365_staffmembers <--> cp365_sublocationstaffs <--> cp365_sublocations
- * 
+ *
  * The `_cp365_defaultlocation_value` field on StaffMember is the staff's DEFAULT/PRIMARY
  * location, but a staff member can work at MULTIPLE sublocations via the junction table.
- * 
+ *
  * ALWAYS use the junction table when filtering staff by sublocation!
- * 
+ *
  * Usage Examples:
  * ```typescript
  * // Get all staff for a sublocation (for dropdowns, assignments, etc.)
  * const staff = await getStaffForSublocation(sublocationId);
- * 
+ *
  * // Get staff with full view data (for rota grids)
  * const staffViewData = await getStaffViewDataForSublocation(sublocationId);
- * 
+ *
  * // Get a single staff member by ID
  * const staffMember = await getStaffMemberById(staffId);
  * ```
- * 
+ *
  * @module staff
  */
 
 import { getDataverseClient, isDataverseClientInitialised } from './client';
-import type { StaffMember, SublocationStaff, SublocationStaffViewData, StaffAbsenceLog } from './types';
+import type { StaffMember, SublocationStaff, SublocationStaffViewData } from './types';
 import { StaffStatus } from './types';
 
 // =============================================================================
@@ -73,20 +73,20 @@ const STAFF_EXTENDED_FIELDS = [
 
 /**
  * Get staff members for a sublocation.
- * 
+ *
  * This is the PRIMARY function for fetching staff by location.
  * Uses the cp365_sublocationstaffs junction table to get correctly assigned staff.
- * 
+ *
  * @param sublocationId - The sublocation GUID to get staff for
  * @param options - Optional configuration
  * @param options.activeOnly - If true, only return active staff (default: false)
  * @returns Array of StaffMember entities
- * 
+ *
  * @example
  * ```typescript
  * // Get all staff for a sublocation
  * const staff = await getStaffForSublocation('guid-here');
- * 
+ *
  * // Get only active staff
  * const activeStaff = await getStaffForSublocation('guid-here', { activeOnly: true });
  * ```
@@ -106,7 +106,6 @@ export async function getStaffForSublocation(
   }
 
   const client = getDataverseClient();
-  console.log('[Staff] Fetching staff for sublocation:', sublocationId);
 
   try {
     // Query the junction table with expanded staff member data
@@ -119,14 +118,10 @@ export async function getStaffForSublocation(
         'cp365_visibleto',
       ],
       // NOTE: Navigation property names vary by entity - this one uses the type alias format
-      expand: [
-        `cp365_StaffMember($select=${STAFF_BASE_FIELDS.join(',')})`
-      ],
+      expand: [`cp365_StaffMember($select=${STAFF_BASE_FIELDS.join(',')})`],
       orderby: 'cp365_sublocationstaffname asc',
       top: 500,
     });
-
-    console.log('[Staff] Found', sublocationStaff.length, 'sublocation staff assignments');
 
     // Extract staff members from the junction records
     const staffMembers: StaffMember[] = [];
@@ -144,7 +139,6 @@ export async function getStaffForSublocation(
       }
     }
 
-    console.log('[Staff] Fetched', staffMembers.length, 'staff members for sublocation');
     return staffMembers;
   } catch (error) {
     console.error('[Staff] Error fetching staff for sublocation:', error);
@@ -154,13 +148,13 @@ export async function getStaffForSublocation(
 
 /**
  * Get staff view data for a sublocation (for RotaGrid display).
- * 
+ *
  * Returns staff in the SublocationStaffViewData format with additional
  * display-friendly fields like formatted names, job titles, etc.
- * 
+ *
  * @param sublocationId - The sublocation GUID to get staff for
  * @returns Array of SublocationStaffViewData for grid display
- * 
+ *
  * @example
  * ```typescript
  * const staffViewData = await getStaffViewDataForSublocation('guid-here');
@@ -181,7 +175,6 @@ export async function getStaffViewDataForSublocation(
   }
 
   const client = getDataverseClient();
-  console.log('[Staff] Fetching staff view data for sublocation:', sublocationId);
 
   try {
     // Query with expanded staff member data including job title
@@ -196,13 +189,11 @@ export async function getStaffViewDataForSublocation(
       ],
       // NOTE: Navigation property names vary by entity - this one uses the type alias format
       expand: [
-        'cp365_StaffMember($select=cp365_staffmemberid,cp365_staffmembername,cp365_forename,cp365_surname,cp365_staffstatus,cp365_dateofbirth,_cp365_jobtitle_value;$expand=cp365_JobTitle($select=cp365_jobtitleid,cp365_jobtitlename))'
+        'cp365_StaffMember($select=cp365_staffmemberid,cp365_staffmembername,cp365_forename,cp365_surname,cp365_staffstatus,cp365_dateofbirth,_cp365_jobtitle_value;$expand=cp365_JobTitle($select=cp365_jobtitleid,cp365_jobtitlename))',
       ],
       orderby: 'cp365_sublocationstaffname asc',
       top: 200,
     });
-
-    console.log('[Staff] Found', sublocationStaff.length, 'sublocation staff assignments for view');
 
     // Map to SublocationStaffViewData format
     return sublocationStaff.map((ss): SublocationStaffViewData => {
@@ -216,7 +207,8 @@ export async function getStaffViewDataForSublocation(
       // Get job title from expanded relationship (property name matches $expand clause)
       const staffMemberExpanded = staffMember as unknown as Record<string, unknown> | undefined;
       const jobTitleObj = staffMemberExpanded?.cp365_JobTitle;
-      const jobTitleName = (jobTitleObj as { cp365_jobtitlename?: string } | undefined)?.cp365_jobtitlename || null;
+      const jobTitleName =
+        (jobTitleObj as { cp365_jobtitlename?: string } | undefined)?.cp365_jobtitlename || null;
 
       return {
         'Staff Member ID': ss._cp365_staffmember_value,
@@ -226,8 +218,9 @@ export async function getStaffViewDataForSublocation(
         'Job Title Name': jobTitleName,
         'Job Type Name': null,
         'Staff Teams': [],
-        'Department': null,
-        'Date of Birth': (staffMember as unknown as { cp365_dateofbirth?: string })?.cp365_dateofbirth || null,
+        Department: null,
+        'Date of Birth':
+          (staffMember as unknown as { cp365_dateofbirth?: string })?.cp365_dateofbirth || null,
       };
     });
   } catch (error) {
@@ -242,13 +235,11 @@ export async function getStaffViewDataForSublocation(
 
 /**
  * Get a single staff member by ID.
- * 
+ *
  * @param staffId - The staff member GUID
  * @returns The staff member or null if not found
  */
-export async function getStaffMemberById(
-  staffId: string
-): Promise<StaffMember | null> {
+export async function getStaffMemberById(staffId: string): Promise<StaffMember | null> {
   if (!isDataverseClientInitialised()) {
     console.warn('[Staff] Dataverse client not initialised');
     return null;
@@ -271,13 +262,11 @@ export async function getStaffMemberById(
 
 /**
  * Get a staff member by email address.
- * 
+ *
  * @param email - The work email address to search for
  * @returns The staff member or null if not found
  */
-export async function getStaffMemberByEmail(
-  email: string
-): Promise<StaffMember | null> {
+export async function getStaffMemberByEmail(email: string): Promise<StaffMember | null> {
   if (!isDataverseClientInitialised()) {
     console.warn('[Staff] Dataverse client not initialised');
     return null;
@@ -307,10 +296,10 @@ export async function getStaffMemberByEmail(
 
 /**
  * Get all staff members (optionally filtered).
- * 
+ *
  * Use this when you need ALL staff regardless of sublocation,
  * for example in admin screens or reports.
- * 
+ *
  * @param options - Optional filters
  * @param options.activeOnly - Only return active staff (default: true)
  * @returns Array of staff members
@@ -324,7 +313,6 @@ export async function getAllStaffMembers(
   }
 
   const client = getDataverseClient();
-  console.log('[Staff] Fetching all staff members, activeOnly:', options.activeOnly);
 
   try {
     const filters: string[] = [];
@@ -339,7 +327,6 @@ export async function getAllStaffMembers(
       top: 1000,
     });
 
-    console.log('[Staff] Fetched', staff.length, 'staff members');
     return staff;
   } catch (error) {
     console.error('[Staff] Error fetching all staff members:', error);
@@ -355,9 +342,7 @@ export async function getAllStaffMembers(
  * @deprecated Use getStaffForSublocation instead.
  * This function is kept for backwards compatibility with existing hooks.
  */
-export async function getStaffMembers(
-  sublocationId?: string
-): Promise<StaffMember[]> {
+export async function getStaffMembers(sublocationId?: string): Promise<StaffMember[]> {
   if (sublocationId) {
     return getStaffForSublocation(sublocationId);
   }
@@ -384,9 +369,7 @@ export async function getSublocationStaff(
  * Create a new staff member.
  * @todo Implement when staff management features are built
  */
-export async function createStaffMember(
-  _staff: Partial<StaffMember>
-): Promise<StaffMember> {
+export async function createStaffMember(_staff: Partial<StaffMember>): Promise<StaffMember> {
   throw new Error('createStaffMember not yet implemented');
 }
 

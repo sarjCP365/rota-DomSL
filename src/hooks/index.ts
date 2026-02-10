@@ -10,3 +10,5 @@ export * from './useRotaData';
 export * from './useLocations';
 export * from './useUnits';
 export * from './useHierarchicalRotaData';
+export * from './useServiceUserRota';
+export * from './useStaffAvailability';

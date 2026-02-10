@@ -5,20 +5,21 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Header } from '../../components/common/Header';
-import { SideNav } from '../../components/common/SideNav';
-import { useLocations } from '../../hooks/useLocations';
-import { useUnitsByLocation, useDeactivateUnit } from '../../hooks/useUnits';
-import { UnitForm } from '../../components/admin/UnitForm';
-import { TeamUnitAssignment } from '../../components/admin/TeamUnitAssignment';
-import type { Unit } from '../../api/dataverse/types';
-import { UnitTypeCode } from '../../api/dataverse/types';
-import { 
-  Search, 
-  Plus, 
-  Building2, 
-  Edit2, 
-  Trash2, 
+import { Header } from '@/components/common/Header';
+import { SideNav } from '@/components/common/SideNav';
+import { FeatureErrorBoundary } from '@/components/common/ErrorBoundary';
+import { useLocations } from '@/hooks/useLocations';
+import { useUnitsByLocation, useDeactivateUnit } from '@/hooks/useUnits';
+import { UnitForm } from '@/components/admin/UnitForm';
+import { TeamUnitAssignment } from '@/components/admin/TeamUnitAssignment';
+import type { Unit } from '@/api/dataverse/types';
+import { UnitTypeCode } from '@/api/dataverse/types';
+import {
+  Search,
+  Plus,
+  Building2,
+  Edit2,
+  Trash2,
   Users,
   ChevronDown,
   AlertCircle,
@@ -28,7 +29,7 @@ import {
 /**
  * Get display name for unit type code
  */
-function getUnitTypeName(typeCode: number | null): string {
+function _getUnitTypeName(typeCode: number | null): string {
   switch (typeCode) {
     case UnitTypeCode.Dementia:
       return 'Dementia';
@@ -46,7 +47,7 @@ function getUnitTypeName(typeCode: number | null): string {
 }
 
 export function UnitsManagement() {
-  const [sideNavOpen, setSideNavOpen] = useState(true);
+  const [sideNavOpen, _setSideNavOpen] = useState(true);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showUnitForm, setShowUnitForm] = useState(false);
@@ -63,9 +64,7 @@ export function UnitsManagement() {
   const filteredUnits = useMemo(() => {
     if (!searchTerm.trim()) return units;
     const search = searchTerm.toLowerCase();
-    return units.filter(
-      (unit) => unit.cp365_unitname.toLowerCase().includes(search)
-    );
+    return units.filter((unit) => unit.cp365_unitname.toLowerCase().includes(search));
   }, [units, searchTerm]);
 
   // Handlers
@@ -110,7 +109,9 @@ export function UnitsManagement() {
       <Header title="Units Management" showBackButton onBack={() => window.history.back()} />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideNav isOpen={sideNavOpen} />
+        <FeatureErrorBoundary featureName="Navigation">
+          <SideNav isOpen={sideNavOpen} />
+        </FeatureErrorBoundary>
 
         <main className="flex flex-1 flex-col overflow-auto bg-white p-6">
           {/* Page Header */}
@@ -118,7 +119,8 @@ export function UnitsManagement() {
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Units</h2>
               <p className="mt-1 text-sm text-gray-500">
-                Manage organizational units within locations. Units group teams and staff for the hierarchical rota view.
+                Manage organizational units within locations. Units group teams and staff for the
+                hierarchical rota view.
               </p>
             </div>
           </div>
@@ -225,9 +227,15 @@ export function UnitsManagement() {
               <table className="w-full">
                 <thead className="bg-elevation-1">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Unit Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-grey">
@@ -293,8 +301,9 @@ export function UnitsManagement() {
               <div className="text-sm text-blue-700">
                 <p className="font-medium">About Units</p>
                 <p className="mt-1">
-                  Units represent organizational groupings within a location (e.g., Dementia Unit, Ward A).
-                  Teams can be assigned to units, and the rota view will group staff by Unit → Team → Staff.
+                  Units represent organizational groupings within a location (e.g., Dementia Unit,
+                  Ward A). Teams can be assigned to units, and the rota view will group staff by
+                  Unit → Team → Staff.
                 </p>
               </div>
             </div>
@@ -314,12 +323,8 @@ export function UnitsManagement() {
 
       {/* Team Assignment Modal */}
       {showTeamAssignment && selectedUnitForTeams && (
-        <TeamUnitAssignment
-          unit={selectedUnitForTeams}
-          onClose={handleTeamAssignmentClose}
-        />
+        <TeamUnitAssignment unit={selectedUnitForTeams} onClose={handleTeamAssignmentClose} />
       )}
     </div>
   );
 }
-

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { usePatternAssignments } from '../../hooks/usePatternAssignments';
 import type { StaffPatternAssignment } from '../../types';
-import { AssignmentStatus, AssignmentStatusLabels } from '../../types';
+import { AssignmentStatusLabels } from '../../types';
 
 interface PatternAssignedStaffProps {
   patternTemplateId: string;
@@ -29,13 +29,20 @@ interface PatternAssignedStaffProps {
 
 type FilterStatus = 'all' | 'active' | 'ended' | 'future';
 
-export function PatternAssignedStaff({ patternTemplateId, patternName }: PatternAssignedStaffProps) {
+export function PatternAssignedStaff({
+  patternTemplateId,
+  patternName: _patternName,
+}: PatternAssignedStaffProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
 
   // Fetch assignments (include ended ones for auditing)
-  const { data: assignments = [], isLoading, isError } = usePatternAssignments(
+  const {
+    data: assignments = [],
+    isLoading,
+    isError,
+  } = usePatternAssignments(
     patternTemplateId,
     false // activeOnly = false to include all assignments
   );
@@ -45,8 +52,10 @@ export function PatternAssignedStaff({ patternTemplateId, patternName }: Pattern
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return assignments.map(assignment => {
-      const startDate = assignment.cp365_sp_startdate ? parseISO(assignment.cp365_sp_startdate) : null;
+    return assignments.map((assignment) => {
+      const startDate = assignment.cp365_sp_startdate
+        ? parseISO(assignment.cp365_sp_startdate)
+        : null;
       const endDate = assignment.cp365_sp_enddate ? parseISO(assignment.cp365_sp_enddate) : null;
 
       let status: FilterStatus = 'active';
@@ -65,7 +74,7 @@ export function PatternAssignedStaff({ patternTemplateId, patternName }: Pattern
 
   // Apply filters
   const filteredAssignments = useMemo(() => {
-    return categorizedAssignments.filter(assignment => {
+    return categorizedAssignments.filter((assignment) => {
       // Status filter
       if (filterStatus !== 'all' && assignment.calculatedStatus !== filterStatus) {
         return false;
@@ -77,7 +86,7 @@ export function PatternAssignedStaff({ patternTemplateId, patternName }: Pattern
         const staffName = assignment.cp365_staffmember?.cp365_staffmembername?.toLowerCase() || '';
         const forename = assignment.cp365_staffmember?.cp365_forename?.toLowerCase() || '';
         const surname = assignment.cp365_staffmember?.cp365_surname?.toLowerCase() || '';
-        
+
         return staffName.includes(search) || forename.includes(search) || surname.includes(search);
       }
 
@@ -87,11 +96,11 @@ export function PatternAssignedStaff({ patternTemplateId, patternName }: Pattern
 
   // Summary stats
   const stats = useMemo(() => {
-    const active = categorizedAssignments.filter(a => a.calculatedStatus === 'active').length;
-    const ended = categorizedAssignments.filter(a => a.calculatedStatus === 'ended').length;
-    const future = categorizedAssignments.filter(a => a.calculatedStatus === 'future').length;
+    const active = categorizedAssignments.filter((a) => a.calculatedStatus === 'active').length;
+    const ended = categorizedAssignments.filter((a) => a.calculatedStatus === 'ended').length;
+    const future = categorizedAssignments.filter((a) => a.calculatedStatus === 'future').length;
     const total = categorizedAssignments.length;
-    const uniqueStaff = new Set(categorizedAssignments.map(a => a._cp365_staffmember_value)).size;
+    const uniqueStaff = new Set(categorizedAssignments.map((a) => a._cp365_staffmember_value)).size;
 
     return { active, ended, future, total, uniqueStaff };
   }, [categorizedAssignments]);
@@ -246,10 +255,10 @@ export function PatternAssignedStaff({ patternTemplateId, patternName }: Pattern
                 assignment={assignment}
                 calculatedStatus={assignment.calculatedStatus}
                 isExpanded={expandedAssignment === assignment.cp365_staffpatternassignmentid}
-                onToggle={() => 
+                onToggle={() =>
                   setExpandedAssignment(
-                    expandedAssignment === assignment.cp365_staffpatternassignmentid 
-                      ? null 
+                    expandedAssignment === assignment.cp365_staffpatternassignmentid
+                      ? null
                       : assignment.cp365_staffpatternassignmentid
                   )
                 }
@@ -271,15 +280,22 @@ interface AssignmentRowProps {
   getStatusBadge: (status: FilterStatus) => React.ReactNode;
 }
 
-function AssignmentRow({ assignment, calculatedStatus, isExpanded, onToggle, getStatusBadge }: AssignmentRowProps) {
-  const staffName = assignment.cp365_staffmember?.cp365_staffmembername || 
+function AssignmentRow({
+  assignment,
+  calculatedStatus,
+  isExpanded,
+  onToggle,
+  getStatusBadge,
+}: AssignmentRowProps) {
+  const staffName =
+    assignment.cp365_staffmember?.cp365_staffmembername ||
     `${assignment.cp365_staffmember?.cp365_forename || ''} ${assignment.cp365_staffmember?.cp365_surname || ''}`.trim() ||
     'Unknown Staff';
 
-  const startDate = assignment.cp365_sp_startdate 
+  const startDate = assignment.cp365_sp_startdate
     ? format(parseISO(assignment.cp365_sp_startdate), 'dd MMM yyyy')
     : 'No start date';
-  
+
   const endDate = assignment.cp365_sp_enddate
     ? format(parseISO(assignment.cp365_sp_enddate), 'dd MMM yyyy')
     : 'Ongoing';
@@ -351,7 +367,9 @@ function AssignmentRow({ assignment, calculatedStatus, isExpanded, onToggle, get
             </div>
             <div>
               <span className="block text-slate-500">Rotation Start Week</span>
-              <span className="text-slate-700">Week {assignment.cp365_sp_rotationstartweek || 1}</span>
+              <span className="text-slate-700">
+                Week {assignment.cp365_sp_rotationstartweek || 1}
+              </span>
             </div>
             <div>
               <span className="block text-slate-500">Last Generated</span>
@@ -376,4 +394,3 @@ function AssignmentRow({ assignment, calculatedStatus, isExpanded, onToggle, get
     </div>
   );
 }
-

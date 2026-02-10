@@ -11,7 +11,10 @@ interface AgencyWorkerListProps {
   onCreateWorker?: () => void;
 }
 
-export function AgencyWorkerList({ onSelectWorker, onCreateWorker }: AgencyWorkerListProps) {
+export function AgencyWorkerList({
+  onSelectWorker: _onSelectWorker,
+  onCreateWorker,
+}: AgencyWorkerListProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // TODO: Implement data fetching
@@ -66,4 +69,3 @@ export function AgencyWorkerList({ onSelectWorker, onCreateWorker }: AgencyWorke
     </div>
   );
 }
-

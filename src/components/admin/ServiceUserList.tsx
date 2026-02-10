@@ -11,7 +11,10 @@ interface ServiceUserListProps {
   onCreateUser?: () => void;
 }
 
-export function ServiceUserList({ onSelectUser, onCreateUser }: ServiceUserListProps) {
+export function ServiceUserList({
+  onSelectUser: _onSelectUser,
+  onCreateUser,
+}: ServiceUserListProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // TODO: Implement data fetching
@@ -65,4 +68,3 @@ export function ServiceUserList({ onSelectUser, onCreateUser }: ServiceUserListP
     </div>
   );
 }
-

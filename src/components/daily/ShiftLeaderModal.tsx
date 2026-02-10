@@ -7,8 +7,8 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { X, UserCheck, AlertTriangle, Loader2 } from 'lucide-react';
-import { useUpdateShift } from '../../hooks/useShifts';
-import type { ShiftViewData } from '../../api/dataverse/types';
+import { useUpdateShift } from '@/hooks/useShifts';
+import type { ShiftViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // Types
@@ -33,7 +33,7 @@ function getInitials(name: string): string {
   if (!name || name === 'Unassigned') return '?';
   return name
     .split(' ')
-    .map(n => n[0])
+    .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
@@ -53,12 +53,7 @@ function formatShiftTime(shift: ShiftViewData): string {
 // Component
 // =============================================================================
 
-export function ShiftLeaderModal({
-  isOpen,
-  onClose,
-  shift,
-  onSave,
-}: ShiftLeaderModalProps) {
+export function ShiftLeaderModal({ isOpen, onClose, shift, onSave }: ShiftLeaderModalProps) {
   const [isShiftLeader, setIsShiftLeader] = useState(false);
   const [isActUp, setIsActUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +61,8 @@ export function ShiftLeaderModal({
   const updateShiftMutation = useUpdateShift();
   const isSubmitting = updateShiftMutation.isPending;
 
-  // Reset state when shift changes
+  // Reset state when shift changes - intentional sync for modal form editing
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (shift) {
       setIsShiftLeader(shift['Shift Leader'] || false);
@@ -74,6 +70,7 @@ export function ShiftLeaderModal({
       setError(null);
     }
   }, [shift]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Handle escape key
   useEffect(() => {
@@ -112,9 +109,8 @@ export function ShiftLeaderModal({
   const staffName = shift['Staff Member Name'] || 'Unassigned';
   const initials = getInitials(staffName);
   const shiftTime = formatShiftTime(shift);
-  const hasChanges = 
-    isShiftLeader !== (shift['Shift Leader'] || false) ||
-    isActUp !== (shift['Act Up'] || false);
+  const hasChanges =
+    isShiftLeader !== (shift['Shift Leader'] || false) || isActUp !== (shift['Act Up'] || false);
 
   return (
     <>
@@ -248,4 +244,3 @@ export function ShiftLeaderModal({
 }
 
 export default ShiftLeaderModal;
-

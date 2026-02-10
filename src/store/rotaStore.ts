@@ -7,14 +7,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { startOfWeek } from 'date-fns';
-import type { 
-  Location, 
-  Sublocation, 
-  Rota,
+import type {
   ShiftViewData,
   SublocationStaffViewData,
   StaffAbsenceLog,
-} from '../api/dataverse/types';
+} from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -55,73 +52,63 @@ export type FlyoutMode = 'view' | 'edit' | 'create' | null;
 
 /**
  * Rota state interface
+ *
+ * Note: Location/sublocation selection is managed by settingsStore
+ * (persisted to localStorage). This store handles rota grid state only.
  */
 interface RotaState {
   // =========================================================================
-  // LOCATION SELECTION
-  // =========================================================================
-  
-  /** Selected location */
-  selectedLocation: Location | null;
-  
-  /** Selected sublocation */
-  selectedSublocation: Sublocation | null;
-  
-  /** Selected/active rota */
-  selectedRota: Rota | null;
-
-  // =========================================================================
   // DATE CONTEXT
   // =========================================================================
-  
+
   /** Selected start date (should be a Monday) */
   selectedDate: Date;
-  
+
   /** View duration in days */
   duration: 7 | 14 | 28;
 
   // =========================================================================
   // VIEW MODE
   // =========================================================================
-  
+
   /** View mode (team hierarchy, people flat list, or shift reference coverage) */
   viewMode: ViewMode;
-  
+
   /** Detail level (detailed, compact, or hours only) */
   detailLevel: DetailLevel;
 
   // =========================================================================
   // GRID DATA
   // =========================================================================
-  
+
   /** Shifts from BuildNewRotaView flow */
   shifts: ShiftViewData[];
-  
+
   /** Staff members from sublocationstaff response */
   staff: SublocationStaffViewData[];
-  
+
   /** Processed staff rows for display */
   staffRows: StaffRow[];
-  
+
   /** Staff absences (TAFW) */
   absences: StaffAbsenceLog[];
-  
+
   /** Shifts from other rotas (dual-location) */
   otherRotaShifts: ShiftViewData[];
 
   // =========================================================================
   // SELECTION STATE
   // =========================================================================
-  
+
   /** Currently selected shift IDs */
   selectedShiftIds: Set<string>;
-  
+
   /** Shift ID for the flyout */
   flyoutShiftId: string | null;
-  
+
   /** Flyout mode */
   flyoutMode: FlyoutMode;
-  
+
   /** Cell being edited (for create mode) */
   flyoutCellData: {
     date: Date;
@@ -131,128 +118,115 @@ interface RotaState {
   // =========================================================================
   // LOADING STATES
   // =========================================================================
-  
+
   /** Whether rota data is loading */
   isLoadingRota: boolean;
-  
+
   /** Whether absences are loading */
   isLoadingAbsences: boolean;
-  
+
   /** Last data fetch timestamp */
   lastFetchTime: number | null;
 
   // =========================================================================
-  // ACTIONS - LOCATION
-  // =========================================================================
-  
-  /** Set selected location (clears sublocation and rota) */
-  setLocation: (location: Location | null) => void;
-  
-  /** Set selected sublocation (clears rota) */
-  setSublocation: (sublocation: Sublocation | null) => void;
-  
-  /** Set selected rota */
-  setRota: (rota: Rota | null) => void;
-
-  // =========================================================================
   // ACTIONS - DATE
   // =========================================================================
-  
+
   /** Set selected date */
   setDate: (date: Date) => void;
-  
+
   /** Set view duration */
   setDuration: (duration: 7 | 14 | 28) => void;
-  
+
   /** Navigate to previous period */
   goToPreviousPeriod: () => void;
-  
+
   /** Navigate to next period */
   goToNextPeriod: () => void;
-  
+
   /** Go to current week */
   goToToday: () => void;
 
   // =========================================================================
   // ACTIONS - VIEW MODE
   // =========================================================================
-  
+
   /** Set view mode */
   setViewMode: (mode: ViewMode) => void;
-  
+
   /** Set detail level */
   setDetailLevel: (level: DetailLevel) => void;
 
   // =========================================================================
   // ACTIONS - GRID DATA
   // =========================================================================
-  
+
   /** Set shifts data */
   setShifts: (shifts: ShiftViewData[]) => void;
-  
+
   /** Set staff data */
   setStaff: (staff: SublocationStaffViewData[]) => void;
-  
+
   /** Set absences data */
   setAbsences: (absences: StaffAbsenceLog[]) => void;
-  
+
   /** Set other rota shifts */
   setOtherRotaShifts: (shifts: ShiftViewData[]) => void;
-  
+
   /** Set loading state */
   setLoadingRota: (isLoading: boolean) => void;
-  
+
   /** Clear all rota data */
   clearRotaData: () => void;
 
   // =========================================================================
   // ACTIONS - SELECTION
   // =========================================================================
-  
+
   /** Select a single shift */
   selectShift: (shiftId: string) => void;
-  
+
   /** Deselect a shift */
   deselectShift: (shiftId: string) => void;
-  
+
   /** Toggle shift selection */
   toggleShiftSelection: (shiftId: string) => void;
-  
+
   /** Clear all selections */
   clearSelection: () => void;
-  
+
   /** Select all shifts */
   selectAllShifts: () => void;
-  
+
   /** Select shifts by staff member */
   selectShiftsByStaff: (staffMemberId: string) => void;
 
   // =========================================================================
   // ACTIONS - FLYOUT
   // =========================================================================
-  
+
   /** Open flyout for viewing/editing a shift */
   openFlyout: (shiftId: string, mode: 'view' | 'edit') => void;
-  
+
   /** Open flyout for creating a new shift */
   openCreateFlyout: (date: Date, staffMemberId: string | null) => void;
-  
+
   /** Close flyout */
   closeFlyout: () => void;
-  
+
   /** Set flyout mode */
   setFlyoutMode: (mode: FlyoutMode) => void;
 
   // =========================================================================
   // COMPUTED
   // =========================================================================
-  
+
   /** Get selected shifts */
   getSelectedShifts: () => ShiftViewData[];
-  
+
   /** Get unassigned shifts */
   getUnassignedShifts: () => ShiftViewData[];
-  
+
   /** Get shifts for a staff member */
   getShiftsForStaff: (staffMemberId: string) => ShiftViewData[];
 }
@@ -289,11 +263,6 @@ function processStaffRows(staff: SublocationStaffViewData[]): StaffRow[] {
 export const useRotaStore = create<RotaState>()(
   persist(
     (set, get) => ({
-      // Initial state - Location
-      selectedLocation: null,
-      selectedSublocation: null,
-      selectedRota: null,
-
       // Initial state - Date
       selectedDate: getCurrentMonday(),
       duration: 7,
@@ -319,33 +288,6 @@ export const useRotaStore = create<RotaState>()(
       isLoadingRota: false,
       isLoadingAbsences: false,
       lastFetchTime: null,
-
-      // =====================================================================
-      // LOCATION ACTIONS
-      // =====================================================================
-
-      setLocation: (location) =>
-        set({
-          selectedLocation: location,
-          selectedSublocation: null,
-          selectedRota: null,
-          shifts: [],
-          staff: [],
-          staffRows: [],
-          selectedShiftIds: new Set(),
-        }),
-
-      setSublocation: (sublocation) =>
-        set({
-          selectedSublocation: sublocation,
-          selectedRota: null,
-          shifts: [],
-          staff: [],
-          staffRows: [],
-          selectedShiftIds: new Set(),
-        }),
-
-      setRota: (rota) => set({ selectedRota: rota }),
 
       // =====================================================================
       // DATE ACTIONS
@@ -503,9 +445,8 @@ export const useRotaStore = create<RotaState>()(
       name: 'carepoint-rota',
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
-        // Only persist location selection, date, and view preferences - not data
-        selectedLocation: state.selectedLocation,
-        selectedSublocation: state.selectedSublocation,
+        // Only persist date and view preferences - not data
+        // Location/sublocation selection is managed by settingsStore
         selectedDate: state.selectedDate,
         duration: state.duration,
         viewMode: state.viewMode,
@@ -518,9 +459,10 @@ export const useRotaStore = create<RotaState>()(
         // Ensure selectedShiftIds is a Set
         selectedShiftIds: new Set(),
         // Convert date string back to Date
-        selectedDate: persisted && typeof (persisted as RotaState).selectedDate === 'string'
-          ? new Date((persisted as RotaState).selectedDate)
-          : current.selectedDate,
+        selectedDate:
+          persisted && typeof (persisted as RotaState).selectedDate === 'string'
+            ? new Date((persisted as RotaState).selectedDate)
+            : current.selectedDate,
       }),
     }
   )
@@ -529,13 +471,6 @@ export const useRotaStore = create<RotaState>()(
 // =============================================================================
 // SELECTORS
 // =============================================================================
-
-/**
- * Check if location is selected
- */
-export const selectHasLocation = (state: RotaState): boolean => {
-  return !!state.selectedLocation && !!state.selectedSublocation;
-};
 
 /**
  * Get total shift count

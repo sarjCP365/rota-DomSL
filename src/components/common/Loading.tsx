@@ -16,11 +16,7 @@ interface LoadingProps {
 /**
  * Full-screen loading overlay with spinner
  */
-export function Loading({ 
-  message = 'Loading...', 
-  fullScreen = true,
-  size = 'lg',
-}: LoadingProps) {
+export function Loading({ message = 'Loading...', fullScreen = true, size = 'lg' }: LoadingProps) {
   const sizeClasses = {
     sm: 'h-6 w-6 border-2',
     md: 'h-10 w-10 border-3',
@@ -38,16 +34,14 @@ export function Loading({
       <div className="flex flex-col items-center justify-center gap-3 p-8">
         <Spinner className={sizeClasses[size]} />
         {message && (
-          <p className={`font-medium text-gray-600 ${textSizeClasses[size]}`}>
-            {message}
-          </p>
+          <p className={`font-medium text-gray-600 ${textSizeClasses[size]}`}>{message}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm"
       role="status"
       aria-live="polite"
@@ -55,12 +49,7 @@ export function Loading({
       <div className="flex flex-col items-center gap-4">
         {/* Logo */}
         <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg">
-          <svg
-            className="h-9 w-9 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-9 w-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -75,9 +64,7 @@ export function Loading({
 
         {/* Message */}
         {message && (
-          <p className={`font-medium text-gray-700 ${textSizeClasses[size]}`}>
-            {message}
-          </p>
+          <p className={`font-medium text-gray-700 ${textSizeClasses[size]}`}>{message}</p>
         )}
 
         {/* Brand text */}
@@ -92,7 +79,7 @@ export function Loading({
  */
 function Spinner({ className = 'h-10 w-10 border-3' }: { className?: string }) {
   return (
-    <div 
+    <div
       className={`animate-spin rounded-full border-primary border-t-transparent ${className}`}
       aria-hidden="true"
     />
@@ -102,28 +89,16 @@ function Spinner({ className = 'h-10 w-10 border-3' }: { className?: string }) {
 /**
  * Inline loading spinner (for buttons, etc.)
  */
-export function LoadingSpinner({ 
+export function LoadingSpinner({
   className = 'h-5 w-5',
   color = 'currentColor',
-}: { 
+}: {
   className?: string;
   color?: string;
 }) {
   return (
-    <svg
-      className={`animate-spin ${className}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke={color}
-        strokeWidth="4"
-      />
+    <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke={color} strokeWidth="4" />
       <path
         className="opacity-75"
         fill={color}
@@ -136,17 +111,8 @@ export function LoadingSpinner({
 /**
  * Skeleton loading placeholder
  */
-export function Skeleton({ 
-  className = 'h-4 w-full',
-}: { 
-  className?: string;
-}) {
-  return (
-    <div 
-      className={`animate-pulse rounded bg-gray-200 ${className}`}
-      aria-hidden="true"
-    />
-  );
+export function Skeleton({ className = 'h-4 w-full' }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-gray-200 ${className}`} aria-hidden="true" />;
 }
 
 /**

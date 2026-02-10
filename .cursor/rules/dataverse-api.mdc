@@ -1,0 +1,28 @@
+---
+description: Dataverse Web API conventions and schema naming rules
+globs: src/api/dataverse/**/*.ts, src/repositories/dataverse/**/*.ts
+alwaysApply: false
+---
+
+# Dataverse API Rules
+
+## CRITICAL: Schema Naming
+- `$select` and `$filter`: Use **LogicalName** (always lowercase)
+- `$expand` and `@odata.bind`: Use **SchemaName** (casing VARIES by table — always check schema export)
+- Lookup values: `_logicalname_value` format
+
+## Before ANY Dataverse API Code
+1. Export schema first using DataverseSchemaExporter (see `docs/templates/`)
+2. Document exact LogicalName and SchemaName for every column
+3. NEVER assume naming conventions — always verify against schema
+
+## Best Practices
+- Two-step creation: Create the record first, then associate lookups separately
+- Validate GUIDs before API calls
+- Never include `@odata.bind` with null or undefined values
+- Use the `DataverseClient` singleton from `src/api/dataverse/client.ts`
+- Handle `DataverseError` explicitly — check `statusCode` and `errorCode`
+
+## Reference Documents
+- `docs/DATAVERSE-DEVELOPMENT-GUIDE.md` — Full guide with examples
+- `docs/templates/DataverseSchemaExporter.tsx` — Schema discovery tool

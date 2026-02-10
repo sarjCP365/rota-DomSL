@@ -1,9 +1,9 @@
 /**
  * PeopleViewGrid Component
- * 
+ *
  * Displays the rota as a flat list of staff members without unit/team grouping.
  * This is the "View by People" mode - focuses on individual schedules.
- * 
+ *
  * Features:
  * - Flat staff list sorted alphabetically by default
  * - Multiple sort options (name, hours, job title)
@@ -16,9 +16,9 @@
 
 import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay, differenceInDays } from 'date-fns';
-import { 
-  AlertCircle,  
-  ArrowUpDown, 
+import {
+  AlertCircle,
+  ArrowUpDown,
   ChevronDown,
   Search,
   X,
@@ -30,9 +30,9 @@ import {
   Users,
   Loader2,
 } from 'lucide-react';
-import type { ShiftViewData, SublocationStaffViewData } from '../../api/dataverse/types';
-import type { DetailLevel } from '../../store/rotaStore';
-import { usePublishShifts } from '../../hooks/useShifts';
+import type { ShiftViewData, SublocationStaffViewData } from '@/api/dataverse/types';
+import type { DetailLevel } from '@/store/rotaStore';
+import { usePublishShifts } from '@/hooks/useShifts';
 import { QuickAssignPopover } from './QuickAssignPopover';
 import { BulkAssignModal } from './BulkAssignModal';
 
@@ -41,12 +41,7 @@ import { BulkAssignModal } from './BulkAssignModal';
 // =============================================================================
 
 /** Sort options for people view */
-export type SortOption = 
-  | 'name-asc' 
-  | 'name-desc' 
-  | 'hours-high' 
-  | 'hours-low' 
-  | 'jobTitle';
+export type SortOption = 'name-asc' | 'name-desc' | 'hours-high' | 'hours-low' | 'jobTitle';
 
 /** Filter state */
 export interface FilterState {
@@ -166,12 +161,8 @@ function HoursDisplay({ allocated, contracted }: HoursDisplayProps) {
 
   return (
     <div className="flex flex-col items-center">
-      <span className={`text-sm font-medium ${colorClass}`}>
-        {allocated}h
-      </span>
-      <span className="text-[10px] text-gray-400">
-        / {contracted}h
-      </span>
+      <span className={`text-sm font-medium ${colorClass}`}>{allocated}h</span>
+      <span className="text-[10px] text-gray-400">/ {contracted}h</span>
     </div>
   );
 }
@@ -182,14 +173,14 @@ function HoursDisplay({ allocated, contracted }: HoursDisplayProps) {
 
 function getShiftType(shift: ShiftViewData): 'day' | 'night' | 'sleepIn' {
   if (shift['Sleep In']) return 'sleepIn';
-  
+
   const shiftType = shift['Shift Type']?.toLowerCase() || '';
   if (shiftType.includes('night')) return 'night';
   if (shiftType.includes('sleep')) return 'sleepIn';
-  
-  const startHour = shift['Shift Reference Start Hour'] ?? 
-    new Date(shift['Shift Start Time']).getHours();
-  
+
+  const startHour =
+    shift['Shift Reference Start Hour'] ?? new Date(shift['Shift Start Time']).getHours();
+
   if (startHour >= 20 || startHour < 6) return 'night';
   return 'day';
 }
@@ -243,7 +234,7 @@ export function PeopleViewGrid({
   const [internalFilters, setInternalFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
-  
+
   // Publish selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedForPublish, setSelectedForPublish] = useState<Set<string>>(new Set());
@@ -267,11 +258,11 @@ export function PeopleViewGrid({
         setShowPublishMenu(false);
       }
     };
-    
+
     if (showPublishMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -310,7 +301,7 @@ export function PeopleViewGrid({
   };
 
   const handleToggleShiftSelection = (shiftId: string) => {
-    setSelectedForPublish(prev => {
+    setSelectedForPublish((prev) => {
       const next = new Set(prev);
       if (next.has(shiftId)) {
         next.delete(shiftId);
@@ -372,13 +363,20 @@ export function PeopleViewGrid({
   }, [staff]);
 
   // Process shifts into grid structure
-  const { staffRows, unassignedShifts, unassignedShiftsList, unassignedCount, unpublishedCount, unpublishedShiftIds } = useMemo(() => {
+  const {
+    staffRows,
+    unassignedShifts,
+    unassignedShiftsList,
+    unassignedCount,
+    unpublishedCount,
+    unpublishedShiftIds,
+  } = useMemo(() => {
     // Process all shifts from current rota
     const processedShifts: ProcessedShift[] = shifts.map((shift) => {
       const shiftDate = new Date(shift['Shift Date']);
       const dayIndex = getDayIndex(shiftDate, startDate);
       const staffMemberId = shift['Staff Member ID'] || null;
-      
+
       return {
         ...shift,
         zone: calculateZone(dayIndex, staffMemberId),
@@ -395,7 +393,7 @@ export function PeopleViewGrid({
       const shiftDate = new Date(shift['Shift Date']);
       const dayIndex = getDayIndex(shiftDate, startDate);
       const staffMemberId = shift['Staff Member ID'] || null;
-      
+
       return {
         ...shift,
         zone: calculateZone(dayIndex, staffMemberId),
@@ -423,38 +421,38 @@ export function PeopleViewGrid({
     const rows: StaffRowData[] = staff
       .filter((s) => !!s['Staff Member ID']) // Skip staff with null/undefined IDs
       .map((s) => {
-      const staffId = s['Staff Member ID']!; // Non-null after filter
-      const staffShifts = shiftsByStaff.get(staffId) || [];
-      
-      // Group shifts by day
-      const cells = new Map<number, ProcessedShift[]>();
-      for (const shift of staffShifts) {
-        const existing = cells.get(shift.dayIndex) || [];
-        existing.push(shift);
-        cells.set(shift.dayIndex, existing);
-      }
+        const staffId = s['Staff Member ID']; // Non-null after filter
+        const staffShifts = shiftsByStaff.get(staffId) || [];
 
-      // Calculate total hours
-      const totalHours = staffShifts.reduce((sum, shift) => {
-        const start = new Date(shift['Shift Start Time']);
-        const end = new Date(shift['Shift End Time']);
-        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        const breakHours = (shift['Shift Break Duration'] || 0) / 60;
-        return sum + Math.max(0, hours - breakHours);
-      }, 0);
+        // Group shifts by day
+        const cells = new Map<number, ProcessedShift[]>();
+        for (const shift of staffShifts) {
+          const existing = cells.get(shift.dayIndex) || [];
+          existing.push(shift);
+          cells.set(shift.dayIndex, existing);
+        }
 
-      return {
-        staffMemberId: staffId,
-        staffMemberName: s['Staff Member Name'],
-        jobTitle: s['Job Title Name'],
-        department: s['Department'],
-        staffTeams: s['Staff Teams'] || [],
-        cells,
-        totalHours: Math.round(totalHours * 10) / 10,
-        contractedHours: s['Contracted Hours'] ?? null,
-        leave: s['Leave'] || [],
-      };
-    });
+        // Calculate total hours
+        const totalHours = staffShifts.reduce((sum, shift) => {
+          const start = new Date(shift['Shift Start Time']);
+          const end = new Date(shift['Shift End Time']);
+          const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+          const breakHours = (shift['Shift Break Duration'] || 0) / 60;
+          return sum + Math.max(0, hours - breakHours);
+        }, 0);
+
+        return {
+          staffMemberId: staffId,
+          staffMemberName: s['Staff Member Name'],
+          jobTitle: s['Job Title Name'],
+          department: s['Department'],
+          staffTeams: s['Staff Teams'] || [],
+          cells,
+          totalHours: Math.round(totalHours * 10) / 10,
+          contractedHours: s['Contracted Hours'] ?? null,
+          leave: s['Leave'] || [],
+        };
+      });
 
     // Get unassigned shifts grouped by day
     const unassigned = shiftsByStaff.get('unassigned') || [];
@@ -467,13 +465,13 @@ export function PeopleViewGrid({
 
     // Get the original unassigned shifts (for bulk assign modal)
     const unassignedShiftsList = shifts.filter(
-      s => !s['Staff Member ID'] || s['Staff Member ID'].trim() === ''
+      (s) => !s['Staff Member ID'] || s['Staff Member ID'].trim() === ''
     );
 
     // Get unpublished shift IDs
     const unpublishedShifts = processedShifts.filter((s) => !s.isPublished);
     const unpublishedCount = unpublishedShifts.length;
-    const unpublishedShiftIds = new Set(unpublishedShifts.map(s => s['Shift ID']));
+    const unpublishedShiftIds = new Set(unpublishedShifts.map((s) => s['Shift ID']));
 
     return {
       staffRows: rows,
@@ -492,10 +490,11 @@ export function PeopleViewGrid({
     // Search query filter
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      rows = rows.filter((row) =>
-        row.staffMemberName.toLowerCase().includes(query) ||
-        (row.jobTitle?.toLowerCase().includes(query) ?? false) ||
-        row.staffTeams.some((team) => team.toLowerCase().includes(query))
+      rows = rows.filter(
+        (row) =>
+          row.staffMemberName.toLowerCase().includes(query) ||
+          (row.jobTitle?.toLowerCase().includes(query) ?? false) ||
+          row.staffTeams.some((team) => team.toLowerCase().includes(query))
       );
     }
 
@@ -520,7 +519,7 @@ export function PeopleViewGrid({
   // Sort filtered staff rows
   const sortedStaffRows = useMemo(() => {
     const rows = [...filteredStaffRows];
-    
+
     switch (sortOption) {
       case 'name-asc':
         return rows.sort((a, b) => a.staffMemberName.localeCompare(b.staffMemberName));
@@ -538,32 +537,35 @@ export function PeopleViewGrid({
   }, [filteredStaffRows, sortOption]);
 
   // Handle shift click
-  const handleShiftClick = useCallback((shift: ProcessedShift, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    if (event.ctrlKey || event.metaKey) {
-      const newSelection = new Set(selectedShiftIds);
-      if (newSelection.has(shift['Shift ID'])) {
-        newSelection.delete(shift['Shift ID']);
+  const handleShiftClick = useCallback(
+    (shift: ProcessedShift, event: React.MouseEvent) => {
+      event.stopPropagation();
+
+      if (event.ctrlKey || event.metaKey) {
+        const newSelection = new Set(selectedShiftIds);
+        if (newSelection.has(shift['Shift ID'])) {
+          newSelection.delete(shift['Shift ID']);
+        } else {
+          newSelection.add(shift['Shift ID']);
+        }
+        onSelectionChange?.(newSelection);
       } else {
-        newSelection.add(shift['Shift ID']);
+        // Check if shift is unassigned - show quick assign popover
+        const isUnassigned = !shift['Staff Member ID'] || shift['Staff Member ID'].trim() === '';
+
+        if (isUnassigned) {
+          // Show quick assign popover at click position
+          setQuickAssignShift({
+            shiftId: shift['Shift ID'],
+            position: { x: event.clientX, y: event.clientY },
+          });
+        } else {
+          onShiftClick?.(shift);
+        }
       }
-      onSelectionChange?.(newSelection);
-    } else {
-      // Check if shift is unassigned - show quick assign popover
-      const isUnassigned = !shift['Staff Member ID'] || shift['Staff Member ID'].trim() === '';
-      
-      if (isUnassigned) {
-        // Show quick assign popover at click position
-        setQuickAssignShift({
-          shiftId: shift['Shift ID'],
-          position: { x: event.clientX, y: event.clientY },
-        });
-      } else {
-        onShiftClick?.(shift);
-      }
-    }
-  }, [selectedShiftIds, onShiftClick, onSelectionChange]);
+    },
+    [selectedShiftIds, onShiftClick, onSelectionChange]
+  );
 
   // Handle quick assign completion
   const handleQuickAssignComplete = useCallback(() => {
@@ -576,7 +578,7 @@ export function PeopleViewGrid({
     if (quickAssignShift) {
       // Find the shift and call onShiftClick
       const allShifts = [...shifts];
-      const shift = allShifts.find(s => s['Shift ID'] === quickAssignShift.shiftId);
+      const shift = allShifts.find((s) => s['Shift ID'] === quickAssignShift.shiftId);
       if (shift) {
         onShiftClick?.(shift);
       }
@@ -585,9 +587,12 @@ export function PeopleViewGrid({
   }, [quickAssignShift, shifts, onShiftClick]);
 
   // Handle cell click
-  const handleCellClick = useCallback((date: Date, staffMemberId: string | null) => {
-    onCellClick?.(date, staffMemberId);
-  }, [onCellClick]);
+  const handleCellClick = useCallback(
+    (date: Date, staffMemberId: string | null) => {
+      onCellClick?.(date, staffMemberId);
+    },
+    [onCellClick]
+  );
 
   // Clear search
   const clearSearch = () => {
@@ -600,7 +605,8 @@ export function PeopleViewGrid({
   };
 
   // Check if any filters are active
-  const hasActiveFilters = filters.searchQuery || filters.jobTitle || filters.team || filters.showOnlyWithShifts;
+  const hasActiveFilters =
+    filters.searchQuery || filters.jobTitle || filters.team || filters.showOnlyWithShifts;
 
   // Sort menu options
   const sortOptions: { value: SortOption; label: string }[] = [
@@ -611,7 +617,7 @@ export function PeopleViewGrid({
     { value: 'jobTitle', label: 'Job Title' },
   ];
 
-  const currentSortLabel = sortOptions.find(opt => opt.value === sortOption)?.label || 'Sort';
+  const currentSortLabel = sortOptions.find((opt) => opt.value === sortOption)?.label || 'Sort';
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border-grey bg-white">
@@ -653,17 +659,17 @@ export function PeopleViewGrid({
               <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
-                  {[filters.jobTitle, filters.team, filters.showOnlyWithShifts].filter(Boolean).length}
+                  {
+                    [filters.jobTitle, filters.team, filters.showOnlyWithShifts].filter(Boolean)
+                      .length
+                  }
                 </span>
               )}
             </button>
 
             {showFilterMenu && (
               <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowFilterMenu(false)} 
-                />
+                <div className="fixed inset-0 z-10" onClick={() => setShowFilterMenu(false)} />
                 <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-border-grey bg-white p-3 shadow-lg">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-900">Filters</span>
@@ -684,29 +690,35 @@ export function PeopleViewGrid({
                     </label>
                     <select
                       value={filters.jobTitle || ''}
-                      onChange={(e) => handleFilterChange({ ...filters, jobTitle: e.target.value || null })}
+                      onChange={(e) =>
+                        handleFilterChange({ ...filters, jobTitle: e.target.value || null })
+                      }
                       className="w-full rounded-md border border-border-grey bg-white px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
                     >
                       <option value="">All Job Titles</option>
                       {jobTitles.map((jt) => (
-                        <option key={jt} value={jt}>{jt}</option>
+                        <option key={jt} value={jt}>
+                          {jt}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   {/* Team filter */}
                   <div className="mb-3">
-                    <label className="mb-1 block text-xs font-medium text-gray-600">
-                      Team
-                    </label>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">Team</label>
                     <select
                       value={filters.team || ''}
-                      onChange={(e) => handleFilterChange({ ...filters, team: e.target.value || null })}
+                      onChange={(e) =>
+                        handleFilterChange({ ...filters, team: e.target.value || null })
+                      }
                       className="w-full rounded-md border border-border-grey bg-white px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
                     >
                       <option value="">All Teams</option>
                       {teams.map((team) => (
-                        <option key={team} value={team}>{team}</option>
+                        <option key={team} value={team}>
+                          {team}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -716,7 +728,9 @@ export function PeopleViewGrid({
                     <input
                       type="checkbox"
                       checked={filters.showOnlyWithShifts}
-                      onChange={(e) => handleFilterChange({ ...filters, showOnlyWithShifts: e.target.checked })}
+                      onChange={(e) =>
+                        handleFilterChange({ ...filters, showOnlyWithShifts: e.target.checked })
+                      }
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <span className="text-sm text-gray-700">Show only staff with shifts</span>
@@ -734,15 +748,14 @@ export function PeopleViewGrid({
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{currentSortLabel}</span>
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showSortMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${showSortMenu ? 'rotate-180' : ''}`}
+              />
             </button>
-            
+
             {showSortMenu && (
               <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowSortMenu(false)} 
-                />
+                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
                 <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-border-grey bg-white py-1 shadow-lg">
                   {sortOptions.map((option) => (
                     <button
@@ -772,29 +785,26 @@ export function PeopleViewGrid({
             <span className="font-medium text-gray-900">{sortedStaffRows.length}</span>
             {sortedStaffRows.length !== staffRows.length && (
               <span className="text-gray-400"> of {staffRows.length}</span>
-            )} Staff
+            )}{' '}
+            Staff
           </span>
           <span className="text-sm text-gray-600">
             <span className="font-medium text-gray-900">{shifts.length}</span> Shifts
           </span>
-          
+
           {/* Unassigned count - clickable to open bulk assign modal */}
           <button
             onClick={() => unassignedCount > 0 && setShowBulkAssignModal(true)}
             disabled={unassignedCount === 0}
             className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${
-              unassignedCount > 0 
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer' 
+              unassignedCount > 0
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer'
                 : 'bg-gray-100 text-gray-500 cursor-default'
             }`}
           >
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              {unassignedCount} Unassigned
-            </span>
-            {unassignedCount > 0 && (
-              <Users className="h-3.5 w-3.5 ml-1" />
-            )}
+            <span className="text-sm font-medium">{unassignedCount} Unassigned</span>
+            {unassignedCount > 0 && <Users className="h-3.5 w-3.5 ml-1" />}
           </button>
 
           {/* Publish controls */}
@@ -802,9 +812,7 @@ export function PeopleViewGrid({
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-red-700">
                 <CheckSquare className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {selectedForPublish.size} selected
-                </span>
+                <span className="text-sm font-medium">{selectedForPublish.size} selected</span>
               </div>
               <button
                 onClick={handlePublishSelected}
@@ -825,7 +833,9 @@ export function PeopleViewGrid({
           ) : unpublishedCount > 0 ? (
             <div className="relative" ref={publishMenuRef}>
               <button
-                onClick={() => !publishShiftsMutation.isPending && setShowPublishMenu(!showPublishMenu)}
+                onClick={() =>
+                  !publishShiftsMutation.isPending && setShowPublishMenu(!showPublishMenu)
+                }
                 disabled={publishShiftsMutation.isPending}
                 className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-2.5 py-1 text-white hover:bg-emerald-700 disabled:opacity-75 disabled:cursor-wait"
               >
@@ -835,7 +845,9 @@ export function PeopleViewGrid({
                   <Send className="h-3.5 w-3.5" />
                 )}
                 <span className="text-sm font-medium">
-                  {publishShiftsMutation.isPending ? 'Publishing...' : `Publish (${unpublishedCount})`}
+                  {publishShiftsMutation.isPending
+                    ? 'Publishing...'
+                    : `Publish (${unpublishedCount})`}
                 </span>
                 {!publishShiftsMutation.isPending && <ChevronDown className="h-3.5 w-3.5" />}
               </button>
@@ -883,18 +895,18 @@ export function PeopleViewGrid({
               <th className="sticky left-0 z-30 w-56 min-w-56 border-b border-r border-border-grey bg-elevation-1 px-3 py-2 text-left">
                 <span className="text-sm font-semibold text-gray-700">Staff Member</span>
               </th>
-              
+
               {/* Total hours column - allocated / contracted */}
               <th className="w-24 min-w-24 border-b border-r border-border-grey bg-elevation-1 px-2 py-2 text-center">
                 <div className="text-xs font-semibold text-gray-600">Total</div>
                 <div className="text-[10px] text-gray-400">Alloc / Cont</div>
               </th>
-              
+
               {/* Date headers */}
               {dates.map((date, index) => {
                 const isToday = isSameDay(date, new Date());
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
+
                 return (
                   <th
                     key={index}
@@ -902,10 +914,10 @@ export function PeopleViewGrid({
                       isToday ? 'bg-primary/10' : isWeekend ? 'bg-gray-50' : 'bg-elevation-1'
                     }`}
                   >
-                    <div className="text-xs font-medium text-gray-500">
-                      {format(date, 'EEE')}
-                    </div>
-                    <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}>
+                    <div className="text-xs font-medium text-gray-500">{format(date, 'EEE')}</div>
+                    <div
+                      className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}
+                    >
                       {format(date, 'd MMM')}
                     </div>
                   </th>
@@ -935,10 +947,7 @@ export function PeopleViewGrid({
             {/* Empty state */}
             {sortedStaffRows.length === 0 && (
               <tr>
-                <td
-                  colSpan={dates.length + 2}
-                  className="px-4 py-12 text-center text-gray-500"
-                >
+                <td colSpan={dates.length + 2} className="px-4 py-12 text-center text-gray-500">
                   {hasActiveFilters
                     ? 'No staff members match your filters.'
                     : 'No staff members assigned to this sublocation.'}
@@ -1009,23 +1018,37 @@ interface PeopleStaffRowProps {
   absenceTypes?: Map<string, import('../../api/dataverse/types').AbsenceType>;
 }
 
-function PeopleStaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClick, detailLevel, isSelectionMode, selectedForPublish, onTogglePublishSelection, absenceTypes }: PeopleStaffRowProps) {
+function PeopleStaffRow({
+  row,
+  dates,
+  selectedShiftIds,
+  onShiftClick,
+  onCellClick,
+  detailLevel,
+  isSelectionMode,
+  selectedForPublish,
+  onTogglePublishSelection,
+  absenceTypes,
+}: PeopleStaffRowProps) {
   const displayName = row.staffMemberName || 'Unknown';
   const initial = displayName.charAt(0).toUpperCase();
-  
+
   const isCompact = detailLevel === 'compact';
   const isHoursOnly = detailLevel === 'hoursOnly';
-  
+
   // Check if staff is on leave for a specific date
-  const getLeaveForDate = useCallback((date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return row.leave.find(leave => {
-      const start = leave.cp365_startdate.split('T')[0];
-      const end = leave.cp365_enddate.split('T')[0];
-      return dateStr >= start && dateStr <= end;
-    });
-  }, [row.leave]);
-  
+  const getLeaveForDate = useCallback(
+    (date: Date) => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return row.leave.find((leave) => {
+        const start = leave.cp365_startdate.split('T')[0];
+        const end = leave.cp365_enddate.split('T')[0];
+        return dateStr >= start && dateStr <= end;
+      });
+    },
+    [row.leave]
+  );
+
   return (
     <tr className="group hover:bg-gray-50/50">
       {/* Staff info cell */}
@@ -1035,18 +1058,12 @@ function PeopleStaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClic
             {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium text-gray-900">
-              {displayName}
-            </div>
+            <div className="truncate text-sm font-medium text-gray-900">{displayName}</div>
             {!isHoursOnly && row.jobTitle && (
-              <div className="truncate text-xs text-gray-500">
-                {row.jobTitle}
-              </div>
+              <div className="truncate text-xs text-gray-500">{row.jobTitle}</div>
             )}
             {!isHoursOnly && !isCompact && row.staffTeams.length > 0 && (
-              <div className="truncate text-xs text-gray-400">
-                {row.staffTeams.join(', ')}
-              </div>
+              <div className="truncate text-xs text-gray-400">{row.staffTeams.join(', ')}</div>
             )}
           </div>
         </div>
@@ -1085,20 +1102,26 @@ function PeopleStaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClic
           >
             {/* Leave indicator */}
             {isOnLeave && (
-              <div 
+              <div
                 className="mb-1 truncate rounded bg-red-100 px-1.5 py-0.5 text-center text-[10px] font-semibold text-red-700"
                 title={
-                  leaveRecord?.cp365_sensitive 
-                    ? 'On Leave (Sensitive)' 
-                    : leaveRecord?._cp365_absencetype_value && absenceTypes?.get(leaveRecord._cp365_absencetype_value)?.cp365_absencetypename
-                      ? absenceTypes.get(leaveRecord._cp365_absencetype_value)!.cp365_absencetypename
+                  leaveRecord?.cp365_sensitive
+                    ? 'On Leave (Sensitive)'
+                    : leaveRecord?._cp365_absencetype_value &&
+                        absenceTypes?.get(leaveRecord._cp365_absencetype_value)
+                          ?.cp365_absencetypename
+                      ? absenceTypes.get(leaveRecord._cp365_absencetype_value)!
+                          .cp365_absencetypename
                       : 'On Leave'
                 }
               >
-                {leaveRecord?.cp365_sensitive 
-                  ? 'LEAVE' 
-                  : leaveRecord?._cp365_absencetype_value && absenceTypes?.get(leaveRecord._cp365_absencetype_value)
-                    ? absenceTypes.get(leaveRecord._cp365_absencetype_value)!.cp365_absencetypename.toUpperCase()
+                {leaveRecord?.cp365_sensitive
+                  ? 'LEAVE'
+                  : leaveRecord?._cp365_absencetype_value &&
+                      absenceTypes?.get(leaveRecord._cp365_absencetype_value)
+                    ? absenceTypes
+                        .get(leaveRecord._cp365_absencetype_value)!
+                        .cp365_absencetypename.toUpperCase()
                     : 'LEAVE'}
               </div>
             )}
@@ -1115,7 +1138,7 @@ function PeopleStaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClic
                 {shifts.map((shift) => {
                   const shiftId = shift['Shift ID'];
                   const isUnpublished = !shift.isPublished;
-                  
+
                   // In selection mode, clicking unpublished shifts toggles selection
                   const handleClick = (e: React.MouseEvent) => {
                     if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
@@ -1125,7 +1148,7 @@ function PeopleStaffRow({ row, dates, selectedShiftIds, onShiftClick, onCellClic
                       onShiftClick(shift, e);
                     }
                   };
-                  
+
                   return (
                     <PeopleShiftCard
                       key={shiftId}
@@ -1166,12 +1189,12 @@ interface UnassignedRowProps {
   onTogglePublishSelection?: (shiftId: string) => void;
 }
 
-function UnassignedRow({ 
-  shifts, 
-  dates, 
+function UnassignedRow({
+  shifts,
+  dates,
   totalCount,
-  selectedShiftIds, 
-  onShiftClick, 
+  selectedShiftIds,
+  onShiftClick,
   onCellClick,
   isSelectionMode,
   selectedForPublish,
@@ -1182,19 +1205,25 @@ function UnassignedRow({
   return (
     <tr className={`bg-[#f5f5f5] ${hasUnassigned ? '' : ''}`}>
       {/* Unassigned label */}
-      <td className={`sticky left-0 z-10 w-56 min-w-56 border-b border-r ${
-        hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'
-      } bg-[#f5f5f5] px-3 py-2`}>
+      <td
+        className={`sticky left-0 z-10 w-56 min-w-56 border-b border-r ${
+          hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'
+        } bg-[#f5f5f5] px-3 py-2`}
+      >
         <div className="flex items-center gap-2">
-          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-            hasUnassigned ? 'bg-warning/20' : 'bg-gray-200'
-          }`}>
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+              hasUnassigned ? 'bg-warning/20' : 'bg-gray-200'
+            }`}
+          >
             <span className="text-lg" role="img" aria-label="unassigned">
               {hasUnassigned ? '⚠️' : '📋'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${hasUnassigned ? 'text-gray-900' : 'text-gray-600'}`}>
+            <span
+              className={`text-sm font-medium ${hasUnassigned ? 'text-gray-900' : 'text-gray-600'}`}
+            >
               Unassigned
             </span>
             {hasUnassigned && (
@@ -1207,9 +1236,11 @@ function UnassignedRow({
       </td>
 
       {/* Empty total cell */}
-      <td className={`w-24 min-w-24 border-b border-r ${
-        hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'
-      } border-r-border-grey bg-[#f5f5f5] px-2 py-2`} />
+      <td
+        className={`w-24 min-w-24 border-b border-r ${
+          hasUnassigned ? 'border-b-warning border-b-2' : 'border-border-grey'
+        } border-r-border-grey bg-[#f5f5f5] px-2 py-2`}
+      />
 
       {/* Unassigned shift cells */}
       {dates.map((date, index) => {
@@ -1232,7 +1263,7 @@ function UnassignedRow({
               {dayShifts.map((shift) => {
                 const shiftId = shift['Shift ID'];
                 const isUnpublished = !shift.isPublished;
-                
+
                 // In selection mode, clicking unpublished shifts toggles selection
                 const handleClick = (e: React.MouseEvent) => {
                   if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
@@ -1242,7 +1273,7 @@ function UnassignedRow({
                     onShiftClick(shift, e);
                   }
                 };
-                
+
                 return (
                   <PeopleShiftCard
                     key={shiftId}
@@ -1279,12 +1310,20 @@ interface PeopleShiftCardProps {
   isSelectedForPublish?: boolean;
 }
 
-function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, isSelectionMode, isSelectedForPublish }: PeopleShiftCardProps) {
+function PeopleShiftCard({
+  shift,
+  isSelected,
+  onClick,
+  isUnassigned,
+  isCompact,
+  isSelectionMode,
+  isSelectedForPublish,
+}: PeopleShiftCardProps) {
   const isOvertime = shift['Overtime Shift'];
   const shiftType = shift.shiftType;
   const isExternalStaff = shift['Is External Staff'] === true;
   const isFromOtherRota = shift.isFromOtherRota === true;
-  
+
   // Determine background class based on shift source:
   // - Other rota shifts: light gray with distinct styling
   // - External staff shifts (same rota, different sublocation): gray
@@ -1293,13 +1332,17 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
     ? 'bg-slate-100 text-slate-600'
     : isExternalStaff
       ? 'bg-gray-200 text-gray-600'
-      : isOvertime 
-        ? SHIFT_BG_CLASSES.overtime 
+      : isOvertime
+        ? SHIFT_BG_CLASSES.overtime
         : SHIFT_BG_CLASSES[shiftType];
 
-  const iconEmoji = isFromOtherRota 
+  const iconEmoji = isFromOtherRota
     ? '🔗' // Chain link to indicate linked from another rota
-    : shiftType === 'night' ? '🌙' : shiftType === 'sleepIn' ? '🛏️' : '☀️';
+    : shiftType === 'night'
+      ? '🌙'
+      : shiftType === 'sleepIn'
+        ? '🛏️'
+        : '☀️';
 
   // In selection mode, only unpublished shifts can be selected
   const canBeSelected = isSelectionMode && !shift.isPublished;
@@ -1338,21 +1381,21 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
         `}
       >
         <div className="flex items-center gap-1">
-          <span className="text-sm" role="img" aria-label={isFromOtherRota ? 'other-rota' : shiftType}>
+          <span
+            className="text-sm"
+            role="img"
+            aria-label={isFromOtherRota ? 'other-rota' : shiftType}
+          >
             {iconEmoji}
           </span>
-          <span className="text-xs font-semibold">
-            {shift.timeLabel}
-          </span>
+          <span className="text-xs font-semibold">{shift.timeLabel}</span>
           {!shift.isPublished && !isFromOtherRota && (
             <span className="ml-auto text-[9px] font-bold text-gray-600">*</span>
           )}
         </div>
         {/* Show rota name for other rota shifts */}
         {isFromOtherRota && shift['Rota Name'] && (
-          <div className="mt-0.5 text-[10px] text-slate-500 truncate">
-            {shift['Rota Name']}
-          </div>
+          <div className="mt-0.5 text-[10px] text-slate-500 truncate">{shift['Rota Name']}</div>
         )}
         {isSelected && (
           <div className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-white">
@@ -1389,12 +1432,14 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
     >
       {/* Time and icon row */}
       <div className="flex items-center gap-1">
-        <span className="text-base" role="img" aria-label={isFromOtherRota ? 'other-rota' : shiftType}>
+        <span
+          className="text-base"
+          role="img"
+          aria-label={isFromOtherRota ? 'other-rota' : shiftType}
+        >
           {iconEmoji}
         </span>
-        <span className="text-xs font-semibold">
-          {shift.timeLabel}
-        </span>
+        <span className="text-xs font-semibold">{shift.timeLabel}</span>
       </div>
 
       {/* Show rota name for other rota shifts */}
@@ -1411,6 +1456,23 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
         </div>
       )}
 
+      {/* Shift Activity - shows activity type with care/non-care indicator (detailed view only) */}
+      {!isFromOtherRota && shift['Shift Activity'] && (
+        <div className="mt-0.5 flex items-center gap-1">
+          <span
+            className={`inline-flex items-center truncate rounded px-1 py-0.5 text-[9px] font-semibold ${
+              shift['Shift Activity Care Type'] === 'Non-Care'
+                ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+            }`}
+            title={`Activity: ${shift['Shift Activity']}${shift['Shift Activity Care Type'] ? ` (${shift['Shift Activity Care Type']})` : ''}`}
+          >
+            {shift['Shift Activity Care Type'] === 'Non-Care' ? '○' : '●'}{' '}
+            {shift['Shift Activity']}
+          </span>
+        </div>
+      )}
+
       {/* Badges row - only show for regular shifts, not other rota shifts */}
       {!isFromOtherRota && (
         <div className="mt-1 flex flex-wrap gap-0.5">
@@ -1419,19 +1481,19 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
               *
             </span>
           )}
-          
+
           {shift['Shift Leader'] && (
             <span className="rounded bg-primary/30 px-1 text-[9px] font-medium text-primary-pressed">
               SL
             </span>
           )}
-          
+
           {shift['Act Up'] && (
             <span className="rounded bg-secondary/30 px-1 text-[9px] font-medium text-secondary-pressed">
               AU
             </span>
           )}
-          
+
           {shift['Senior'] && (
             <span className="rounded bg-gray-500/30 px-1 text-[9px] font-medium text-gray-700">
               SR
@@ -1467,4 +1529,3 @@ function PeopleShiftCard({ shift, isSelected, onClick, isUnassigned, isCompact, 
 // =============================================================================
 
 export type { PeopleViewGridProps };
-

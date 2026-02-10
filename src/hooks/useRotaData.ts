@@ -5,8 +5,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
-import { getRotaGridData, type RotaGridData } from '../api/dataverse/shifts';
-import { useAuthStore } from '../store/authStore';
+import { getRotaGridData, type RotaGridData } from '@/api/dataverse/shifts';
+import { useAuthStore } from '@/store/authStore';
 
 interface RotaDataParams {
   sublocationId: string | undefined;
@@ -23,56 +23,44 @@ interface RotaDataParams {
 /**
  * Hook to fetch rota data from Dataverse
  */
-export function useRotaData({ 
-  sublocationId, 
-  startDate, 
-  duration, 
+export function useRotaData({
+  sublocationId,
+  startDate,
+  duration,
   rotaId,
   enabled = true,
   showExternalStaff = false,
   showOtherRotaShifts = false,
 }: RotaDataParams) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
-  console.log('[useRotaData] Hook called', {
-    sublocationId,
-    startDate: startDate.toISOString(),
-    duration,
-    rotaId,
-    enabled,
-    isDataverseReady,
-    showExternalStaff,
-    showOtherRotaShifts,
-  });
 
   return useQuery({
-    queryKey: ['rotaData', sublocationId, startDate.toISOString(), duration, rotaId, showExternalStaff, showOtherRotaShifts],
+    queryKey: [
+      'rotaData',
+      sublocationId,
+      startDate.toISOString(),
+      duration,
+      rotaId,
+      showExternalStaff,
+      showOtherRotaShifts,
+    ],
     queryFn: async (): Promise<RotaGridData | null> => {
-      console.log('[useRotaData] queryFn executing...');
-      
       if (!sublocationId) {
-        console.log('[useRotaData] No sublocationId, returning null');
         return null;
       }
 
-      try {
-        const data = await getRotaGridData(sublocationId, startDate, duration, rotaId, showExternalStaff, showOtherRotaShifts);
-        console.log('[useRotaData] Data fetched successfully:', {
-          shiftsCount: data.shifts.length,
-          staffCount: data.staff.length,
-          otherRotaShiftsCount: data.otherRotaShifts?.length ?? 0,
-          rotaId,
-          showExternalStaff,
-          showOtherRotaShifts,
-        });
-        return data;
-      } catch (error) {
-        console.error('[useRotaData] Error fetching rota data:', error);
-        throw error;
-      }
+      const data = await getRotaGridData(
+        sublocationId,
+        startDate,
+        duration,
+        rotaId,
+        showExternalStaff,
+        showOtherRotaShifts
+      );
+      return data;
     },
     enabled: enabled && !!sublocationId && isDataverseReady,
-    staleTime: 0, // Temporarily disabled for debugging - was 2 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: false,
   });
 }

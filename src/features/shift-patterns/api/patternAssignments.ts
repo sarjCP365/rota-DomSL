@@ -3,12 +3,11 @@
  * CRUD operations for Staff Pattern Assignments
  */
 
-import { getDataverseClient, isDataverseClientInitialised } from '../../../api/dataverse/client';
+import { getDataverseClient, isDataverseClientInitialised } from '@/api/dataverse/client';
 import type {
   StaffPatternAssignment,
   AssignmentFormData,
   BulkAssignmentOptions,
-  AssignmentStatus,
   ShiftPatternTemplate,
 } from '../types';
 import { AssignmentStatus as AssignmentStatusEnum } from '../types';
@@ -58,18 +57,13 @@ export async function fetchStaffAssignments(
   includeEnded: boolean = false
 ): Promise<StaffPatternAssignment[]> {
   if (!isDataverseClientInitialised()) {
-    console.warn('[PatternAssignments] Dataverse client not initialised');
     return [];
   }
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Fetching assignments for staff:', staffMemberId);
 
-    const filterParts = [
-      `_cp365_staffmember_value eq '${staffMemberId}'`,
-      'statecode eq 0',
-    ];
+    const filterParts = [`_cp365_staffmember_value eq '${staffMemberId}'`, 'statecode eq 0'];
 
     if (!includeEnded) {
       filterParts.push(`cp365_sp_assignmentstatus eq ${AssignmentStatusEnum.Active}`);
@@ -82,7 +76,6 @@ export async function fetchStaffAssignments(
       orderby: 'cp365_sp_priority asc, cp365_sp_startdate desc',
     });
 
-    console.log('[PatternAssignments] Fetched', assignments.length, 'assignments');
     return assignments;
   } catch (error) {
     console.error('[PatternAssignments] Error fetching staff assignments:', error);
@@ -98,13 +91,11 @@ export async function fetchAssignmentsByPattern(
   activeOnly: boolean = true
 ): Promise<StaffPatternAssignment[]> {
   if (!isDataverseClientInitialised()) {
-    console.warn('[PatternAssignments] Dataverse client not initialised');
     return [];
   }
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Fetching assignments for pattern:', patternTemplateId);
 
     const filterParts = [
       `_cp365_shiftpatterntemplate_value eq '${patternTemplateId}'`,
@@ -122,7 +113,6 @@ export async function fetchAssignmentsByPattern(
       orderby: 'cp365_sp_startdate desc',
     });
 
-    console.log('[PatternAssignments] Fetched', assignments.length, 'assignments');
     return assignments;
   } catch (error) {
     console.error('[PatternAssignments] Error fetching pattern assignments:', error);
@@ -133,17 +123,13 @@ export async function fetchAssignmentsByPattern(
 /**
  * Fetch a single assignment by ID
  */
-export async function fetchAssignmentById(
-  id: string
-): Promise<StaffPatternAssignment | null> {
+export async function fetchAssignmentById(id: string): Promise<StaffPatternAssignment | null> {
   if (!isDataverseClientInitialised()) {
-    console.warn('[PatternAssignments] Dataverse client not initialised');
     return null;
   }
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Fetching assignment by ID:', id);
 
     const assignment = await client.getById<StaffPatternAssignment>(ENTITY_SET, id, {
       select: ASSIGNMENT_SELECT,
@@ -169,7 +155,6 @@ export async function createPatternAssignment(
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Creating assignment for staff:', data.staffMemberId);
 
     // Fetch pattern to get name for assignment name
     const pattern = await client.getById<ShiftPatternTemplate>(
@@ -202,10 +187,7 @@ export async function createPatternAssignment(
       assignmentData.cp365_sp_publishstatus = data.publishStatus;
     }
 
-    console.log('[PatternAssignments] CREATE payload:', assignmentData);
-
     const result = await client.create<StaffPatternAssignment>(ENTITY_SET, assignmentData);
-    console.log('[PatternAssignments] Created assignment:', result.cp365_staffpatternassignmentid);
 
     return result;
   } catch (error) {
@@ -227,7 +209,6 @@ export async function updatePatternAssignment(
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Updating assignment:', id);
 
     const updateData: Record<string, unknown> = {};
 
@@ -248,9 +229,10 @@ export async function updatePatternAssignment(
     }
 
     if (data.appliesToDays !== undefined) {
-      updateData.cp365_sp_appliestodays = data.appliesToDays && data.appliesToDays.length > 0
-        ? JSON.stringify(data.appliesToDays)
-        : null;
+      updateData.cp365_sp_appliestodays =
+        data.appliesToDays && data.appliesToDays.length > 0
+          ? JSON.stringify(data.appliesToDays)
+          : null;
     }
 
     if (data.overridePublishStatus !== undefined) {
@@ -261,10 +243,7 @@ export async function updatePatternAssignment(
       updateData.cp365_sp_publishstatus = data.publishStatus;
     }
 
-    console.log('[PatternAssignments] UPDATE payload:', updateData);
-
     await client.update(ENTITY_SET, id, updateData);
-    console.log('[PatternAssignments] Updated assignment:', id);
   } catch (error) {
     console.error('[PatternAssignments] Error updating assignment:', error);
     throw error;
@@ -274,24 +253,18 @@ export async function updatePatternAssignment(
 /**
  * End a pattern assignment
  */
-export async function endPatternAssignment(
-  id: string,
-  endDate: string
-): Promise<void> {
+export async function endPatternAssignment(id: string, endDate: string): Promise<void> {
   if (!isDataverseClientInitialised()) {
     throw new Error('Dataverse client not initialised');
   }
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Ending assignment:', id, 'on', endDate);
 
     await client.update(ENTITY_SET, id, {
       cp365_sp_enddate: endDate,
       cp365_sp_assignmentstatus: AssignmentStatusEnum.Ended,
     });
-
-    console.log('[PatternAssignments] Ended assignment:', id);
   } catch (error) {
     console.error('[PatternAssignments] Error ending assignment:', error);
     throw error;
@@ -308,10 +281,8 @@ export async function deletePatternAssignment(id: string): Promise<void> {
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Deleting assignment:', id);
 
     await client.delete(ENTITY_SET, id);
-    console.log('[PatternAssignments] Deleted assignment:', id);
   } catch (error) {
     console.error('[PatternAssignments] Error deleting assignment:', error);
     throw error;
@@ -332,7 +303,6 @@ export async function getActivePatternForDate(
   try {
     const client = getDataverseClient();
     const dateStr = format(date, 'yyyy-MM-dd');
-    console.log('[PatternAssignments] Getting active pattern for staff:', staffMemberId, 'on', dateStr);
 
     const assignments = await client.get<StaffPatternAssignment>(ENTITY_SET, {
       filter: `_cp365_staffmember_value eq '${staffMemberId}' and cp365_sp_assignmentstatus eq ${AssignmentStatusEnum.Active} and cp365_sp_startdate le ${dateStr} and (cp365_sp_enddate eq null or cp365_sp_enddate ge ${dateStr})`,
@@ -372,17 +342,13 @@ export async function getActivePatternForDate(
 /**
  * Bulk assign a pattern to multiple staff members
  */
-export async function bulkAssignPattern(
-  options: BulkAssignmentOptions
-): Promise<{
+export async function bulkAssignPattern(options: BulkAssignmentOptions): Promise<{
   created: StaffPatternAssignment[];
   errors: Array<{ staffMemberId: string; error: string }>;
 }> {
   if (!isDataverseClientInitialised()) {
     throw new Error('Dataverse client not initialised');
   }
-
-  console.log('[PatternAssignments] Bulk assigning pattern to', options.staffMemberIds.length, 'staff');
 
   const created: StaffPatternAssignment[] = [];
   const errors: Array<{ staffMemberId: string; error: string }> = [];
@@ -420,7 +386,6 @@ export async function bulkAssignPattern(
 
       created.push(assignment);
     } catch (error) {
-      console.error('[PatternAssignments] Error assigning to staff:', staffMemberId, error);
       errors.push({
         staffMemberId,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -428,31 +393,23 @@ export async function bulkAssignPattern(
     }
   }
 
-  console.log('[PatternAssignments] Bulk assign complete:', created.length, 'created,', errors.length, 'errors');
-
   return { created, errors };
 }
 
 /**
  * Update the last generated date for an assignment
  */
-export async function updateLastGeneratedDate(
-  id: string,
-  date: string
-): Promise<void> {
+export async function updateLastGeneratedDate(id: string, date: string): Promise<void> {
   if (!isDataverseClientInitialised()) {
     throw new Error('Dataverse client not initialised');
   }
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Updating last generated date:', id, 'to', date);
 
     await client.update(ENTITY_SET, id, {
       cp365_sp_lastgenerateddate: date,
     });
-
-    console.log('[PatternAssignments] Updated last generated date');
   } catch (error) {
     console.error('[PatternAssignments] Error updating last generated date:', error);
     throw error;
@@ -469,7 +426,6 @@ export async function getAssignmentsNeedingGeneration(): Promise<StaffPatternAss
 
   try {
     const client = getDataverseClient();
-    console.log('[PatternAssignments] Fetching assignments needing generation');
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -483,7 +439,6 @@ export async function getAssignmentsNeedingGeneration(): Promise<StaffPatternAss
     // Filter to those that need generation
     // This would need more sophisticated logic based on lastgenerateddate and generationwindow
     // For now, return all active assignments
-    console.log('[PatternAssignments] Found', assignments.length, 'active assignments');
 
     return assignments;
   } catch (error) {
@@ -509,4 +464,3 @@ export function parseAppliesToDays(json: string | null | undefined): string[] {
     return [];
   }
 }
-

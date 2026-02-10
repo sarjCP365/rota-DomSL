@@ -1,0 +1,29 @@
+---
+description: Zustand store patterns for state management
+globs: src/store/**/*.ts
+alwaysApply: false
+---
+
+# Zustand Store Patterns
+
+## Store Structure
+- Define a clear TypeScript interface for state + actions
+- Group state, actions, and computed getters with comment sections
+- Use `persist` middleware with `partialize` to only persist what's needed
+- Never persist server data — only user preferences and selections
+
+## Selectors
+- Export standalone selector functions for derived state
+- Use individual property selectors to prevent unnecessary re-renders:
+```typescript
+// Good: subscribe to specific slices
+const viewMode = useRotaStore((state) => state.viewMode);
+
+// Bad: subscribe to entire store
+const store = useRotaStore();
+```
+
+## Data Types in Stores
+- Use `Set` for ID collections (handle serialisation in merge)
+- Store `Date` objects carefully — handle string/Date conversion on rehydration
+- Keep data types from the API layer (don't re-define types)

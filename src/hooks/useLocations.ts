@@ -13,8 +13,8 @@ import {
   getRotas,
   getRotaById,
   getActiveRotaForSublocation,
-} from '../api/dataverse/locations';
-import { useAuthStore } from '../store/authStore';
+} from '@/api/dataverse/locations';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Fetch all active locations
@@ -22,17 +22,10 @@ import { useAuthStore } from '../store/authStore';
 export function useLocations() {
   // Use reactive state from store instead of direct client check
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
-  console.log('[useLocations] Hook called, isDataverseReady:', isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['locations'],
-    queryFn: async () => {
-      console.log('[useLocations] queryFn executing...');
-      const result = await getLocations();
-      console.log('[useLocations] queryFn result:', result);
-      return result;
-    },
+    queryFn: getLocations,
     staleTime: 1000 * 60 * 10, // 10 minutes
     enabled: isDataverseReady,
   });
@@ -117,4 +110,3 @@ export function useActiveRota(sublocationId: string | undefined) {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
-

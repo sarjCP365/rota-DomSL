@@ -1,9 +1,9 @@
 /**
  * TeamStaffRow Component
- * 
+ *
  * Displays a staff member row within the Team View hierarchy.
  * Shows avatar, name, job title, hours, qualifications, and shift cells.
- * 
+ *
  * Features:
  * - Avatar with initials or photo
  * - Staff name and job title
@@ -16,9 +16,9 @@
 
 import { useMemo, useCallback } from 'react';
 import { format, isSameDay } from 'date-fns';
-import { Sun, Moon, Bed, Plus } from 'lucide-react';
-import type { StaffWithShifts, Shift, Capability } from '../../api/dataverse/types';
-import type { DetailLevel } from '../../store/rotaStore';
+import { Plus } from 'lucide-react';
+import type { StaffWithShifts, Shift, Capability } from '@/api/dataverse/types';
+import type { DetailLevel } from '@/store/rotaStore';
 
 // =============================================================================
 // TYPES
@@ -71,9 +71,9 @@ const QUALIFICATION_BADGES: Record<string, { abbr: string; color: string; bgColo
   'first aider': { abbr: 'FA', color: 'text-red-700', bgColor: 'bg-red-100' },
   'first aid': { abbr: 'FA', color: 'text-red-700', bgColor: 'bg-red-100' },
   'manual handling': { abbr: 'MH', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  'medication': { abbr: 'MED', color: 'text-green-700', bgColor: 'bg-green-100' },
-  'safeguarding': { abbr: 'SG', color: 'text-purple-700', bgColor: 'bg-purple-100' },
-  'driver': { abbr: 'DR', color: 'text-gray-700', bgColor: 'bg-gray-200' },
+  medication: { abbr: 'MED', color: 'text-green-700', bgColor: 'bg-green-100' },
+  safeguarding: { abbr: 'SG', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+  driver: { abbr: 'DR', color: 'text-gray-700', bgColor: 'bg-gray-200' },
 };
 
 // =============================================================================
@@ -82,13 +82,13 @@ const QUALIFICATION_BADGES: Record<string, { abbr: string; color: string; bgColo
 
 function getShiftType(shift: Shift): 'day' | 'night' | 'sleepIn' {
   if (shift.cp365_sleepin) return 'sleepIn';
-  
+
   // Check start hour from the time
   if (shift.cp365_shiftstarttime) {
     const startHour = new Date(shift.cp365_shiftstarttime).getHours();
     if (startHour >= 20 || startHour < 6) return 'night';
   }
-  
+
   return 'day';
 }
 
@@ -112,7 +112,7 @@ function calculateShiftHours(shift: Shift): number {
     const start = new Date(shift.cp365_shiftstarttime);
     const end = new Date(shift.cp365_shiftendtime);
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    const breakHours = ((shift as any).cr1e2_shiftbreakduration || 0) / 60;
+    const breakHours = (shift.cr1e2_shiftbreakduration || 0) / 60;
     return Math.max(0, hours - breakHours);
   } catch {
     return 0;
@@ -121,25 +121,27 @@ function calculateShiftHours(shift: Shift): number {
 
 function getHoursVarianceColor(scheduled: number, contracted: number): string {
   if (contracted === 0) return 'text-gray-500';
-  
+
   const variance = scheduled - contracted;
   const variancePercent = (variance / contracted) * 100;
-  
+
   if (variancePercent >= 10) return 'text-red-600'; // Significantly over
   if (variancePercent > 0) return 'text-amber-600'; // Slightly over
   if (variancePercent >= -10) return 'text-green-600'; // At or near target
   return 'text-amber-600'; // Under contracted
 }
 
-function getQualificationBadge(capabilityName: string): { abbr: string; color: string; bgColor: string } | null {
+function getQualificationBadge(
+  capabilityName: string
+): { abbr: string; color: string; bgColor: string } | null {
   const nameLower = capabilityName.toLowerCase();
-  
+
   for (const [key, badge] of Object.entries(QUALIFICATION_BADGES)) {
     if (nameLower.includes(key)) {
       return badge;
     }
   }
-  
+
   // Generic badge for unknown qualifications
   return {
     abbr: capabilityName.substring(0, 2).toUpperCase(),
@@ -166,13 +168,13 @@ export function TeamStaffRow({
   // Process shifts by date
   const shiftsByDate = useMemo(() => {
     const map = new Map<string, ProcessedDayShift[]>();
-    
+
     for (const shift of staff.shifts) {
       const dateKey = shift.cp365_shiftdate;
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
-      
+
       map.get(dateKey)!.push({
         shift,
         shiftType: getShiftType(shift),
@@ -181,7 +183,7 @@ export function TeamStaffRow({
         isOvertime: shift.cp365_overtimeshift || false,
       });
     }
-    
+
     return map;
   }, [staff.shifts]);
 
@@ -191,24 +193,28 @@ export function TeamStaffRow({
   }, [staff.shifts]);
 
   // Derive display values
-  const displayName = staff.cp365_staffmembername || 
-    `${staff.cp365_forename || ''} ${staff.cp365_surname || ''}`.trim() || 
+  const displayName =
+    staff.cp365_staffmembername ||
+    `${staff.cp365_forename || ''} ${staff.cp365_surname || ''}`.trim() ||
     'Unknown';
   const initial = displayName.charAt(0).toUpperCase();
   const hoursColor = getHoursVarianceColor(scheduledHours, contractedHours);
-  
+
   const isCompact = detailLevel === 'compact';
   const isHoursOnly = detailLevel === 'hoursOnly';
 
   // Handle cell click
-  const handleCellClick = useCallback((date: Date) => {
-    onCellClick?.(date, staff.cp365_staffmemberid);
-  }, [onCellClick, staff.cp365_staffmemberid]);
+  const handleCellClick = useCallback(
+    (date: Date) => {
+      onCellClick?.(date, staff.cp365_staffmemberid);
+    },
+    [onCellClick, staff.cp365_staffmemberid]
+  );
 
   // Render qualification badges (max 3, with +N more)
   const renderQualifications = () => {
     if (qualifications.length === 0) return null;
-    
+
     const maxShow = 3;
     const shown = qualifications.slice(0, maxShow);
     const remaining = qualifications.length - maxShow;
@@ -218,7 +224,7 @@ export function TeamStaffRow({
         {shown.map((qual) => {
           const badge = getQualificationBadge(qual.cp365_capabilityname);
           if (!badge) return null;
-          
+
           return (
             <span
               key={qual.cp365_capabilityid}
@@ -232,7 +238,10 @@ export function TeamStaffRow({
         {remaining > 0 && (
           <span
             className="rounded bg-gray-100 px-1 text-[9px] font-medium text-gray-500"
-            title={qualifications.slice(maxShow).map(q => q.cp365_capabilityname).join(', ')}
+            title={qualifications
+              .slice(maxShow)
+              .map((q) => q.cp365_capabilityname)
+              .join(', ')}
           >
             +{remaining}
           </span>
@@ -254,7 +263,7 @@ export function TeamStaffRow({
           >
             {initial}
           </button>
-          
+
           {/* Info */}
           <div className="min-w-0 flex-1">
             {/* Name */}
@@ -264,7 +273,7 @@ export function TeamStaffRow({
             >
               {displayName}
             </button>
-            
+
             {/* Job title - hidden in hoursOnly mode */}
             {!isHoursOnly && (
               <div className="truncate text-xs text-gray-500">
@@ -272,12 +281,12 @@ export function TeamStaffRow({
                 Staff Member
               </div>
             )}
-            
+
             {/* Hours comparison */}
             <div className={`text-xs font-medium ${hoursColor}`}>
               {Math.round(scheduledHours * 10) / 10}h / {contractedHours}h
             </div>
-            
+
             {/* Qualifications - hidden in compact/hoursOnly mode */}
             {!isCompact && !isHoursOnly && renderQualifications()}
           </div>
@@ -290,19 +299,16 @@ export function TeamStaffRow({
         const dayShifts = shiftsByDate.get(dateKey) || [];
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
         const isToday = isSameDay(date, new Date());
-        
+
         // Check if staff is on leave this day
-        const isOnLeave = staff.leave.some(leave => {
+        const isOnLeave = staff.leave.some((leave) => {
           const leaveStart = new Date(leave.cp365_startdate);
           const leaveEnd = new Date(leave.cp365_enddate);
           return date >= leaveStart && date <= leaveEnd;
         });
 
         // Calculate daily hours for hoursOnly mode
-        const dailyHours = dayShifts.reduce(
-          (sum, ds) => sum + calculateShiftHours(ds.shift),
-          0
-        );
+        const dailyHours = dayShifts.reduce((sum, ds) => sum + calculateShiftHours(ds.shift), 0);
 
         return (
           <td
@@ -315,9 +321,7 @@ export function TeamStaffRow({
             {isOnLeave ? (
               // Leave indicator
               <div className="flex h-full min-h-[40px] items-center justify-center rounded border border-orange-200 bg-orange-50 px-2 py-1">
-                <span className="text-xs font-medium text-orange-700">
-                  On Leave
-                </span>
+                <span className="text-xs font-medium text-orange-700">On Leave</span>
               </div>
             ) : isHoursOnly ? (
               // Hours only view
@@ -340,7 +344,7 @@ export function TeamStaffRow({
                     isCompact={isCompact}
                   />
                 ))}
-                
+
                 {/* Empty cell hint */}
                 {dayShifts.length === 0 && (
                   <div className="flex h-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
@@ -369,10 +373,8 @@ interface TeamShiftCardProps {
 
 function TeamShiftCard({ processedShift, isSelected, onClick, isCompact }: TeamShiftCardProps) {
   const { shift, shiftType, timeLabel, isPublished, isOvertime } = processedShift;
-  
-  const bgClass = isOvertime 
-    ? SHIFT_BG_CLASSES.overtime 
-    : SHIFT_BG_CLASSES[shiftType];
+
+  const bgClass = isOvertime ? SHIFT_BG_CLASSES.overtime : SHIFT_BG_CLASSES[shiftType];
 
   const iconEmoji = shiftType === 'night' ? '🌙' : shiftType === 'sleepIn' ? '🛏️' : '☀️';
 
@@ -429,10 +431,14 @@ function TeamShiftCard({ processedShift, isSelected, onClick, isCompact }: TeamS
           <span className="rounded bg-primary/30 px-1 text-[9px] font-medium text-primary">SL</span>
         )}
         {shift.cp365_actup && (
-          <span className="rounded bg-secondary/30 px-1 text-[9px] font-medium text-secondary">AU</span>
+          <span className="rounded bg-secondary/30 px-1 text-[9px] font-medium text-secondary">
+            AU
+          </span>
         )}
         {shift.cp365_senior && (
-          <span className="rounded bg-gray-500/30 px-1 text-[9px] font-medium text-gray-700">SR</span>
+          <span className="rounded bg-gray-500/30 px-1 text-[9px] font-medium text-gray-700">
+            SR
+          </span>
         )}
       </div>
 
@@ -457,4 +463,3 @@ function TeamShiftCard({ processedShift, isSelected, onClick, isCompact }: TeamS
 // =============================================================================
 
 export type { TeamStaffRowProps, ProcessedDayShift };
-

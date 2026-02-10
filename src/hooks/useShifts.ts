@@ -18,18 +18,14 @@ import {
   getTotalUnpublishedCount,
   getAllUnpublishedShifts,
   bulkDeleteShifts,
-} from '../api/dataverse/shifts';
-import type { UnpublishedShiftsFilter } from '../api/dataverse/shifts';
-import type { Shift } from '../api/dataverse/types';
+} from '@/api/dataverse/shifts';
+import type { UnpublishedShiftsFilter } from '@/api/dataverse/shifts';
+import type { Shift } from '@/api/dataverse/types';
 
 /**
  * Fetch shifts for a rota and date range
  */
-export function useShifts(
-  rotaId: string | undefined,
-  startDate: Date,
-  endDate: Date
-) {
+export function useShifts(rotaId: string | undefined, startDate: Date, endDate: Date) {
   return useQuery({
     queryKey: ['shifts', rotaId, startDate.toISOString(), endDate.toISOString()],
     queryFn: () => (rotaId ? getShifts(rotaId, startDate, endDate) : []),
@@ -44,16 +40,7 @@ export function useShifts(
 export function useShift(shiftId: string | undefined) {
   return useQuery({
     queryKey: ['shift', shiftId],
-    queryFn: async () => {
-      if (!shiftId) return null;
-      console.log('[useShift] Fetching shift:', shiftId);
-      const shift = await getShiftById(shiftId);
-      console.log('[useShift] Loaded shift data:', shift);
-      console.log('[useShift] Has shiftReferenceId:', shift?._cp365_shiftreference_value);
-      console.log('[useShift] Has shiftActivityId:', shift?._cp365_shiftactivity_value);
-      console.log('[useShift] Has overtimeshift:', shift?.cp365_overtimeshift);
-      return shift;
-    },
+    queryFn: () => (shiftId ? getShiftById(shiftId) : null),
     enabled: !!shiftId,
     staleTime: 0, // Always consider data stale - refetch on each open
     gcTime: 0, // Don't cache (was cacheTime in older React Query)

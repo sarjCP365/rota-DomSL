@@ -50,9 +50,7 @@ export const msalConfig: Configuration = {
 /**
  * Scopes required for Dataverse API access
  */
-export const dataverseScopes = [
-  `${import.meta.env.VITE_DATAVERSE_URL}/.default`,
-];
+export const dataverseScopes = [`${import.meta.env.VITE_DATAVERSE_URL}/.default`];
 
 /**
  * Login request configuration
@@ -85,7 +83,7 @@ export function isMsalConfigured(): boolean {
  */
 export function getConfigurationWarnings(): string[] {
   const warnings: string[] = [];
-  
+
   if (!import.meta.env.VITE_CLIENT_ID) {
     warnings.push('VITE_CLIENT_ID is not set');
   }
@@ -95,7 +93,6 @@ export function getConfigurationWarnings(): string[] {
   if (!import.meta.env.VITE_DATAVERSE_URL) {
     warnings.push('VITE_DATAVERSE_URL is not set');
   }
-  
+
   return warnings;
 }
-

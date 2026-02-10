@@ -1,73 +1,127 @@
-# React + TypeScript + Vite
+# CarePoint 365 Rota
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A staff rostering and shift management application built for care sector organisations. Integrates with Microsoft Dataverse for data storage and Azure AD (Entra ID) for authentication.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Rota Management** — Weekly, fortnightly, and monthly rota grids with team/people/shift reference views
+- **Daily View** — Day-at-a-glance shift overview with attendance tracking
+- **Staff Management** — Staff profiles, capabilities, and availability management
+- **Shift Patterns** — Pattern library, builder, and assignment tools for recurring schedules
+- **Domiciliary Care** — Service user-centric visit scheduling and round planning
+- **Shift Swaps & Open Shifts** — Request management and open shift offers
+- **Dashboard** — Coverage analytics, critical alerts, and period statistics
+- **Reports** — Swap history and operational reports
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript |
+| Build | Vite 7 |
+| Styling | Tailwind CSS 4 |
+| State (client) | Zustand |
+| State (server) | TanStack React Query |
+| Routing | React Router 7 |
+| Forms | React Hook Form + Zod |
+| Auth | MSAL (Azure AD / Entra ID) |
+| Backend | Microsoft Dataverse Web API |
+| Hosting | Azure Static Web Apps |
+| CI/CD | GitHub Actions |
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 20+
+- npm 10+
+- Access to a Microsoft Dataverse environment
+- An Azure AD app registration
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Environment Variables
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Create a `.env.local` file in the project root:
+
+```env
+VITE_CLIENT_ID=<your-azure-ad-app-client-id>
+VITE_TENANT_ID=<your-azure-ad-tenant-id>
+VITE_DATAVERSE_URL=https://<your-org>.crm11.dynamics.com
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Installation
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### Development
+
+```bash
+npm run dev
+```
+
+The app runs on [http://localhost:5176](http://localhost:5176) by default.
+
+### Build
+
+```bash
+npm run build          # Production build
+npm run build:check    # Type-check then build
+```
+
+### Quality Checks
+
+```bash
+npm run lint           # ESLint
+npm run lint:fix       # ESLint with auto-fix
+npm run format         # Prettier formatting
+npm run format:check   # Check formatting
+```
+
+## Project Structure
+
+```
+src/
+├── api/                    # Dataverse Web API client and entity operations
+│   ├── dataverse/          # Dataverse client, types, entity modules
+│   └── flows/              # Power Automate flow integration
+├── components/             # React components by feature area
+│   ├── admin/              # Admin management (units, agency workers)
+│   ├── auth/               # Authentication (MSAL provider, login)
+│   ├── common/             # Shared UI (header, sidenav, error boundaries)
+│   ├── daily/              # Daily view components
+│   ├── dashboard/          # Dashboard widgets
+│   ├── requests/           # Shift swap request components
+│   ├── rota/               # Rota grid and shift management
+│   ├── shifts/             # Shift-specific components
+│   └── staff/              # Staff management components
+├── config/                 # MSAL configuration
+├── data/                   # Dummy data generators (development)
+├── features/               # Self-contained feature modules
+│   └── shift-patterns/     # Pattern library, builder, assignment
+├── hooks/                  # Global custom hooks
+├── pages/                  # Route-level page components
+├── repositories/           # Repository pattern (domiciliary features)
+├── services/               # Business logic services
+├── store/                  # Zustand state stores
+├── types/                  # Shared TypeScript type definitions
+└── utils/                  # Utility functions
+```
+
+## Deployment
+
+The application deploys automatically to Azure Static Web Apps via GitHub Actions on push to `main`. Pull requests generate preview environments.
+
+## Documentation
+
+Additional documentation is available in the `docs/` directory:
+
+- **DATAVERSE-DEVELOPMENT-GUIDE.md** — Dataverse API conventions and schema naming rules
+- **CURSOR-DOMICILIARY-SUPPORTED-LIVING-ROSTERING.md** — Domiciliary care feature specification
+- **MOBILE-APP-SHIFT-SWAP-SPEC.md** — Mobile shift swap specification
+- **OPEN-SHIFTS-DATAVERSE-SCHEMA.md** — Open shifts Dataverse schema
+- **QA-Dashboard-Feature-Guide.md** — Dashboard QA test scripts
+
+## Licence
+
+Proprietary — CarePoint365

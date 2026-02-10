@@ -1,12 +1,21 @@
 /**
  * Staff Pattern View Component
  * Displays a staff member's assigned patterns and provides management controls
- * 
+ *
  * Can be used on staff profile pages or as a panel on the rota view.
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { format, parseISO, addWeeks, startOfWeek, addDays, isBefore, isAfter, isToday } from 'date-fns';
+import {
+  format,
+  parseISO,
+  addWeeks,
+  startOfWeek,
+  addDays,
+  isBefore,
+  isAfter,
+  isToday,
+} from 'date-fns';
 import {
   Calendar,
   Clock,
@@ -26,10 +35,14 @@ import {
   User,
   MoreVertical,
 } from 'lucide-react';
-import { useStaffPatternAssignments, useEndPatternAssignment, useDeletePatternAssignment } from '../../hooks/usePatternAssignments';
-import { useStaffMember } from '../../../../hooks/useStaff';
-import type { StaffPatternAssignment, PatternDayFormData } from '../../types';
-import { DayOfWeek, DayOfWeekLabels, DayOfWeekShortLabels, AssignmentStatus, PatternPublishStatus } from '../../types';
+import {
+  useStaffPatternAssignments,
+  useEndPatternAssignment,
+  useDeletePatternAssignment,
+} from '../../hooks/usePatternAssignments';
+import { useStaffMember } from '@/hooks/useStaff';
+import type { StaffPatternAssignment } from '../../types';
+import { DayOfWeek, DayOfWeekLabels, DayOfWeekShortLabels, AssignmentStatus } from '../../types';
 
 // =============================================================================
 // TYPES
@@ -52,9 +65,19 @@ interface StaffPatternViewProps {
 
 // Colour palette for different patterns
 const PATTERN_COLOURS = [
-  { bg: 'bg-emerald-100', border: 'border-emerald-400', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  {
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-400',
+    text: 'text-emerald-700',
+    dot: 'bg-emerald-500',
+  },
   { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-700', dot: 'bg-blue-500' },
-  { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-700', dot: 'bg-purple-500' },
+  {
+    bg: 'bg-purple-100',
+    border: 'border-purple-400',
+    text: 'text-purple-700',
+    dot: 'bg-purple-500',
+  },
   { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-700', dot: 'bg-amber-500' },
   { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-700', dot: 'bg-rose-500' },
   { bg: 'bg-cyan-100', border: 'border-cyan-400', text: 'text-cyan-700', dot: 'bg-cyan-500' },
@@ -84,7 +107,7 @@ function getDaysCovered(appliesTo?: string): string {
   if (days.length === 0 || days.length === 7) {
     return 'All days';
   }
-  return days.map(d => d.substring(0, 3)).join(', ');
+  return days.map((d) => d.substring(0, 3)).join(', ');
 }
 
 /**
@@ -96,7 +119,7 @@ function isGenerationBehind(assignment: StaffPatternAssignment): boolean {
 
   const lastGeneratedDate = parseISO(lastGenerated);
   const expectedDate = addWeeks(new Date(), 2); // Should have shifts 2 weeks ahead
-  
+
   return isBefore(lastGeneratedDate, expectedDate);
 }
 
@@ -106,11 +129,11 @@ function isGenerationBehind(assignment: StaffPatternAssignment): boolean {
 function getCalendarDates(startDate: Date): Date[] {
   const dates: Date[] = [];
   const weekStart = startOfWeek(startDate, { weekStartsOn: 1 });
-  
+
   for (let i = 0; i < 28; i++) {
     dates.push(addDays(weekStart, i));
   }
-  
+
   return dates;
 }
 
@@ -122,20 +145,20 @@ function getPatternForDate(
   assignments: StaffPatternAssignment[]
 ): StaffPatternAssignment | null {
   const activeAssignments = assignments
-    .filter(a => {
+    .filter((a) => {
       const startDate = parseISO(a.cp365_sp_startdate);
       const endDate = a.cp365_sp_enddate ? parseISO(a.cp365_sp_enddate) : null;
-      
+
       if (isBefore(date, startDate)) return false;
       if (endDate && isAfter(date, endDate)) return false;
-      
+
       // Check applies to days
       const appliesToDays = parseAppliesToDays(a.cp365_sp_appliestodays);
       if (appliesToDays.length > 0) {
         const dayName = DayOfWeekLabels[getDayOfWeek(date)];
         if (!appliesToDays.includes(dayName)) return false;
       }
-      
+
       return true;
     })
     .sort((a, b) => a.cp365_sp_priority - b.cp365_sp_priority);
@@ -194,7 +217,7 @@ function AssignmentCard({
               </span>
             )}
           </div>
-          
+
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -203,14 +226,14 @@ function AssignmentCard({
                 <> - {format(parseISO(assignment.cp365_sp_enddate), 'd MMM yyyy')}</>
               )}
             </span>
-            
+
             {avgHours !== undefined && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {avgHours.toFixed(1)} hrs/wk
               </span>
             )}
-            
+
             <span className="flex items-center gap-1">
               <Layers className="h-3 w-3" />
               {getDaysCovered(assignment.cp365_sp_appliestodays)}
@@ -231,7 +254,7 @@ function AssignmentCard({
                   No shifts generated
                 </span>
               )}
-              
+
               {needsGeneration && onGenerate && (
                 <button
                   onClick={onGenerate}
@@ -253,13 +276,10 @@ function AssignmentCard({
           >
             <MoreVertical className="h-4 w-4" />
           </button>
-          
+
           {showMenu && (
             <>
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setShowMenu(false)} 
-              />
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
               <div className="absolute right-0 top-full mt-1 z-20 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                 <button
                   onClick={() => {
@@ -345,12 +365,11 @@ function PatternCalendar({ assignments, compact }: PatternCalendarProps) {
       <div className="grid grid-cols-7 gap-px bg-slate-200">
         {calendarDates.map((date, index) => {
           const assignment = getPatternForDate(date, assignments);
-          const colourIndex = assignment 
-            ? assignmentColours.get(assignment.cp365_staffpatternassignmentid) ?? 0
+          const colourIndex = assignment
+            ? (assignmentColours.get(assignment.cp365_staffpatternassignmentid) ?? 0)
             : -1;
-          const colour = colourIndex >= 0 
-            ? PATTERN_COLOURS[colourIndex % PATTERN_COLOURS.length] 
-            : null;
+          const colour =
+            colourIndex >= 0 ? PATTERN_COLOURS[colourIndex % PATTERN_COLOURS.length] : null;
           const isCurrentDay = isToday(date);
 
           return (
@@ -360,9 +379,11 @@ function PatternCalendar({ assignments, compact }: PatternCalendarProps) {
                 colour ? colour.bg : 'bg-slate-50'
               } ${isCurrentDay ? 'ring-2 ring-inset ring-emerald-500' : ''}`}
             >
-              <span className={`text-xs font-medium ${
-                colour ? colour.text : 'text-slate-400'
-              } ${isCurrentDay ? 'font-bold' : ''}`}>
+              <span
+                className={`text-xs font-medium ${
+                  colour ? colour.text : 'text-slate-400'
+                } ${isCurrentDay ? 'font-bold' : ''}`}
+              >
                 {format(date, 'd')}
               </span>
               {!compact && colour && assignment && (
@@ -379,7 +400,10 @@ function PatternCalendar({ assignments, compact }: PatternCalendarProps) {
           {assignments.map((assignment, index) => {
             const colour = PATTERN_COLOURS[index % PATTERN_COLOURS.length];
             return (
-              <div key={assignment.cp365_staffpatternassignmentid} className="flex items-center gap-1.5">
+              <div
+                key={assignment.cp365_staffpatternassignmentid}
+                className="flex items-center gap-1.5"
+              >
                 <div className={`h-2.5 w-2.5 rounded-full ${colour.dot}`} />
                 <span className="text-xs text-slate-600">
                   {assignment.cp365_shiftpatterntemplate?.cp365_name || 'Pattern'}
@@ -404,31 +428,25 @@ interface HoursSummaryProps {
 
 function HoursSummary({ contractedHours, patternHours }: HoursSummaryProps) {
   const variance = contractedHours !== undefined ? patternHours - contractedHours : 0;
-  const variancePercent = contractedHours ? ((variance / contractedHours) * 100).toFixed(0) : 0;
 
   return (
     <div className="grid grid-cols-3 gap-3 rounded-lg border border-slate-200 bg-white p-3">
       <div className="text-center">
-        <p className="text-lg font-semibold text-slate-700">
-          {contractedHours?.toFixed(1) || '-'}
-        </p>
+        <p className="text-lg font-semibold text-slate-700">{contractedHours?.toFixed(1) || '-'}</p>
         <p className="text-xs text-slate-500">Contracted</p>
       </div>
       <div className="text-center border-x border-slate-200">
-        <p className="text-lg font-semibold text-emerald-600">
-          {patternHours.toFixed(1)}
-        </p>
+        <p className="text-lg font-semibold text-emerald-600">{patternHours.toFixed(1)}</p>
         <p className="text-xs text-slate-500">Pattern</p>
       </div>
       <div className="text-center">
-        <p className={`text-lg font-semibold ${
-          variance === 0 
-            ? 'text-slate-600' 
-            : variance > 0 
-            ? 'text-amber-600' 
-            : 'text-red-600'
-        }`}>
-          {variance > 0 ? '+' : ''}{variance.toFixed(1)}
+        <p
+          className={`text-lg font-semibold ${
+            variance === 0 ? 'text-slate-600' : variance > 0 ? 'text-amber-600' : 'text-red-600'
+          }`}
+        >
+          {variance > 0 ? '+' : ''}
+          {variance.toFixed(1)}
         </p>
         <p className="text-xs text-slate-500">Variance</p>
       </div>
@@ -451,7 +469,7 @@ export function StaffPatternView({
   // ==========================================================================
   // STATE
   // ==========================================================================
-  
+
   const [showHistory, setShowHistory] = useState(false);
   const [endingId, setEndingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -459,9 +477,9 @@ export function StaffPatternView({
   // ==========================================================================
   // DATA FETCHING
   // ==========================================================================
-  
+
   const { data: staffMember } = useStaffMember(staffMemberId);
-  const { data: allAssignments = [], isLoading, refetch } = useStaffPatternAssignments(
+  const { data: allAssignments = [], isLoading } = useStaffPatternAssignments(
     staffMemberId,
     true // Include ended assignments
   );
@@ -472,13 +490,13 @@ export function StaffPatternView({
   // ==========================================================================
   // DERIVED DATA
   // ==========================================================================
-  
+
   const { activeAssignments, endedAssignments } = useMemo(() => {
     const active = allAssignments.filter(
-      a => a.cp365_sp_assignmentstatus === AssignmentStatus.Active
+      (a) => a.cp365_sp_assignmentstatus === AssignmentStatus.Active
     );
     const ended = allAssignments.filter(
-      a => a.cp365_sp_assignmentstatus !== AssignmentStatus.Active
+      (a) => a.cp365_sp_assignmentstatus !== AssignmentStatus.Active
     );
     return { activeAssignments: active, endedAssignments: ended };
   }, [allAssignments]);
@@ -494,40 +512,52 @@ export function StaffPatternView({
   // ==========================================================================
   // HANDLERS
   // ==========================================================================
-  
-  const handleEndAssignment = useCallback(async (id: string) => {
-    if (!confirm('Are you sure you want to end this pattern assignment? Future shifts will not be generated.')) {
-      return;
-    }
-    
-    setEndingId(id);
-    try {
-      await endAssignmentMutation.mutateAsync({
-        id,
-        endDate: format(new Date(), 'yyyy-MM-dd'),
-      });
-    } finally {
-      setEndingId(null);
-    }
-  }, [endAssignmentMutation]);
 
-  const handleDeleteAssignment = useCallback(async (id: string) => {
-    if (!confirm('Are you sure you want to delete this pattern assignment? This cannot be undone.')) {
-      return;
-    }
-    
-    setDeletingId(id);
-    try {
-      await deleteAssignmentMutation.mutateAsync(id);
-    } finally {
-      setDeletingId(null);
-    }
-  }, [deleteAssignmentMutation]);
+  const handleEndAssignment = useCallback(
+    async (id: string) => {
+      if (
+        !confirm(
+          'Are you sure you want to end this pattern assignment? Future shifts will not be generated.'
+        )
+      ) {
+        return;
+      }
+
+      setEndingId(id);
+      try {
+        await endAssignmentMutation.mutateAsync({
+          id,
+          endDate: format(new Date(), 'yyyy-MM-dd'),
+        });
+      } finally {
+        setEndingId(null);
+      }
+    },
+    [endAssignmentMutation]
+  );
+
+  const handleDeleteAssignment = useCallback(
+    async (id: string) => {
+      if (
+        !confirm('Are you sure you want to delete this pattern assignment? This cannot be undone.')
+      ) {
+        return;
+      }
+
+      setDeletingId(id);
+      try {
+        await deleteAssignmentMutation.mutateAsync(id);
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deleteAssignmentMutation]
+  );
 
   // ==========================================================================
   // RENDER
   // ==========================================================================
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -546,9 +576,7 @@ export function StaffPatternView({
               <User className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-medium text-slate-900">
-                {staffMember.cp365_staffmembername}
-              </h3>
+              <h3 className="font-medium text-slate-900">{staffMember.cp365_staffmembername}</h3>
               <p className="text-sm text-slate-500">
                 {staffMember.cp365_jobtitle || 'Staff Member'}
               </p>
@@ -566,10 +594,7 @@ export function StaffPatternView({
 
       {/* Hours Summary */}
       {!compact && activeAssignments.length > 0 && (
-        <HoursSummary 
-          contractedHours={contractedHours} 
-          patternHours={totalPatternHours} 
-        />
+        <HoursSummary contractedHours={contractedHours} patternHours={totalPatternHours} />
       )}
 
       {/* No Patterns */}
@@ -602,7 +627,11 @@ export function StaffPatternView({
               onEdit={() => onEditAssignment(assignment.cp365_staffpatternassignmentid)}
               onEnd={() => handleEndAssignment(assignment.cp365_staffpatternassignmentid)}
               onDelete={() => handleDeleteAssignment(assignment.cp365_staffpatternassignmentid)}
-              onGenerate={onGenerateShifts ? () => onGenerateShifts(assignment.cp365_staffpatternassignmentid) : undefined}
+              onGenerate={
+                onGenerateShifts
+                  ? () => onGenerateShifts(assignment.cp365_staffpatternassignmentid)
+                  : undefined
+              }
               isEnding={endingId === assignment.cp365_staffpatternassignmentid}
               isDeleting={deletingId === assignment.cp365_staffpatternassignmentid}
               compact={compact}
@@ -636,7 +665,7 @@ export function StaffPatternView({
               <ChevronRight className="h-4 w-4" />
             )}
           </button>
-          
+
           {showHistory && (
             <div className="mt-2 space-y-2">
               {endedAssignments.map((assignment) => (
@@ -672,4 +701,3 @@ export function StaffPatternView({
     </div>
   );
 }
-

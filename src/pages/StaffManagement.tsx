@@ -5,18 +5,19 @@
 
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Header } from '../components/common/Header';
-import { SideNav } from '../components/common/SideNav';
-import { StaffList } from '../components/staff/StaffList';
-import { StaffDetail } from '../components/staff/StaffDetail';
-import { StaffForm } from '../components/staff/StaffForm';
+import { Header } from '@/components/common/Header';
+import { SideNav } from '@/components/common/SideNav';
+import { FeatureErrorBoundary } from '@/components/common/ErrorBoundary';
+import { StaffList } from '@/components/staff/StaffList';
+import { StaffDetail } from '@/components/staff/StaffDetail';
+import { StaffForm } from '@/components/staff/StaffForm';
 
 type ViewMode = 'list' | 'detail' | 'edit' | 'create';
 
 export function StaffManagement() {
   const { staffId } = useParams<{ staffId: string }>();
   const navigate = useNavigate();
-  const [sideNavOpen, setSideNavOpen] = useState(true);
+  const [sideNavOpen, _setSideNavOpen] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>(staffId ? 'detail' : 'list');
 
   const handleSelectStaff = (id: string) => {
@@ -42,9 +43,8 @@ export function StaffManagement() {
     }
   };
 
-  const handleSubmit = async (data: unknown) => {
+  const handleSubmit = async (_data: unknown) => {
     // TODO: Implement create/update using mutation hooks
-    console.log('Submit:', data);
     handleCancel();
   };
 
@@ -63,14 +63,12 @@ export function StaffManagement() {
 
   return (
     <div className="flex h-screen flex-col bg-elevation-1">
-      <Header
-        title={getTitle()}
-        showBackButton={viewMode !== 'list'}
-        onBack={handleCancel}
-      />
+      <Header title={getTitle()} showBackButton={viewMode !== 'list'} onBack={handleCancel} />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideNav isOpen={sideNavOpen} />
+        <FeatureErrorBoundary featureName="Navigation">
+          <SideNav isOpen={sideNavOpen} />
+        </FeatureErrorBoundary>
 
         <main className="flex flex-1 flex-col overflow-auto bg-white">
           <div className="p-6">
@@ -106,4 +104,3 @@ export function StaffManagement() {
     </div>
   );
 }
-

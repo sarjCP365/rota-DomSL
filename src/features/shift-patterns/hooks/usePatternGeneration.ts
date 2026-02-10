@@ -8,12 +8,7 @@ import {
   detectConflicts,
   getGenerationLogs,
 } from '../api/patternGeneration';
-import type {
-  GenerationResult,
-  PatternConflict,
-  ShiftGenerationLog,
-  GenerateShiftsOptions,
-} from '../types';
+import type { GenerateShiftsOptions } from '../types';
 import { patternAssignmentKeys } from './usePatternAssignments';
 // Note: Add react-toastify or similar library for proper notifications
 
@@ -22,10 +17,9 @@ import { patternAssignmentKeys } from './usePatternAssignments';
  */
 export const patternGenerationKeys = {
   all: ['patternGeneration'] as const,
-  conflicts: (assignmentId: string, startDate: string, endDate: string) => 
+  conflicts: (assignmentId: string, startDate: string, endDate: string) =>
     [...patternGenerationKeys.all, 'conflicts', assignmentId, startDate, endDate] as const,
-  logs: (assignmentId: string) => 
-    [...patternGenerationKeys.all, 'logs', assignmentId] as const,
+  logs: (assignmentId: string) => [...patternGenerationKeys.all, 'logs', assignmentId] as const,
 };
 
 /**
@@ -72,33 +66,26 @@ export function useGenerateShifts() {
       // Invalidate shift queries
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['rotaData'] });
-      
+
       // Invalidate the assignment (lastGeneratedDate has changed)
-      queryClient.invalidateQueries({ 
-        queryKey: patternAssignmentKeys.detail(options.assignmentId) 
-      });
-      
-      // Invalidate generation logs
-      queryClient.invalidateQueries({ 
-        queryKey: patternGenerationKeys.logs(options.assignmentId) 
+      queryClient.invalidateQueries({
+        queryKey: patternAssignmentKeys.detail(options.assignmentId),
       });
 
-      // Show result message
-      if (result.errors.length === 0) {
-        console.log(
-          `[PatternGeneration] Generated ${result.shiftsCreated.length} shifts. ${result.shiftsSkipped.length} skipped.`
-        );
-      } else {
+      // Invalidate generation logs
+      queryClient.invalidateQueries({
+        queryKey: patternGenerationKeys.logs(options.assignmentId),
+      });
+
+      // Show result message if errors
+      if (result.errors.length > 0) {
         console.warn(
           `[PatternGeneration] Generated ${result.shiftsCreated.length} shifts with ${result.errors.length} errors.`
         );
-        alert(`Generated ${result.shiftsCreated.length} shifts with ${result.errors.length} errors.`);
       }
     },
     onError: (error) => {
-      console.error('[useGenerateShifts] Error:', error);
-      console.error(`[PatternGeneration] Failed to generate shifts: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to generate shifts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternGeneration] Failed to generate shifts:', error);
     },
   });
 }
@@ -108,12 +95,10 @@ export function useGenerateShifts() {
  */
 export function usePreviewGeneration() {
   return useMutation({
-    mutationFn: (options: Omit<GenerateShiftsOptions, 'dryRun'>) => 
+    mutationFn: (options: Omit<GenerateShiftsOptions, 'dryRun'>) =>
       generateShiftsFromPattern({ ...options, dryRun: true }),
     onError: (error) => {
-      console.error('[usePreviewGeneration] Error:', error);
-      console.error(`[PatternGeneration] Failed to preview generation: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to preview generation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternGeneration] Failed to preview:', error);
     },
   });
 }
@@ -130,14 +115,14 @@ export function useRegenerateShifts() {
       // This would need an API function to delete shifts by assignment and date range
       // For now, we'll just regenerate with override conflict resolution
       const resolutions = new Map<string, 'keep' | 'override' | 'skip'>();
-      
+
       // Set all conflicts to override
       const conflicts = await detectConflicts(
         options.assignmentId, // This is wrong - we need staffMemberId
         options.startDate,
         options.endDate
       );
-      
+
       for (const conflict of conflicts) {
         if (conflict.type === 'existing_shift') {
           resolutions.set(conflict.date, 'override');
@@ -153,20 +138,15 @@ export function useRegenerateShifts() {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['rotaData'] });
-      queryClient.invalidateQueries({ 
-        queryKey: patternAssignmentKeys.detail(options.assignmentId) 
+      queryClient.invalidateQueries({
+        queryKey: patternAssignmentKeys.detail(options.assignmentId),
       });
-      queryClient.invalidateQueries({ 
-        queryKey: patternGenerationKeys.logs(options.assignmentId) 
+      queryClient.invalidateQueries({
+        queryKey: patternGenerationKeys.logs(options.assignmentId),
       });
-
-      console.log(`[PatternGeneration] Regenerated ${result.shiftsCreated.length} shifts.`);
     },
     onError: (error) => {
-      console.error('[useRegenerateShifts] Error:', error);
-      console.error(`[PatternGeneration] Failed to regenerate shifts: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      alert(`Failed to regenerate shifts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[PatternGeneration] Failed to regenerate shifts:', error);
     },
   });
 }
-

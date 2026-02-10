@@ -1,9 +1,9 @@
 /**
  * TeamViewGrid Component
- * 
+ *
  * Displays the rota in a hierarchical Unit > Team > Staff structure.
  * Each level is collapsible and shows aggregated statistics.
- * 
+ *
  * Features:
  * - Collapsible Unit sections
  * - Collapsible Team sections within units
@@ -15,34 +15,33 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay } from 'date-fns';
-import { 
-  ChevronRight, 
-  ChevronDown, 
-  Users, 
+import {
+  ChevronRight,
+  ChevronDown,
+  Users,
   Layers,
   UserX,
   AlertCircle,
   Building2,
-  Calendar,
   Send,
   CheckSquare,
   XCircle,
   UserPlus,
   Loader2,
 } from 'lucide-react';
-import type { 
-  HierarchicalRotaData, 
-  UnitWithTeams, 
-  TeamWithStaff, 
+import type {
+  HierarchicalRotaData,
+  UnitWithTeams,
+  TeamWithStaff,
   StaffWithShifts,
   Shift,
   ShiftViewData,
   SublocationStaffViewData,
   ShiftReference,
-} from '../../api/dataverse/types';
-import { ShiftStatus } from '../../api/dataverse/types';
-import type { DetailLevel } from '../../store/rotaStore';
-import { usePublishShifts } from '../../hooks/useShifts';
+} from '@/api/dataverse/types';
+import { ShiftStatus } from '@/api/dataverse/types';
+import type { DetailLevel } from '@/store/rotaStore';
+import { usePublishShifts } from '@/hooks/useShifts';
 import { QuickAssignPopover } from './QuickAssignPopover';
 import { BulkAssignModal } from './BulkAssignModal';
 
@@ -110,11 +109,11 @@ export function TeamViewGrid({
         setShowPublishMenu(false);
       }
     };
-    
+
     if (showPublishMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -133,7 +132,7 @@ export function TeamViewGrid({
   };
 
   const handleToggleShiftSelection = useCallback((shiftId: string) => {
-    setSelectedForPublish(prev => {
+    setSelectedForPublish((prev) => {
       const next = new Set(prev);
       if (next.has(shiftId)) {
         next.delete(shiftId);
@@ -174,7 +173,7 @@ export function TeamViewGrid({
 
   // Toggle unit expansion
   const toggleUnit = useCallback((unitId: string) => {
-    setExpandedUnits(prev => {
+    setExpandedUnits((prev) => {
       const next = new Set(prev);
       if (next.has(unitId)) {
         next.delete(unitId);
@@ -187,7 +186,7 @@ export function TeamViewGrid({
 
   // Toggle team expansion
   const toggleTeam = useCallback((teamId: string) => {
-    setExpandedTeams(prev => {
+    setExpandedTeams((prev) => {
       const next = new Set(prev);
       if (next.has(teamId)) {
         next.delete(teamId);
@@ -200,10 +199,10 @@ export function TeamViewGrid({
 
   // Expand all
   const expandAll = useCallback(() => {
-    const allUnitIds = new Set(data.units.map(u => u.cp365_unitid));
+    const allUnitIds = new Set(data.units.map((u) => u.cp365_unitid));
     const allTeamIds = new Set<string>();
-    data.units.forEach(u => u.teams.forEach(t => allTeamIds.add(t.cp365_staffteamid)));
-    data.unassignedTeams.forEach(t => allTeamIds.add(t.cp365_staffteamid));
+    data.units.forEach((u) => u.teams.forEach((t) => allTeamIds.add(t.cp365_staffteamid)));
+    data.unassignedTeams.forEach((t) => allTeamIds.add(t.cp365_staffteamid));
     setExpandedUnits(allUnitIds);
     setExpandedTeams(allTeamIds);
   }, [data]);
@@ -222,7 +221,7 @@ export function TeamViewGrid({
   // Calculate overall stats
   const stats = useMemo(() => {
     let totalShifts = 0;
-    let unassignedCount = data.unassignedShifts.length;
+    const unassignedCount = data.unassignedShifts.length;
     let unpublishedCount = 0;
     const unpublishedShiftIds = new Set<string>();
 
@@ -279,7 +278,7 @@ export function TeamViewGrid({
 
   // Get unassigned shifts for bulk assign modal (converted to ShiftViewData format)
   const unassignedShiftsList = useMemo(() => {
-    return data.unassignedShifts.map(s => ({
+    return data.unassignedShifts.map((s) => ({
       'Shift ID': s.cp365_shiftid,
       'Shift Date': s.cp365_shiftdate,
       'Shift Start Time': s.cp365_shiftstarttime,
@@ -323,7 +322,8 @@ export function TeamViewGrid({
           </div>
           <h3 className="text-lg font-medium text-slate-900">No Units Found</h3>
           <p className="mt-2 text-sm text-slate-500">
-            No units have been configured for this location. Units group teams together for better organization.
+            No units have been configured for this location. Units group teams together for better
+            organization.
           </p>
         </div>
       </div>
@@ -349,27 +349,21 @@ export function TeamViewGrid({
             onClick={() => stats.unassignedCount > 0 && setShowBulkAssignModal(true)}
             disabled={stats.unassignedCount === 0}
             className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 transition-colors ${
-              stats.unassignedCount > 0 
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer' 
+              stats.unassignedCount > 0
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer'
                 : 'bg-gray-100 text-gray-500 cursor-default'
             }`}
           >
             <AlertCircle className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">
-              {stats.unassignedCount} Unassigned
-            </span>
-            {stats.unassignedCount > 0 && (
-              <UserPlus className="h-3 w-3 ml-1" />
-            )}
+            <span className="text-xs font-medium">{stats.unassignedCount} Unassigned</span>
+            {stats.unassignedCount > 0 && <UserPlus className="h-3 w-3 ml-1" />}
           </button>
           {/* Publish controls */}
           {isSelectionMode ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 rounded-md bg-red-100 px-2 py-0.5 text-red-700">
                 <CheckSquare className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">
-                  {selectedForPublish.size} selected
-                </span>
+                <span className="text-xs font-medium">{selectedForPublish.size} selected</span>
               </div>
               <button
                 onClick={handlePublishSelected}
@@ -390,7 +384,9 @@ export function TeamViewGrid({
           ) : stats.unpublishedCount > 0 ? (
             <div className="relative" ref={publishMenuRef}>
               <button
-                onClick={() => !publishShiftsMutation.isPending && setShowPublishMenu(!showPublishMenu)}
+                onClick={() =>
+                  !publishShiftsMutation.isPending && setShowPublishMenu(!showPublishMenu)
+                }
                 disabled={publishShiftsMutation.isPending}
                 className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-2 py-0.5 text-white hover:bg-emerald-700 disabled:opacity-75 disabled:cursor-wait"
               >
@@ -400,7 +396,9 @@ export function TeamViewGrid({
                   <Send className="h-3 w-3" />
                 )}
                 <span className="text-xs font-medium">
-                  {publishShiftsMutation.isPending ? 'Publishing...' : `Publish (${stats.unpublishedCount})`}
+                  {publishShiftsMutation.isPending
+                    ? 'Publishing...'
+                    : `Publish (${stats.unpublishedCount})`}
                 </span>
                 {!publishShiftsMutation.isPending && <ChevronDown className="h-3 w-3" />}
               </button>
@@ -458,8 +456,8 @@ export function TeamViewGrid({
                 <th
                   key={idx}
                   className={`min-w-[100px] border-b border-r border-slate-200 px-2 py-2 text-center text-xs ${
-                    isSameDay(date, new Date()) 
-                      ? 'bg-emerald-50 font-semibold text-emerald-700' 
+                    isSameDay(date, new Date())
+                      ? 'bg-emerald-50 font-semibold text-emerald-700'
                       : 'bg-slate-50 font-medium text-slate-600'
                   }`}
                 >
@@ -585,7 +583,10 @@ export function TeamViewGrid({
           </span>
         </div>
         <div className="text-xs text-slate-500">
-          Coverage: <strong className={data.stats.coveragePercentage < 100 ? 'text-amber-600' : 'text-emerald-600'}>
+          Coverage:{' '}
+          <strong
+            className={data.stats.coveragePercentage < 100 ? 'text-amber-600' : 'text-emerald-600'}
+          >
             {data.stats.coveragePercentage}%
           </strong>
         </div>
@@ -632,7 +633,7 @@ function UnitSection({
   return (
     <>
       {/* Unit header row */}
-      <tr 
+      <tr
         className="cursor-pointer bg-emerald-50 hover:bg-emerald-100 transition-colors"
         onClick={onToggleUnit}
       >
@@ -662,29 +663,27 @@ function UnitSection({
           {/* Could show unit total hours here */}
         </td>
         {dateColumns.map((_, idx) => (
-          <td
-            key={idx}
-            className="border-b border-r border-emerald-200 bg-emerald-50 px-2 py-2"
-          />
+          <td key={idx} className="border-b border-r border-emerald-200 bg-emerald-50 px-2 py-2" />
         ))}
       </tr>
 
       {/* Teams within unit */}
-      {isExpanded && unit.teams.map((team) => (
-        <TeamSection
-          key={team.cp365_staffteamid}
-          team={team}
-          dateColumns={dateColumns}
-          isExpanded={expandedTeams.has(team.cp365_staffteamid)}
-          onToggle={() => onToggleTeam(team.cp365_staffteamid)}
-          detailLevel={detailLevel}
-          onShiftClick={onShiftClick}
-          onCellClick={onCellClick}
-          isSelectionMode={isSelectionMode}
-          selectedForPublish={selectedForPublish}
-          onTogglePublishSelection={onTogglePublishSelection}
-        />
-      ))}
+      {isExpanded &&
+        unit.teams.map((team) => (
+          <TeamSection
+            key={team.cp365_staffteamid}
+            team={team}
+            dateColumns={dateColumns}
+            isExpanded={expandedTeams.has(team.cp365_staffteamid)}
+            onToggle={() => onToggleTeam(team.cp365_staffteamid)}
+            detailLevel={detailLevel}
+            onShiftClick={onShiftClick}
+            onCellClick={onCellClick}
+            isSelectionMode={isSelectionMode}
+            selectedForPublish={selectedForPublish}
+            onTogglePublishSelection={onTogglePublishSelection}
+          />
+        ))}
     </>
   );
 }
@@ -727,11 +726,13 @@ function TeamSection({
   return (
     <>
       {/* Team header row */}
-      <tr 
+      <tr
         className={`cursor-pointer ${bgClass} ${hoverClass} transition-colors`}
         onClick={onToggle}
       >
-        <td className={`sticky left-0 z-10 border-b border-r ${borderClass} ${bgClass} px-4 py-2 pl-8`}>
+        <td
+          className={`sticky left-0 z-10 border-b border-r ${borderClass} ${bgClass} px-4 py-2 pl-8`}
+        >
           <div className="flex items-center gap-2">
             {isExpanded ? (
               <ChevronDown className="h-4 w-4 text-slate-500" />
@@ -750,31 +751,31 @@ function TeamSection({
             )}
           </div>
         </td>
-        <td className={`border-b border-r ${borderClass} ${bgClass} px-2 py-2 text-center text-sm text-slate-600`}>
+        <td
+          className={`border-b border-r ${borderClass} ${bgClass} px-2 py-2 text-center text-sm text-slate-600`}
+        >
           {/* Could show team total hours */}
         </td>
         {dateColumns.map((_, idx) => (
-          <td
-            key={idx}
-            className={`border-b border-r ${borderClass} ${bgClass} px-2 py-2`}
-          />
+          <td key={idx} className={`border-b border-r ${borderClass} ${bgClass} px-2 py-2`} />
         ))}
       </tr>
 
       {/* Staff members within team */}
-      {isExpanded && team.staffMembers.map((staff) => (
-        <StaffRow
-          key={staff.cp365_staffmemberid}
-          staff={staff}
-          dateColumns={dateColumns}
-          detailLevel={detailLevel}
-          onShiftClick={onShiftClick}
-          onCellClick={onCellClick}
-          isSelectionMode={isSelectionMode}
-          selectedForPublish={selectedForPublish}
-          onTogglePublishSelection={onTogglePublishSelection}
-        />
-      ))}
+      {isExpanded &&
+        team.staffMembers.map((staff) => (
+          <StaffRow
+            key={staff.cp365_staffmemberid}
+            staff={staff}
+            dateColumns={dateColumns}
+            detailLevel={detailLevel}
+            onShiftClick={onShiftClick}
+            onCellClick={onCellClick}
+            isSelectionMode={isSelectionMode}
+            selectedForPublish={selectedForPublish}
+            onTogglePublishSelection={onTogglePublishSelection}
+          />
+        ))}
     </>
   );
 }
@@ -820,7 +821,7 @@ function StaffRow({
   // Check if staff is on leave for a specific date
   const isOnLeave = (date: Date): boolean => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return staff.leave.some(leave => {
+    return staff.leave.some((leave) => {
       const start = leave.cp365_startdate.split('T')[0];
       const end = leave.cp365_enddate.split('T')[0];
       return dateStr >= start && dateStr <= end;
@@ -839,9 +840,7 @@ function StaffRow({
             {initials || '??'}
           </div>
           <div>
-            <div className="text-sm font-medium text-slate-800">
-              {staff.cp365_staffmembername}
-            </div>
+            <div className="text-sm font-medium text-slate-800">{staff.cp365_staffmembername}</div>
             {detailLevel === 'detailed' && (
               <div className="text-xs text-slate-500">
                 {staff.contractedHours > 0 ? `${staff.contractedHours}h contract` : 'No contract'}
@@ -853,7 +852,13 @@ function StaffRow({
 
       {/* Hours cell */}
       <td className="border-b border-r border-slate-200 bg-white px-2 py-2 text-center text-sm">
-        <span className={staff.scheduledHours > staff.contractedHours ? 'text-amber-600 font-medium' : 'text-slate-600'}>
+        <span
+          className={
+            staff.scheduledHours > staff.contractedHours
+              ? 'text-amber-600 font-medium'
+              : 'text-slate-600'
+          }
+        >
           {staff.scheduledHours}h
         </span>
       </td>
@@ -881,16 +886,16 @@ function StaffRow({
             {dayShifts.map((shift) => {
               const shiftId = shift.cp365_shiftid;
               const isUnpublished = shift.cp365_shiftstatus !== ShiftStatus.Published;
-              
+
               // In selection mode, clicking unpublished shifts toggles selection
-              const handleClick = (e: React.MouseEvent) => {
+              const handleClick = (_e: React.MouseEvent) => {
                 if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
                   onTogglePublishSelection(shiftId);
                 } else {
                   onShiftClick?.(shiftId);
                 }
               };
-              
+
               return (
                 <ShiftBlock
                   key={shiftId}
@@ -921,9 +926,15 @@ interface ShiftBlockProps {
   isSelectedForPublish?: boolean;
 }
 
-function ShiftBlock({ shift, detailLevel, onClick, isSelectionMode, isSelectedForPublish }: ShiftBlockProps) {
+function ShiftBlock({
+  shift,
+  detailLevel,
+  onClick,
+  isSelectionMode,
+  isSelectedForPublish,
+}: ShiftBlockProps) {
   // Parse times
-  const startTime = shift.cp365_shiftstarttime 
+  const startTime = shift.cp365_shiftstarttime
     ? format(new Date(shift.cp365_shiftstarttime), 'HH:mm')
     : '??:??';
   const endTime = shift.cp365_shiftendtime
@@ -959,8 +970,17 @@ function ShiftBlock({ shift, detailLevel, onClick, isSelectionMode, isSelectedFo
   if (detailLevel === 'hoursOnly') {
     return (
       <div
-        onClick={(e) => { e.stopPropagation(); onClick?.(e); }}
-        title={isUnpublished ? (isSelectionMode ? 'Click to select for publishing' : 'Unpublished shift') : undefined}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.(e);
+        }}
+        title={
+          isUnpublished
+            ? isSelectionMode
+              ? 'Click to select for publishing'
+              : 'Unpublished shift'
+            : undefined
+        }
         className={`mb-1 rounded border px-1 py-0.5 text-center text-[10px] cursor-pointer hover:opacity-80 ${getBgColor()} ${getSelectionStyle()}`}
       >
         {startTime}-{endTime}
@@ -972,25 +992,35 @@ function ShiftBlock({ shift, detailLevel, onClick, isSelectionMode, isSelectedFo
 
   const isLeader = shift.cp365_shiftleader;
   const isActUp = shift.cp365_actup;
-  const hasRoleBadge = isLeader || isActUp;
-  
+
   return (
     <div
-      onClick={(e) => { e.stopPropagation(); onClick?.(e); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
       title={`${isUnpublished ? (isSelectionMode ? 'Click to select for publishing' : 'Unpublished shift') : ''}${isLeader ? ' (Shift Leader)' : ''}${isActUp ? ' (Act Up)' : ''}`}
       className={`mb-1 rounded border px-1 py-0.5 text-[10px] cursor-pointer hover:opacity-80 ${getBgColor()} ${getSelectionStyle()}`}
     >
       <div className="flex items-center gap-1">
         <span>{getIcon()}</span>
-        <span className="font-medium">{startTime}-{endTime}</span>
+        <span className="font-medium">
+          {startTime}-{endTime}
+        </span>
         {/* Role badges - always show */}
         {isLeader && (
-          <span className="shrink-0 rounded bg-orange-200 px-0.5 text-[8px] font-bold text-orange-700">SL</span>
+          <span className="shrink-0 rounded bg-orange-200 px-0.5 text-[8px] font-bold text-orange-700">
+            SL
+          </span>
         )}
         {isActUp && (
-          <span className="shrink-0 rounded bg-purple-200 px-0.5 text-[8px] font-bold text-purple-700">AU</span>
+          <span className="shrink-0 rounded bg-purple-200 px-0.5 text-[8px] font-bold text-purple-700">
+            AU
+          </span>
         )}
-        {isUnpublished && !isSelectedForPublish && <span className="ml-auto font-bold text-gray-500">*</span>}
+        {isUnpublished && !isSelectedForPublish && (
+          <span className="ml-auto font-bold text-gray-500">*</span>
+        )}
         {isSelectedForPublish && <span className="ml-auto text-red-500 font-bold">✓</span>}
       </div>
     </div>
@@ -1017,7 +1047,7 @@ interface UnassignedShiftsRowProps {
 function UnassignedShiftsRow({
   shifts,
   dateColumns,
-  startDate,
+  startDate: _startDate,
   detailLevel,
   onShiftClick,
   onCellClick,
@@ -1069,7 +1099,7 @@ function UnassignedShiftsRow({
             {dayShifts.map((shift) => {
               const shiftId = shift.cp365_shiftid;
               const isUnpublished = shift.cp365_shiftstatus !== ShiftStatus.Published;
-              
+
               // Handle click - selection mode for publish, otherwise quick assign
               const handleClick = (e: React.MouseEvent) => {
                 e.stopPropagation();
@@ -1082,7 +1112,7 @@ function UnassignedShiftsRow({
                   onShiftClick?.(shiftId);
                 }
               };
-              
+
               return (
                 <ShiftBlock
                   key={shiftId}
@@ -1102,4 +1132,3 @@ function UnassignedShiftsRow({
 }
 
 export default TeamViewGrid;
-

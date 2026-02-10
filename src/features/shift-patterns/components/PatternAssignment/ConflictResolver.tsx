@@ -1,43 +1,35 @@
 /**
  * Conflict Resolver Component
  * Detects and helps resolve conflicts when generating shifts from patterns
- * 
+ *
  * This component appears after an assignment is created and before shift generation,
  * allowing users to review and resolve any conflicts with existing shifts or leave.
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { format, addDays, addWeeks, parseISO, isSameDay, startOfWeek, isWithinInterval } from 'date-fns';
+import { format, addDays, parseISO, startOfWeek, isWithinInterval } from 'date-fns';
 import {
-  AlertTriangle,
-  Calendar,
   Clock,
   Check,
   X,
   Loader2,
   ChevronDown,
   ChevronRight,
-  Briefcase,
   CalendarX2,
   Layers,
   Play,
-  SkipForward,
-  RefreshCw,
   Info,
 } from 'lucide-react';
-import type { 
-  PatternConflict, 
-  StaffPatternAssignment, 
-  ShiftPatternTemplate, 
+import type {
+  PatternConflict,
+  StaffPatternAssignment,
+  ShiftPatternTemplate,
   PatternDayFormData,
   GenerationResult,
 } from '../../types';
-import {
-  DayOfWeek,
-  DayOfWeekLabels,
-  PatternPublishStatus,
-} from '../../types';
-import type { Shift, StaffAbsenceLog } from '../../../../api/dataverse/types';
+import { DayOfWeek } from '../../types';
+import type { Shift, StaffAbsenceLog } from '@/api/dataverse/types';
+import { AbsenceStatus } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -101,15 +93,14 @@ function getPatternDayForDate(
 ): PatternDayFormData | undefined {
   // Calculate which week of the rotation we're in
   const daysSinceStart = Math.floor(
-    (date.getTime() - startOfWeek(assignmentStartDate, { weekStartsOn: 1 }).getTime()) / 
-    (1000 * 60 * 60 * 24)
+    (date.getTime() - startOfWeek(assignmentStartDate, { weekStartsOn: 1 }).getTime()) /
+      (1000 * 60 * 60 * 24)
   );
-  const weekNumber = ((Math.floor(daysSinceStart / 7) + rotationStartWeek - 1) % rotationCycleWeeks) + 1;
+  const weekNumber =
+    ((Math.floor(daysSinceStart / 7) + rotationStartWeek - 1) % rotationCycleWeeks) + 1;
   const dayOfWeek = getDayOfWeek(date);
 
-  return patternDays.find(
-    (pd) => pd.weekNumber === weekNumber && pd.dayOfWeek === dayOfWeek
-  );
+  return patternDays.find((pd) => pd.weekNumber === weekNumber && pd.dayOfWeek === dayOfWeek);
 }
 
 /**
@@ -153,16 +144,16 @@ function detectConflicts(
 
     if (shiftOnDate) {
       const shiftRef = shiftOnDate.cp365_shiftreference?.cp365_shiftreferencename || 'Shift';
-      const shiftStart = shiftOnDate.cp365_shiftstarttime 
-        ? format(parseISO(shiftOnDate.cp365_shiftstarttime), 'HH:mm') 
+      const shiftStart = shiftOnDate.cp365_shiftstarttime
+        ? format(parseISO(shiftOnDate.cp365_shiftstarttime), 'HH:mm')
         : '??:??';
-      const shiftEnd = shiftOnDate.cp365_shiftendtime 
-        ? format(parseISO(shiftOnDate.cp365_shiftendtime), 'HH:mm') 
+      const shiftEnd = shiftOnDate.cp365_shiftendtime
+        ? format(parseISO(shiftOnDate.cp365_shiftendtime), 'HH:mm')
         : '??:??';
 
       // Check if this is from another pattern (uses cr482_sp_ prefix in Dataverse)
-      const isFromPattern = (shiftOnDate as any).cr482_sp_isgeneratedfrompattern;
-      
+      const isFromPattern = shiftOnDate.cr482_sp_isgeneratedfrompattern;
+
       conflicts.push({
         date: dateStr,
         type: isFromPattern ? 'other_pattern' : 'existing_shift',
@@ -184,10 +175,10 @@ function detectConflicts(
     });
 
     if (leaveOnDate && !shiftOnDate) {
-      // Note: The status field may vary - using absencetype name as fallback
-      const isApproved = (leaveOnDate as any).cp365_absencestatus === 3;
+      // Check if leave is approved using the proper AbsenceStatus enum
+      const isApproved = leaveOnDate.cp365_absencestatus === AbsenceStatus.Approved;
       const leaveType = leaveOnDate.cp365_absencetype?.cp365_absencetypename || 'Leave';
-      
+
       conflicts.push({
         date: dateStr,
         type: isApproved ? 'approved_leave' : 'pending_leave',
@@ -299,11 +290,11 @@ function ConflictCard({ conflict, onResolutionChange }: ConflictCardProps) {
               <ChevronRight className="h-4 w-4 text-slate-400" />
             )}
           </button>
-          
+
           <div className={`p-1.5 rounded ${config.bgColor}`}>
             <Icon className={`h-4 w-4 ${config.color}`} />
           </div>
-          
+
           <div>
             <div className="flex items-center gap-2">
               <span className="font-medium text-slate-900">
@@ -324,8 +315,8 @@ function ConflictCard({ conflict, onResolutionChange }: ConflictCardProps) {
             conflict.resolution === 'keep'
               ? 'bg-slate-100 border-slate-300 text-slate-700'
               : conflict.resolution === 'skip'
-              ? 'bg-amber-100 border-amber-300 text-amber-700'
-              : 'bg-red-100 border-red-300 text-red-700'
+                ? 'bg-amber-100 border-amber-300 text-amber-700'
+                : 'bg-red-100 border-red-300 text-red-700'
           }`}
         >
           <option value="keep">Keep Existing</option>
@@ -411,9 +402,8 @@ export function ConflictResolver({
     // Default resolutions based on type
     const withResolutions: ConflictWithResolution[] = detected.map((conflict) => ({
       ...conflict,
-      resolution: conflict.type === 'approved_leave' || conflict.type === 'pending_leave' 
-        ? 'skip' 
-        : 'keep',
+      resolution:
+        conflict.type === 'approved_leave' || conflict.type === 'pending_leave' ? 'skip' : 'keep',
     }));
 
     setConflicts(withResolutions);
@@ -459,7 +449,9 @@ export function ConflictResolver({
   }, [conflicts]);
 
   const summary = useMemo(() => {
-    const skipped = conflicts.filter((c) => c.resolution === 'skip' || c.resolution === 'keep').length;
+    const skipped = conflicts.filter(
+      (c) => c.resolution === 'skip' || c.resolution === 'keep'
+    ).length;
     const overrides = conflicts.filter((c) => c.resolution === 'override').length;
     const shiftsToGenerate = totalWorkingDays - skipped;
 
@@ -484,13 +476,14 @@ export function ConflictResolver({
     });
   }, []);
 
-  const handleBulkResolution = useCallback((type: PatternConflict['type'], resolution: ConflictResolution) => {
-    setConflicts((prev) =>
-      prev.map((conflict) =>
-        conflict.type === type ? { ...conflict, resolution } : conflict
-      )
-    );
-  }, []);
+  const handleBulkResolution = useCallback(
+    (type: PatternConflict['type'], resolution: ConflictResolution) => {
+      setConflicts((prev) =>
+        prev.map((conflict) => (conflict.type === type ? { ...conflict, resolution } : conflict))
+      );
+    },
+    []
+  );
 
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
@@ -522,13 +515,13 @@ export function ConflictResolver({
   // RENDER
   // ==========================================================================
 
-  const containerClasses = variant === 'modal'
-    ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50'
-    : '';
+  const containerClasses =
+    variant === 'modal' ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50' : '';
 
-  const panelClasses = variant === 'modal'
-    ? 'mx-4 max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col'
-    : 'rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col';
+  const panelClasses =
+    variant === 'modal'
+      ? 'mx-4 max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col'
+      : 'rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col';
 
   // Generation complete view
   if (generationComplete && generationResult) {
@@ -543,7 +536,7 @@ export function ConflictResolver({
             <p className="mt-2 text-slate-600">
               Successfully created {generationResult.shiftsCreated.length} shifts.
             </p>
-            
+
             {generationResult.shiftsSkipped.length > 0 && (
               <div className="mt-4 rounded-lg bg-amber-50 p-3 text-left">
                 <p className="text-sm font-medium text-amber-800">
@@ -551,7 +544,9 @@ export function ConflictResolver({
                 </p>
                 <ul className="mt-1 text-xs text-amber-700">
                   {generationResult.shiftsSkipped.slice(0, 5).map((skip, i) => (
-                    <li key={i}>• {skip.date}: {skip.reason}</li>
+                    <li key={i}>
+                      • {skip.date}: {skip.reason}
+                    </li>
                   ))}
                   {generationResult.shiftsSkipped.length > 5 && (
                     <li>• ...and {generationResult.shiftsSkipped.length - 5} more</li>
@@ -662,10 +657,10 @@ export function ConflictResolver({
                 {/* Conflict Type Sections */}
                 {Object.entries(conflictsByType).map(([type, typeConflicts]) => {
                   if (typeConflicts.length === 0) return null;
-                  
+
                   const typedType = type as PatternConflict['type'];
                   const isExpanded = expandedTypes.has(typedType);
-                  
+
                   const typeLabels: Record<PatternConflict['type'], string> = {
                     existing_shift: 'Existing Shifts',
                     approved_leave: 'Approved Leave',
@@ -685,7 +680,9 @@ export function ConflictResolver({
                         <div className="flex items-center gap-2">
                           <select
                             onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => handleBulkResolution(typedType, e.target.value as ConflictResolution)}
+                            onChange={(e) =>
+                              handleBulkResolution(typedType, e.target.value as ConflictResolution)
+                            }
                             className="rounded border border-slate-300 px-2 py-1 text-xs"
                           >
                             <option value="">Apply to all...</option>
@@ -705,7 +702,7 @@ export function ConflictResolver({
 
                       {isExpanded && (
                         <div className="space-y-2">
-                          {typeConflicts.map((conflict, i) => {
+                          {typeConflicts.map((conflict) => {
                             const globalIndex = conflicts.findIndex(
                               (c) => c.date === conflict.date && c.type === conflict.type
                             );
@@ -731,9 +728,15 @@ export function ConflictResolver({
                   <div className="text-xs text-slate-600">
                     <p className="font-medium">Resolution Options:</p>
                     <ul className="mt-1 space-y-0.5">
-                      <li><strong>Keep Existing:</strong> Don't create a pattern shift for this date</li>
-                      <li><strong>Skip:</strong> Same as keep (no shift created for this date)</li>
-                      <li><strong>Override:</strong> Delete existing and create pattern shift</li>
+                      <li>
+                        <strong>Keep Existing:</strong> Don't create a pattern shift for this date
+                      </li>
+                      <li>
+                        <strong>Skip:</strong> Same as keep (no shift created for this date)
+                      </li>
+                      <li>
+                        <strong>Override:</strong> Delete existing and create pattern shift
+                      </li>
                     </ul>
                     <p className="mt-2">Leave cannot be overridden - only skipped.</p>
                   </div>
@@ -775,4 +778,3 @@ export function ConflictResolver({
     </div>
   );
 }
-

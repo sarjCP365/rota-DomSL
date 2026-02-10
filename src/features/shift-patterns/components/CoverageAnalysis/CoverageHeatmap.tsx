@@ -1,22 +1,15 @@
 /**
  * Coverage Heatmap Component
- * 
+ *
  * Visual grid showing coverage levels by shift reference and day.
  * Uses colour coding to indicate coverage status.
  */
 
 import { useMemo, useState } from 'react';
-import { format, addDays, startOfWeek, parseISO, eachDayOfInterval } from 'date-fns';
-import {
-  Info,
-  Calendar,
-  Download,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
-import { DayOfWeek, DayOfWeekShortLabels, DayOfWeekLabels } from '../../types';
-import type { ShiftReference } from '../../../../api/dataverse/types';
+import { format, addDays, startOfWeek, eachDayOfInterval } from 'date-fns';
+import { Calendar, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DayOfWeek, DayOfWeekShortLabels } from '../../types';
+import type { ShiftReference } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -116,7 +109,7 @@ function HeatmapCell({ data, editable, onRequirementChange }: HeatmapCellProps) 
         <span className="text-lg font-bold">{data.assigned}</span>
         <span className="text-sm font-normal opacity-70">/{data.required}</span>
       </div>
-      
+
       {/* Coverage bar */}
       <div className="mt-1 h-1.5 w-full rounded-full bg-white/50 overflow-hidden">
         <div
@@ -127,9 +120,7 @@ function HeatmapCell({ data, editable, onRequirementChange }: HeatmapCellProps) 
 
       {/* Gap indicator */}
       {data.gap > 0 && (
-        <div className="mt-1 text-center text-xs font-medium text-red-600">
-          -{data.gap}
-        </div>
+        <div className="mt-1 text-center text-xs font-medium text-red-600">-{data.gap}</div>
       )}
 
       {/* Editable requirement */}
@@ -284,7 +275,8 @@ export function CoverageHeatmap({
             <ChevronLeft className="h-5 w-5" />
           </button>
           <span className="text-sm text-slate-600">
-            {format(displayDates[0], 'd MMM')} - {format(displayDates[displayDates.length - 1], 'd MMM yyyy')}
+            {format(displayDates[0], 'd MMM')} -{' '}
+            {format(displayDates[displayDates.length - 1], 'd MMM yyyy')}
           </span>
           <button
             onClick={() => setWeekOffset((prev) => prev + 1)}
@@ -315,7 +307,9 @@ export function CoverageHeatmap({
           <p className="text-xs text-slate-500">Required</p>
         </div>
         <div className="bg-white p-3 text-center">
-          <p className={`text-lg font-bold ${totals.gaps > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+          <p
+            className={`text-lg font-bold ${totals.gaps > 0 ? 'text-red-600' : 'text-emerald-600'}`}
+          >
             {totals.gaps}
           </p>
           <p className="text-xs text-slate-500">Gaps</p>
@@ -326,8 +320,8 @@ export function CoverageHeatmap({
               totals.coverage >= 100
                 ? 'text-emerald-600'
                 : totals.coverage >= 75
-                ? 'text-amber-600'
-                : 'text-red-600'
+                  ? 'text-amber-600'
+                  : 'text-red-600'
             }`}
           >
             {totals.coverage.toFixed(0)}%
@@ -341,9 +335,7 @@ export function CoverageHeatmap({
         <table className="w-full">
           <thead className="bg-slate-50">
             <tr>
-              <th className="w-32 px-3 py-2 text-left text-xs font-medium text-slate-500">
-                Shift
-              </th>
+              <th className="w-32 px-3 py-2 text-left text-xs font-medium text-slate-500">Shift</th>
               {displayDates.map((date) => (
                 <th
                   key={format(date, 'yyyy-MM-dd')}
@@ -411,4 +403,3 @@ export function CoverageHeatmap({
     </div>
   );
 }
-

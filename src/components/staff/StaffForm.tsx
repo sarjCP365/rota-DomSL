@@ -43,37 +43,27 @@ export function StaffForm({ staffId, initialData, onSubmit, onCancel }: StaffFor
       <div className="grid gap-6 md:grid-cols-2">
         {/* Forename */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Forename *
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Forename *</label>
           <input
             {...register('forename')}
             className="w-full rounded-lg border border-border-grey px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
-          {errors.forename && (
-            <p className="mt-1 text-sm text-error">{errors.forename.message}</p>
-          )}
+          {errors.forename && <p className="mt-1 text-sm text-error">{errors.forename.message}</p>}
         </div>
 
         {/* Surname */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Surname *
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Surname *</label>
           <input
             {...register('surname')}
             className="w-full rounded-lg border border-border-grey px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
-          {errors.surname && (
-            <p className="mt-1 text-sm text-error">{errors.surname.message}</p>
-          )}
+          {errors.surname && <p className="mt-1 text-sm text-error">{errors.surname.message}</p>}
         </div>
 
         {/* Staff Number */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Staff Number
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Staff Number</label>
           <input
             {...register('staffNumber')}
             className="w-full rounded-lg border border-border-grey px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -82,9 +72,7 @@ export function StaffForm({ staffId, initialData, onSubmit, onCancel }: StaffFor
 
         {/* Work Email */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Work Email
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Work Email</label>
           <input
             type="email"
             {...register('workEmail')}
@@ -97,9 +85,7 @@ export function StaffForm({ staffId, initialData, onSubmit, onCancel }: StaffFor
 
         {/* Date of Birth */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Date of Birth
-          </label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Date of Birth</label>
           <input
             type="date"
             {...register('dateOfBirth')}
@@ -130,4 +116,3 @@ export function StaffForm({ staffId, initialData, onSubmit, onCancel }: StaffFor
     </form>
   );
 }
-

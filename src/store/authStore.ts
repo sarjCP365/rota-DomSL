@@ -6,7 +6,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { StaffMember } from '../api/dataverse/types';
+import type { StaffMember } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -33,62 +33,62 @@ interface AuthState {
   // =========================================================================
   // STATE
   // =========================================================================
-  
+
   /** Azure AD user (from MSAL) */
   azureUser: AzureUser | null;
-  
+
   /** CarePoint staff member record (from Dataverse) */
   staffMember: StaffMember | null;
-  
+
   /** Current access token for API calls */
   accessToken: string | null;
-  
+
   /** Token expiry timestamp */
   tokenExpiry: number | null;
-  
+
   /** Whether user is authenticated with Azure AD */
   isAuthenticated: boolean;
-  
+
   /** Whether auth is initialising */
   isLoading: boolean;
-  
+
   /** Whether staff member is being loaded */
   isLoadingStaffMember: boolean;
-  
+
   /** Whether the Dataverse client is initialised and ready */
   isDataverseReady: boolean;
-  
+
   /** Authentication error message */
   error: string | null;
 
   // =========================================================================
   // ACTIONS
   // =========================================================================
-  
+
   /** Set Azure AD user after login */
   setAzureUser: (user: AzureUser | null) => void;
-  
+
   /** Set CarePoint staff member after Dataverse lookup */
   setStaffMember: (staffMember: StaffMember | null) => void;
-  
+
   /** Set access token for API calls */
   setAccessToken: (token: string | null, expiresAt?: number) => void;
-  
+
   /** Set loading state */
   setLoading: (isLoading: boolean) => void;
-  
+
   /** Set staff member loading state */
   setLoadingStaffMember: (isLoading: boolean) => void;
-  
+
   /** Set error message */
   setError: (error: string | null) => void;
-  
+
   /** Set Dataverse client ready state */
   setDataverseReady: (isReady: boolean) => void;
-  
+
   /** Clear all auth state (logout) */
   logout: () => void;
-  
+
   /** Check if token is expired */
   isTokenExpired: () => boolean;
 }
@@ -135,11 +135,9 @@ export const useAuthStore = create<AuthState>()(
 
       setLoadingStaffMember: (isLoadingStaffMember) => set({ isLoadingStaffMember }),
 
-      setError: (error) =>
-        set({ error, isLoading: false }),
+      setError: (error) => set({ error, isLoading: false }),
 
-      setDataverseReady: (isDataverseReady) =>
-        set({ isDataverseReady }),
+      setDataverseReady: (isDataverseReady) => set({ isDataverseReady }),
 
       logout: () =>
         set({

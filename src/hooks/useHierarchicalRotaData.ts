@@ -5,8 +5,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { addDays, format } from 'date-fns';
-import { fetchHierarchicalRotaData } from '../api/dataverse/units';
-import type { HierarchicalRotaData } from '../api/dataverse/types';
+import { fetchHierarchicalRotaData } from '@/api/dataverse/units';
+import type { HierarchicalRotaData } from '@/api/dataverse/types';
 
 // =============================================================================
 // Hook Options
@@ -44,7 +44,7 @@ export function useHierarchicalRotaData({
   enabled = true,
 }: UseHierarchicalRotaDataOptions) {
   const endDate = addDays(startDate, duration - 1);
-  
+
   const query = useQuery<HierarchicalRotaData>({
     queryKey: [
       'hierarchicalRotaData',
@@ -55,10 +55,7 @@ export function useHierarchicalRotaData({
       duration,
     ],
     queryFn: async () => {
-      console.log('[useHierarchicalRotaData] Fetching hierarchical data...');
-      
       if (!locationId || !sublocationId) {
-        console.log('[useHierarchicalRotaData] Missing location or sublocation');
         return {
           units: [],
           unassignedTeams: [],
@@ -77,7 +74,7 @@ export function useHierarchicalRotaData({
           },
         };
       }
-      
+
       const data = await fetchHierarchicalRotaData(
         locationId,
         sublocationId,
@@ -85,13 +82,7 @@ export function useHierarchicalRotaData({
         startDate,
         endDate
       );
-      
-      console.log('[useHierarchicalRotaData] Data fetched:', {
-        units: data.units.length,
-        unassignedTeams: data.unassignedTeams.length,
-        stats: data.stats,
-      });
-      
+
       return data;
     },
     enabled: enabled && !!locationId && !!sublocationId,

@@ -7,4 +7,3 @@ export * from './standardPatterns';
 export * from './shiftGeneration';
 export * from './generationService';
 export * from './leaveCalculations';
-

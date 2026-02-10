@@ -1,12 +1,12 @@
 /**
  * Agency Gaps View Component
- * 
+ *
  * Displays a list of uncovered shifts grouped by date,
  * showing estimated agency hours needed to fill gaps.
  */
 
 import { useMemo, useState } from 'react';
-import { format, parseISO, isWithinInterval, eachDayOfInterval } from 'date-fns';
+import { format, eachDayOfInterval } from 'date-fns';
 import {
   Users,
   Clock,
@@ -16,10 +16,9 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
-  ExternalLink,
 } from 'lucide-react';
 import type { CoverageData } from './CoverageHeatmap';
-import type { ShiftReference } from '../../../../api/dataverse/types';
+import type { ShiftReference } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -67,14 +66,16 @@ interface AgencyGapsViewProps {
  * Get shift hours from shift reference
  */
 function getShiftHours(ref: ShiftReference): number {
-  const startMinutes = (ref.cp365_shiftreferencestarthour || 9) * 60 + (ref.cp365_shiftreferencestartminute || 0);
-  let endMinutes = (ref.cp365_shiftreferenceendhour || 17) * 60 + (ref.cp365_shiftreferenceendminute || 0);
-  
+  const startMinutes =
+    (ref.cp365_shiftreferencestarthour || 9) * 60 + (ref.cp365_shiftreferencestartminute || 0);
+  let endMinutes =
+    (ref.cp365_shiftreferenceendhour || 17) * 60 + (ref.cp365_shiftreferenceendminute || 0);
+
   // Handle overnight
   if (ref.cp365_endonnextday && endMinutes < startMinutes) {
     endMinutes += 24 * 60;
   }
-  
+
   return (endMinutes - startMinutes) / 60;
 }
 
@@ -108,9 +109,7 @@ function GapCard({ gap, onRequestAgency }: GapCardProps) {
               <Clock className="h-3.5 w-3.5" />
               {gap.startTime} - {gap.endTime}
             </span>
-            <span className="text-red-600 font-medium">
-              Need {gap.gapCount} more
-            </span>
+            <span className="text-red-600 font-medium">Need {gap.gapCount} more</span>
           </div>
         </div>
       </div>
@@ -145,7 +144,8 @@ interface DaySectionProps {
 }
 
 function DaySection({ summary, isExpanded, onToggle, onRequestAgency }: DaySectionProps) {
-  const criticalLevel = summary.totalGapHours > 24 ? 'critical' : summary.totalGapHours > 8 ? 'warning' : 'normal';
+  const criticalLevel =
+    summary.totalGapHours > 24 ? 'critical' : summary.totalGapHours > 8 ? 'warning' : 'normal';
 
   return (
     <div className="border-b border-slate-200 last:border-b-0">
@@ -155,8 +155,8 @@ function DaySection({ summary, isExpanded, onToggle, onRequestAgency }: DaySecti
           criticalLevel === 'critical'
             ? 'bg-red-50'
             : criticalLevel === 'warning'
-            ? 'bg-amber-50'
-            : ''
+              ? 'bg-amber-50'
+              : ''
         }`}
       >
         <div className="flex items-center gap-3">
@@ -169,16 +169,14 @@ function DaySection({ summary, isExpanded, onToggle, onRequestAgency }: DaySecti
           <span className="font-medium text-slate-800">{summary.dateFormatted}</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500">
-            {summary.totalGapShifts} gaps
-          </span>
+          <span className="text-sm text-slate-500">{summary.totalGapShifts} gaps</span>
           <span
             className={`rounded px-2 py-0.5 text-sm font-medium ${
               criticalLevel === 'critical'
                 ? 'bg-red-100 text-red-700'
                 : criticalLevel === 'warning'
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-slate-100 text-slate-600'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-slate-100 text-slate-600'
             }`}
           >
             {summary.totalGapHours}h needed
@@ -268,10 +266,16 @@ export function AgencyGapsView({
             shiftReferenceId: data.shiftReferenceId,
             shiftReferenceName: data.shiftReferenceName,
             startTime: ref
-              ? formatShiftTime(ref.cp365_shiftreferencestarthour || 9, ref.cp365_shiftreferencestartminute || 0)
+              ? formatShiftTime(
+                  ref.cp365_shiftreferencestarthour || 9,
+                  ref.cp365_shiftreferencestartminute || 0
+                )
               : '09:00',
             endTime: ref
-              ? formatShiftTime(ref.cp365_shiftreferenceendhour || 17, ref.cp365_shiftreferenceendminute || 0)
+              ? formatShiftTime(
+                  ref.cp365_shiftreferenceendhour || 17,
+                  ref.cp365_shiftreferenceendminute || 0
+                )
               : '17:00',
             gapCount: data.gap,
             hoursPerShift,
@@ -432,4 +436,3 @@ export function AgencyGapsView({
     </div>
   );
 }
-

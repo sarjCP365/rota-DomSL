@@ -9,31 +9,21 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { 
-  X, 
-  Save, 
-  Trash2, 
-  UserMinus, 
-  Clock,
-  AlertTriangle,
-  Loader2,
-  Layers,
-  Send,
-} from 'lucide-react';
-import { 
-  useShift, 
-  useShiftReferences, 
+import { X, Save, Trash2, UserMinus, Clock, AlertTriangle, Loader2, Send } from 'lucide-react';
+import {
+  useShift,
+  useShiftReferences,
   useShiftActivities,
   useCreateShift,
   useUpdateShift,
   useDeleteShift,
   useUnassignShift,
   usePublishShifts,
-} from '../../hooks/useShifts';
-import { useRotaData } from '../../hooks/useRotaData';
-import { LoadingSpinner } from '../common/Loading';
-import type { ShiftReference } from '../../api/dataverse/types';
-import { ShiftStatus } from '../../api/dataverse/types';
+} from '@/hooks/useShifts';
+import { LoadingSpinner } from '@/components/common/Loading';
+import type { ShiftReference } from '@/api/dataverse/types';
+import { ShiftStatus } from '@/api/dataverse/types';
+import { isShiftEditable } from '@/utils/shiftUtils';
 
 // =============================================================================
 // TYPES & SCHEMA
@@ -65,6 +55,8 @@ interface ShiftFlyoutProps {
   defaultDate?: Date;
   /** Pre-fill staff member for new shifts */
   defaultStaffMemberId?: string;
+  /** Pre-fill shift reference for new shifts (from Shift Reference View) */
+  defaultShiftReferenceId?: string;
   /** Location ID for fetching references */
   locationId?: string;
   /** Sublocation ID for fetching references */
@@ -86,6 +78,7 @@ export function ShiftFlyout({
   mode: initialMode,
   defaultDate,
   defaultStaffMemberId,
+  defaultShiftReferenceId,
   locationId,
   sublocationId,
   rotaId,
@@ -100,8 +93,15 @@ export function ShiftFlyout({
     mode !== 'create' ? shiftId : undefined
   );
 
+  // Check if shift is editable (past/started shifts cannot be edited)
+  const editability = mode !== 'create' && shift ? isShiftEditable(shift) : { editable: true };
+  const isPastOrStarted = !editability.editable;
+
   // Fetch dropdown data
-  const { data: shiftReferences = [], isLoading: isLoadingRefs } = useShiftReferences(sublocationId, locationId);
+  const { data: shiftReferences = [], isLoading: isLoadingRefs } = useShiftReferences(
+    sublocationId,
+    locationId
+  );
   const { data: shiftActivities = [], isLoading: isLoadingActivities } = useShiftActivities();
 
   // Mutations
@@ -114,7 +114,7 @@ export function ShiftFlyout({
   const isSubmitting = createShiftMutation.isPending || updateShiftMutation.isPending;
   const isDeleting = deleteShiftMutation.isPending;
   const isPublishing = publishShiftsMutation.isPending;
-  
+
   // Check if shift is unpublished
   const isUnpublished = shift && shift.cp365_shiftstatus !== ShiftStatus.Published;
   const isUnassigning = unassignShiftMutation.isPending;
@@ -132,7 +132,7 @@ export function ShiftFlyout({
     resolver: zodResolver(shiftSchema),
     defaultValues: {
       staffMemberId: defaultStaffMemberId || '',
-      shiftReferenceId: '',
+      shiftReferenceId: defaultShiftReferenceId || '',
       shiftActivityId: '',
       date: defaultDate ? format(defaultDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
       startTime: '09:00',
@@ -153,12 +153,11 @@ export function ShiftFlyout({
   useEffect(() => {
     // Always reset delete confirmation when mode or shift changes
     setShowDeleteConfirm(false);
-    
+
     if (mode === 'create') {
-      console.log('[ShiftFlyout] Resetting form for CREATE mode');
       reset({
         staffMemberId: defaultStaffMemberId || '',
-        shiftReferenceId: '',
+        shiftReferenceId: defaultShiftReferenceId || '',
         shiftActivityId: '',
         date: defaultDate ? format(defaultDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
         startTime: '09:00',
@@ -171,23 +170,18 @@ export function ShiftFlyout({
         communityHours: 0,
       });
     } else if (shift) {
-      console.log('[ShiftFlyout] Resetting form for EDIT mode with shift data:');
-      console.log('[ShiftFlyout] - shiftReferenceId:', shift._cp365_shiftreference_value);
-      console.log('[ShiftFlyout] - shiftActivityId:', shift._cp365_shiftactivity_value);
-      console.log('[ShiftFlyout] - isOvertime:', shift.cp365_overtimeshift);
-      console.log('[ShiftFlyout] - isSleepIn:', shift.cp365_sleepin);
-      console.log('[ShiftFlyout] - isShiftLeader:', shift.cp365_shiftleader);
-      console.log('[ShiftFlyout] - isActUp:', shift.cp365_actup);
-      console.log('[ShiftFlyout] - Full shift object:', JSON.stringify(shift, null, 2));
-      
       reset({
         staffMemberId: shift._cp365_staffmember_value || '',
         shiftReferenceId: shift._cp365_shiftreference_value || '',
         shiftActivityId: shift._cp365_shiftactivity_value || '',
         date: shift.cp365_shiftdate?.split('T')[0] || '',
-        startTime: shift.cp365_shiftstarttime ? format(new Date(shift.cp365_shiftstarttime), 'HH:mm') : '',
-        endTime: shift.cp365_shiftendtime ? format(new Date(shift.cp365_shiftendtime), 'HH:mm') : '',
-        breakDuration: (shift as any).cr1e2_shiftbreakduration || 0,
+        startTime: shift.cp365_shiftstarttime
+          ? format(new Date(shift.cp365_shiftstarttime), 'HH:mm')
+          : '',
+        endTime: shift.cp365_shiftendtime
+          ? format(new Date(shift.cp365_shiftendtime), 'HH:mm')
+          : '',
+        breakDuration: shift.cr1e2_shiftbreakduration || 0,
         isOvertime: shift.cp365_overtimeshift || false,
         isSleepIn: shift.cp365_sleepin || false,
         isShiftLeader: shift.cp365_shiftleader || false,
@@ -195,28 +189,27 @@ export function ShiftFlyout({
         communityHours: shift.cp365_communityhours || 0,
       });
     }
-  }, [shift, mode, reset, defaultDate, defaultStaffMemberId]);
+  }, [shift, mode, reset, defaultDate, defaultStaffMemberId, defaultShiftReferenceId]);
 
   // Update times when shift reference changes
   useEffect(() => {
     if (selectedRefId) {
       const ref = shiftReferences.find((r) => r.cp365_shiftreferenceid === selectedRefId);
-      console.log('[ShiftFlyout] Selected shift reference:', selectedRefId);
-      console.log('[ShiftFlyout] Found ref:', ref);
       if (ref) {
-        console.log('[ShiftFlyout] Ref start hour:', ref.cp365_shiftreferencestarthour, 'minute:', ref.cp365_shiftreferencestartminute);
-        console.log('[ShiftFlyout] Ref end hour:', ref.cp365_shiftreferenceendhour, 'minute:', ref.cp365_shiftreferenceendminute);
-        const startTime = formatRefTime(ref.cp365_shiftreferencestarthour, ref.cp365_shiftreferencestartminute);
-        const endTime = formatRefTime(ref.cp365_shiftreferenceendhour, ref.cp365_shiftreferenceendminute);
-        console.log('[ShiftFlyout] Formatted start:', startTime, 'end:', endTime);
+        const startTime = formatRefTime(
+          ref.cp365_shiftreferencestarthour,
+          ref.cp365_shiftreferencestartminute
+        );
+        const endTime = formatRefTime(
+          ref.cp365_shiftreferenceendhour,
+          ref.cp365_shiftreferenceendminute
+        );
         // Only set times if they are valid formatted strings
         if (startTime) {
           setValue('startTime', startTime);
-          console.log('[ShiftFlyout] Set startTime to:', startTime);
         }
         if (endTime) {
           setValue('endTime', endTime);
-          console.log('[ShiftFlyout] Set endTime to:', endTime);
         }
         setValue('isSleepIn', ref.cp365_sleepin || false);
       }
@@ -231,18 +224,21 @@ export function ShiftFlyout({
   // Handle form submission
   const onSubmit = async (data: ShiftFormData) => {
     setSubmitError(null);
-    
+
     // Helper function to check if a value is a valid GUID
     const isValidGuid = (value: string | null | undefined): boolean => {
       if (!value || typeof value !== 'string') return false;
       const trimmed = value.trim();
       if (trimmed === '') return false;
       // GUID regex pattern
-      const guidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const guidPattern =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
       return guidPattern.test(trimmed);
     };
-    
-    // Build the payload first for debugging
+
+    // Build the payload - only include fields that exist in Dataverse schema
+    // Note: cp365_shiftname, cp365_shifttype, cp365_shiftsourcetype, cp365_shiftsetuptype
+    // do NOT exist on cp365_shift entity - these are populated by Power Automate flows
     const shiftData: Record<string, unknown> = {
       cp365_shiftdate: data.date,
       cp365_shiftstarttime: `${data.date}T${data.startTime}:00Z`,
@@ -252,7 +248,7 @@ export function ShiftFlyout({
       // Note: break duration uses different publisher prefix
       cr1e2_shiftbreakduration: data.breakDuration || 0,
     };
-    
+
     // Boolean fields - only add if true
     if (data.isOvertime) shiftData.cp365_overtimeshift = true;
     if (data.isSleepIn) shiftData.cp365_sleepin = true;
@@ -266,24 +262,17 @@ export function ShiftFlyout({
       shiftData['cp365_StaffMember@odata.bind'] = `/cp365_staffmembers(${data.staffMemberId})`;
     }
     if (isValidGuid(data.shiftReferenceId)) {
-      shiftData['cp365_ShiftReference@odata.bind'] = `/cp365_shiftreferences(${data.shiftReferenceId})`;
+      shiftData['cp365_ShiftReference@odata.bind'] =
+        `/cp365_shiftreferences(${data.shiftReferenceId})`;
     }
     if (isValidGuid(data.shiftActivityId)) {
-      shiftData['cp365_ShiftActivity@odata.bind'] = `/cp365_shiftactivities(${data.shiftActivityId})`;
+      shiftData['cp365_ShiftActivity@odata.bind'] =
+        `/cp365_shiftactivities(${data.shiftActivityId})`;
     }
     if (mode === 'create' && isValidGuid(rotaId)) {
       shiftData['cp365_Rota@odata.bind'] = `/cp365_rotas(${rotaId})`;
     }
-    
-    // Debug: Show exactly what we're sending
-    const payloadJson = JSON.stringify(shiftData, null, 2);
-    console.log('[ShiftFlyout] ========== SHIFT CREATION DEBUG ==========');
-    console.log('[ShiftFlyout] Mode:', mode);
-    console.log('[ShiftFlyout] Form data:', JSON.stringify(data, null, 2));
-    console.log('[ShiftFlyout] Payload to send:', payloadJson);
-    console.log('[ShiftFlyout] Payload keys:', Object.keys(shiftData));
-    console.log('[ShiftFlyout] ==========================================');
-    
+
     try {
       // Validate rotaId for create mode
       if (mode === 'create' && !rotaId) {
@@ -299,16 +288,14 @@ export function ShiftFlyout({
 
       if (mode === 'create') {
         await createShiftMutation.mutateAsync(shiftData);
-        console.log('[ShiftFlyout] Shift created successfully');
       } else if (shiftId) {
         await updateShiftMutation.mutateAsync({ shiftId, data: shiftData });
-        console.log('[ShiftFlyout] Shift updated successfully');
       }
 
       onClose();
     } catch (error) {
       console.error('[ShiftFlyout] Failed to save shift:', error);
-      
+
       // Extract detailed error message
       let errorMessage = 'An unknown error occurred';
       if (error instanceof Error) {
@@ -321,19 +308,19 @@ export function ShiftFlyout({
           errorMessage = `[${dvError.errorCode}] ${errorMessage}`;
         }
       }
-      
+
       // Log full error for debugging
       console.error('[ShiftFlyout] Full error:', JSON.stringify(error, null, 2));
-      
-      // Show payload in error for debugging
-      setSubmitError(`${errorMessage}\n\nPayload sent:\n${payloadJson}`);
+
+      // Show error message
+      setSubmitError(errorMessage);
     }
   };
 
   // Handle delete
   const handleDelete = async () => {
     if (!shiftId) return;
-    
+
     try {
       await deleteShiftMutation.mutateAsync(shiftId);
       onClose();
@@ -345,7 +332,7 @@ export function ShiftFlyout({
   // Handle unassign
   const handleUnassign = async () => {
     if (!shiftId) return;
-    
+
     try {
       await unassignShiftMutation.mutateAsync(shiftId);
       onClose();
@@ -357,7 +344,7 @@ export function ShiftFlyout({
   // Handle publish
   const handlePublish = async () => {
     if (!shiftId) return;
-    
+
     try {
       await publishShiftsMutation.mutateAsync([shiftId]);
       onClose();
@@ -375,7 +362,8 @@ export function ShiftFlyout({
   }[mode];
 
   const isLoading = isLoadingShift || isLoadingRefs || isLoadingActivities;
-  const isReadOnly = mode === 'view';
+  // Read-only if in view mode OR if the shift is in the past/has started
+  const isReadOnly = mode === 'view' || isPastOrStarted;
 
   return (
     <>
@@ -387,7 +375,7 @@ export function ShiftFlyout({
       />
 
       {/* Flyout Panel */}
-      <div 
+      <div
         className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
@@ -399,7 +387,8 @@ export function ShiftFlyout({
             {title}
           </h2>
           <div className="flex items-center gap-2">
-            {mode === 'view' && (
+            {/* Only show Edit button if in view mode AND shift is editable (not past/started) */}
+            {mode === 'view' && !isPastOrStarted && (
               <button
                 onClick={() => setMode('edit')}
                 className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover"
@@ -429,7 +418,19 @@ export function ShiftFlyout({
               {submitError && (
                 <div className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
-                  <div className="text-sm text-error whitespace-pre-wrap break-all">{submitError}</div>
+                  <div className="text-sm text-error whitespace-pre-wrap break-all">
+                    {submitError}
+                  </div>
+                </div>
+              )}
+
+              {/* Read-only Banner for Past/Started Shifts */}
+              {isPastOrStarted && editability.reason && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div className="text-sm text-amber-800">
+                    <span className="font-medium">View Only:</span> {editability.reason}
+                  </div>
                 </div>
               )}
 
@@ -485,7 +486,10 @@ export function ShiftFlyout({
                 >
                   <option value="">Select activity...</option>
                   {shiftActivities.map((activity) => (
-                    <option key={activity.cp365_shiftactivityid} value={activity.cp365_shiftactivityid}>
+                    <option
+                      key={activity.cp365_shiftactivityid}
+                      value={activity.cp365_shiftactivityid}
+                    >
                       {activity.cp365_shiftactivityname}
                     </option>
                   ))}
@@ -503,9 +507,7 @@ export function ShiftFlyout({
                   disabled={isReadOnly}
                   className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
                 />
-                {errors.date && (
-                  <p className="mt-1 text-sm text-error">{errors.date.message}</p>
-                )}
+                {errors.date && <p className="mt-1 text-sm text-error">{errors.date.message}</p>}
               </div>
 
               {/* Start/End Time */}
@@ -594,7 +596,7 @@ export function ShiftFlyout({
               {/* Checkboxes */}
               <div className="space-y-3 rounded-lg border border-border-grey p-4">
                 <p className="text-sm font-medium text-gray-700">Shift Options</p>
-                
+
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -661,20 +663,67 @@ export function ShiftFlyout({
                   disabled={isDeleting}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-error px-4 py-2 text-sm font-medium text-white hover:bg-error/90 disabled:opacity-50"
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                   Delete
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex gap-2">
-              {/* Left side - destructive actions */}
-              {mode !== 'create' && (
-                <div className="flex gap-2">
+            <div className="space-y-3">
+              {/* Primary actions row - always visible and full width */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 rounded-lg border border-border-grey px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white"
+                >
+                  Cancel
+                </button>
+                {/* Publish button for unpublished shifts (hidden for past/started shifts) */}
+                {mode !== 'create' && isUnpublished && !isPastOrStarted && (
+                  <button
+                    type="button"
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Publish
+                  </button>
+                )}
+                {/* Only show Save button if not read-only AND not past/started (create mode is always allowed) */}
+                {!isReadOnly && (
+                  <button
+                    type="submit"
+                    form="shift-form"
+                    disabled={isSubmitting || (mode !== 'create' && !isDirty)}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    {mode === 'create' ? 'Create' : 'Save'}
+                  </button>
+                )}
+              </div>
+
+              {/* Secondary actions row - destructive actions (hidden for past/started shifts) */}
+              {mode !== 'create' && !isPastOrStarted && (
+                <div className="flex gap-2 border-t border-border-grey pt-3">
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-error px-3 py-2 text-sm font-medium text-error hover:bg-error/5"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-error px-3 py-2 text-sm font-medium text-error hover:bg-error/5"
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
@@ -684,48 +733,18 @@ export function ShiftFlyout({
                       type="button"
                       onClick={handleUnassign}
                       disabled={isUnassigning}
-                      className="flex items-center gap-1.5 rounded-lg border border-border-grey px-3 py-2 text-sm font-medium text-gray-700 hover:bg-elevation-1 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-grey px-3 py-2 text-sm font-medium text-gray-700 hover:bg-elevation-1 disabled:opacity-50"
                     >
-                      {isUnassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                      {isUnassigning ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserMinus className="h-4 w-4" />
+                      )}
                       Unassign
                     </button>
                   )}
                 </div>
               )}
-
-              {/* Right side - primary actions */}
-              <div className="ml-auto flex gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-lg border border-border-grey px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white"
-                >
-                  Cancel
-                </button>
-                {/* Publish button for unpublished shifts */}
-                {mode !== 'create' && isUnpublished && (
-                  <button
-                    type="button"
-                    onClick={handlePublish}
-                    disabled={isPublishing}
-                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    Publish
-                  </button>
-                )}
-                {!isReadOnly && (
-                  <button
-                    type="submit"
-                    form="shift-form"
-                    disabled={isSubmitting || (mode !== 'create' && !isDirty)}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-                  >
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    {mode === 'create' ? 'Create' : 'Save'}
-                  </button>
-                )}
-              </div>
             </div>
           )}
         </div>
@@ -756,20 +775,27 @@ function formatRefTime(hour: number | null | undefined, minute: number | null | 
   // Convert from Dataverse option set values to actual values
   const actualHour = convertDataverseOptionSetValue(hour);
   const actualMinute = convertDataverseOptionSetValue(minute);
-  
+
   // Handle invalid or missing values
-  if (actualHour == null || actualMinute == null || actualHour < 0 || actualHour > 23 || actualMinute < 0 || actualMinute > 59) {
-    console.log('[formatRefTime] Invalid values - hour:', hour, '→', actualHour, ', minute:', minute, '→', actualMinute);
+  if (
+    actualHour == null ||
+    actualMinute == null ||
+    actualHour < 0 ||
+    actualHour > 23 ||
+    actualMinute < 0 ||
+    actualMinute > 59
+  ) {
     return '';
   }
-  
-  const result = `${actualHour.toString().padStart(2, '0')}:${actualMinute.toString().padStart(2, '0')}`;
-  console.log('[formatRefTime] Converted', hour, '/', minute, '→', result);
-  return result;
+
+  return `${actualHour.toString().padStart(2, '0')}:${actualMinute.toString().padStart(2, '0')}`;
 }
 
 function formatRefTimeRange(ref: ShiftReference): string {
-  const start = formatRefTime(ref.cp365_shiftreferencestarthour, ref.cp365_shiftreferencestartminute);
+  const start = formatRefTime(
+    ref.cp365_shiftreferencestarthour,
+    ref.cp365_shiftreferencestartminute
+  );
   const end = formatRefTime(ref.cp365_shiftreferenceendhour, ref.cp365_shiftreferenceendminute);
   return `${start}-${end}`;
 }

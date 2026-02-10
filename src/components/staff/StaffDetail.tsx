@@ -73,4 +73,3 @@ export function StaffDetail({ staffId, onEdit }: StaffDetailProps) {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 /**
  * PatternSummary Component
  * Displays hours breakdown and shift statistics for a pattern
- * 
+ *
  * Features:
  * - Total hours per rotation cycle
  * - Average weekly hours
@@ -53,9 +53,9 @@ const WTD_MAX_WEEKLY_HOURS = 48;
  */
 function getShiftType(startTime: string | undefined): 'day' | 'evening' | 'night' | null {
   if (!startTime) return null;
-  
+
   const [hours] = startTime.split(':').map(Number);
-  
+
   if (hours >= 6 && hours < 18) return 'day';
   if (hours >= 18 && hours < 22) return 'evening';
   return 'night';
@@ -71,17 +71,17 @@ function calculateShiftMinutes(
   isOvernight: boolean
 ): number {
   if (!startTime || !endTime) return 0;
-  
+
   const [startH, startM] = startTime.split(':').map(Number);
   const [endH, endM] = endTime.split(':').map(Number);
-  
-  let startMins = startH * 60 + startM;
+
+  const startMins = startH * 60 + startM;
   let endMins = endH * 60 + endM;
-  
+
   if (isOvernight || endMins <= startMins) {
     endMins += 24 * 60;
   }
-  
+
   return endMins - startMins - (breakMinutes || 0);
 }
 
@@ -103,11 +103,11 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
   // Calculate hours per week
   const weeklyHours = useMemo<WeekHours[]>(() => {
     const weeks: WeekHours[] = [];
-    
+
     for (let week = 1; week <= rotationCycleWeeks; week++) {
-      const weekDays = days.filter(d => d.weekNumber === week && !d.isRestDay);
+      const weekDays = days.filter((d) => d.weekNumber === week && !d.isRestDay);
       let totalMinutes = 0;
-      
+
       for (const day of weekDays) {
         totalMinutes += calculateShiftMinutes(
           day.startTime,
@@ -116,7 +116,7 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
           day.isOvernight
         );
       }
-      
+
       weeks.push({
         weekNumber: week,
         hours: Math.floor(totalMinutes / 60),
@@ -124,19 +124,19 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
         totalMinutes,
       });
     }
-    
+
     return weeks;
   }, [days, rotationCycleWeeks]);
-  
+
   // Calculate totals
   const totals = useMemo(() => {
     const totalMinutes = weeklyHours.reduce((sum, w) => sum + w.totalMinutes, 0);
     const averageMinutesPerWeek = rotationCycleWeeks > 0 ? totalMinutes / rotationCycleWeeks : 0;
     const averageHoursPerWeek = averageMinutesPerWeek / 60;
-    
-    const workingDays = days.filter(d => !d.isRestDay && d.startTime && d.endTime).length;
-    const restDays = days.filter(d => d.isRestDay).length;
-    
+
+    const workingDays = days.filter((d) => !d.isRestDay && d.startTime && d.endTime).length;
+    const restDays = days.filter((d) => d.isRestDay).length;
+
     return {
       totalMinutes,
       averageMinutesPerWeek,
@@ -145,67 +145,70 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
       restDays,
     };
   }, [weeklyHours, days, rotationCycleWeeks]);
-  
+
   // Calculate shift type breakdown
   const shiftTypes = useMemo<ShiftTypeCount>(() => {
     const counts: ShiftTypeCount = { day: 0, evening: 0, night: 0 };
-    
+
     for (const day of days) {
       if (day.isRestDay || !day.startTime) continue;
       const type = getShiftType(day.startTime);
       if (type) counts[type]++;
     }
-    
+
     return counts;
   }, [days]);
-  
+
   // Calculate percentage compared to standard hours
   const percentageOfStandard = useMemo(() => {
     return Math.round((totals.averageHoursPerWeek / STANDARD_WEEKLY_HOURS) * 100);
   }, [totals.averageHoursPerWeek]);
-  
+
   // Determine status colour
   const getStatusColour = (percentage: number): { bg: string; text: string; bar: string } => {
     if (percentage < 80) {
       return { bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-500' };
     }
-    if (percentage > 128) { // > 48h (WTD limit)
+    if (percentage > 128) {
+      // > 48h (WTD limit)
       return { bg: 'bg-red-50', text: 'text-red-700', bar: 'bg-red-500' };
     }
-    if (percentage > 110) { // > 41.25h
+    if (percentage > 110) {
+      // > 41.25h
       return { bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-500' };
     }
     return { bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500' };
   };
-  
+
   const statusColours = getStatusColour(percentageOfStandard);
-  
+
   // Trend indicator
-  const TrendIcon = percentageOfStandard > 100 
-    ? TrendingUp 
-    : percentageOfStandard < 100 
-      ? TrendingDown 
-      : Minus;
-  
+  const TrendIcon =
+    percentageOfStandard > 100 ? TrendingUp : percentageOfStandard < 100 ? TrendingDown : Minus;
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
         <h3 className="font-semibold text-slate-900">Pattern Summary</h3>
       </div>
-      
+
       <div className="p-4 space-y-4">
         {/* Hours Overview */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Total Rotation Hours</span>
-            <span className="font-semibold text-slate-900">{formatDuration(totals.totalMinutes)}</span>
+            <span className="font-semibold text-slate-900">
+              {formatDuration(totals.totalMinutes)}
+            </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Average Weekly Hours</span>
-            <span className="font-semibold text-slate-900">{formatDuration(totals.averageMinutesPerWeek)}</span>
+            <span className="font-semibold text-slate-900">
+              {formatDuration(totals.averageMinutesPerWeek)}
+            </span>
           </div>
-          
+
           {/* Progress Bar */}
           <div className={`rounded-lg p-3 ${statusColours.bg}`}>
             <div className="mb-2 flex items-center justify-between text-sm">
@@ -216,7 +219,7 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
               </div>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div 
+              <div
                 className={`h-full transition-all ${statusColours.bar}`}
                 style={{ width: `${Math.min(150, percentageOfStandard)}%` }}
               />
@@ -228,25 +231,27 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
             )}
           </div>
         </div>
-        
+
         {/* Hours by Week (if multi-week rotation) */}
         {rotationCycleWeeks > 1 && (
           <div className="border-t border-slate-100 pt-3">
             <p className="mb-2 text-xs font-medium uppercase text-slate-500">Hours by Week</p>
             <div className="grid grid-cols-2 gap-2">
               {weeklyHours.map((week) => (
-                <div 
+                <div
                   key={week.weekNumber}
                   className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
                 >
                   <span className="text-sm text-slate-600">Week {week.weekNumber}</span>
-                  <span className="text-sm font-medium text-slate-900">{formatDuration(week.totalMinutes)}</span>
+                  <span className="text-sm font-medium text-slate-900">
+                    {formatDuration(week.totalMinutes)}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         )}
-        
+
         {/* Days Breakdown */}
         <div className="border-t border-slate-100 pt-3">
           <p className="mb-2 text-xs font-medium uppercase text-slate-500">Days Breakdown</p>
@@ -265,7 +270,7 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
             </div>
           </div>
         </div>
-        
+
         {/* Shift Types */}
         <div className="border-t border-slate-100 pt-3">
           <p className="mb-2 text-xs font-medium uppercase text-slate-500">Shift Types</p>
@@ -279,13 +284,17 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
             {shiftTypes.evening > 0 && (
               <div className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1">
                 <Sunset className="h-3.5 w-3.5 text-blue-700" />
-                <span className="text-sm font-medium text-blue-800">{shiftTypes.evening} Evening</span>
+                <span className="text-sm font-medium text-blue-800">
+                  {shiftTypes.evening} Evening
+                </span>
               </div>
             )}
             {shiftTypes.night > 0 && (
               <div className="flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1">
                 <Moon className="h-3.5 w-3.5 text-purple-700" />
-                <span className="text-sm font-medium text-purple-800">{shiftTypes.night} Night</span>
+                <span className="text-sm font-medium text-purple-800">
+                  {shiftTypes.night} Night
+                </span>
               </div>
             )}
             {shiftTypes.day === 0 && shiftTypes.evening === 0 && shiftTypes.night === 0 && (
@@ -299,4 +308,3 @@ export function PatternSummary({ days, rotationCycleWeeks }: PatternSummaryProps
 }
 
 export default PatternSummary;
-

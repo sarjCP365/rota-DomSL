@@ -78,9 +78,7 @@ export function LastUpdatedIndicator({
           Last updated: {lastUpdatedText}
         </span>
         {!isPageVisible && (
-          <span className="text-[10px] text-gray-400">
-            Updates paused (tab hidden)
-          </span>
+          <span className="text-[10px] text-gray-400">Updates paused (tab hidden)</span>
         )}
       </div>
 
@@ -136,4 +134,3 @@ export function LastUpdatedBadge({ text, isRefreshing, onClick }: LastUpdatedBad
 }
 
 export default LastUpdatedIndicator;
-

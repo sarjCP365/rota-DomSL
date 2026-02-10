@@ -1,6 +1,6 @@
 /**
  * CarePoint 365 - Shift Generation Service
- * 
+ *
  * Handles scheduling, batch processing, and management of shift generation
  * from pattern assignments.
  */
@@ -20,18 +20,9 @@ import {
   validateGenerationData,
   type GenerateShiftsResult,
 } from './shiftGeneration';
-import type {
-  StaffPatternAssignment,
-  ShiftPatternTemplate,
-  ShiftPatternDay,
-  ShiftGenerationLog,
-} from '../types';
-import {
-  GenerationWindow,
-  GenerationType,
-  AssignmentStatus,
-} from '../types';
-import type { Shift, StaffAbsenceLog } from '../../../api/dataverse/types';
+import type { StaffPatternAssignment, ShiftPatternTemplate, ShiftPatternDay } from '../types';
+import { GenerationWindow, GenerationType, AssignmentStatus } from '../types';
+import type { Shift, StaffAbsenceLog } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -71,7 +62,7 @@ export interface GenerationLogData {
 
 /**
  * Calculate the generation window for an assignment
- * 
+ *
  * Determines the start and end dates for shift generation based on:
  * - Last generated date (or assignment start if never generated)
  * - Generation window setting from the template (1, 2, or 4 weeks)
@@ -81,10 +72,10 @@ export function calculateGenerationWindow(
   template: ShiftPatternTemplate
 ): GenerationWindow {
   const today = startOfDay(new Date());
-  
+
   // Determine start date
   let startDate: Date;
-  
+
   if (assignment.cp365_sp_lastgenerateddate) {
     // Start from day after last generated
     startDate = addDays(parseISO(assignment.cp365_sp_lastgenerateddate), 1);
@@ -121,7 +112,7 @@ export function calculateGenerationWindow(
 
 /**
  * Check if an assignment needs shift generation
- * 
+ *
  * Returns true if:
  * - Never generated (cp365_sp_lastgenerateddate is null)
  * - Last generated date + threshold is approaching (within 2 days of window end)
@@ -151,13 +142,13 @@ export function isGenerationNeeded(
   const today = startOfDay(new Date());
   const lastGenerated = parseISO(assignment.cp365_sp_lastgenerateddate);
   const windowWeeks = template.cp365_sp_generationwindowweeks;
-  
+
   // Calculate when we would run out of generated shifts
   const runOutDate = addWeeks(lastGenerated, windowWeeks);
-  
+
   // Generate if we're within 2 days of running out
   const threshold = addDays(today, 2);
-  
+
   return isBefore(runOutDate, threshold);
 }
 
@@ -176,9 +167,9 @@ export function getDaysUntilGenerationNeeded(
   const today = startOfDay(new Date());
   const lastGenerated = parseISO(assignment.cp365_sp_lastgenerateddate);
   const windowWeeks = template.cp365_sp_generationwindowweeks;
-  
+
   const runOutDate = addWeeks(lastGenerated, windowWeeks);
-  
+
   return differenceInDays(runOutDate, today);
 }
 
@@ -188,7 +179,7 @@ export function getDaysUntilGenerationNeeded(
 
 /**
  * Generate shifts for a single assignment
- * 
+ *
  * This is the main entry point for generating shifts for one assignment.
  * It fetches required data, calculates the window, and generates shifts.
  */
@@ -249,7 +240,7 @@ export async function generateForAssignment(
 
 /**
  * Process multiple assignments in batch
- * 
+ *
  * Generates shifts for all assignments that need generation,
  * with rate limiting to avoid API throttling.
  */
@@ -291,16 +282,11 @@ export async function generateBatch(
     }
 
     try {
-      const genResult = await generateForAssignment(
-        assignment,
-        template,
-        patternDays,
-        {
-          existingShifts,
-          existingLeave,
-          dryRun: options?.dryRun,
-        }
-      );
+      const genResult = await generateForAssignment(assignment, template, patternDays, {
+        existingShifts,
+        existingLeave,
+        dryRun: options?.dryRun,
+      });
 
       result.results.set(assignment.cp365_staffpatternassignmentid, genResult);
       result.assignmentsProcessed++;
@@ -389,7 +375,7 @@ export function summarizeGenerationResult(result: GenerateShiftsResult): string 
 
 /**
  * Calculate which shifts need regeneration after a pattern change
- * 
+ *
  * Returns the list of existing pattern-generated shifts that would be affected.
  */
 export function getShiftsAffectedByPatternChange(
@@ -398,34 +384,34 @@ export function getShiftsAffectedByPatternChange(
   effectiveDate: Date
 ): Shift[] {
   const effectiveDateStr = format(effectiveDate, 'yyyy-MM-dd');
-  
+
   return existingShifts.filter((shift) => {
     // Only pattern-generated shifts (uses cr482_sp_ prefix in Dataverse)
-    if (!(shift as any).cr482_sp_isgeneratedfrompattern) return false;
-    
+    if (!shift.cr482_sp_isgeneratedfrompattern) return false;
+
     // Only shifts on or after effective date
     const shiftDate = shift.cp365_shiftdate?.split('T')[0];
     if (!shiftDate || shiftDate < effectiveDateStr) return false;
-    
+
     // Only published or unpublished status (not worked, cancelled, etc.)
     // This ensures we don't modify historical shifts
     if (shift.cp365_shiftstatus !== 1001 && shift.cp365_shiftstatus !== 1009) {
       return false;
     }
-    
+
     return true;
   });
 }
 
 /**
  * Plan regeneration for all assignments using a pattern
- * 
+ *
  * This doesn't execute the regeneration, just calculates what would be affected.
  */
 export function planPatternChangeRegeneration(
   assignments: StaffPatternAssignment[],
   affectedShifts: Shift[],
-  effectiveDate: Date
+  _effectiveDate: Date
 ): {
   assignmentsToRegenerate: StaffPatternAssignment[];
   shiftsToDelete: Shift[];
@@ -478,8 +464,8 @@ export function estimateShiftsToGenerate(
   rotationCycleWeeks: number,
   daysToGenerate: number
 ): number {
-  const workingDaysPerWeek = patternDays.filter((pd) => !pd.cp365_sp_isrestday).length / rotationCycleWeeks;
+  const workingDaysPerWeek =
+    patternDays.filter((pd) => !pd.cp365_sp_isrestday).length / rotationCycleWeeks;
   const weeks = daysToGenerate / 7;
   return Math.round(workingDaysPerWeek * weeks);
 }
-

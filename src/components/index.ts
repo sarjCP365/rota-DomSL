@@ -8,4 +8,3 @@ export * from './common';
 export * from './rota';
 export * from './staff';
 export * from './admin';
-

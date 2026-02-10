@@ -13,13 +13,12 @@ import {
   X,
   Save,
   Trash2,
-  Clock,
   AlertTriangle,
   Loader2,
-  UserMinus,
   UserCheck,
   XCircle,
   ChevronDown,
+  Clock,
 } from 'lucide-react';
 import {
   useShift,
@@ -27,16 +26,17 @@ import {
   useShiftActivities,
   useUpdateShift,
   useDeleteShift,
-} from '../../hooks/useShifts';
-import { LoadingSpinner } from '../common/Loading';
+} from '@/hooks/useShifts';
+import { LoadingSpinner } from '@/components/common/Loading';
 import { StatusDot } from './AttendanceStatusBadge';
 import {
   type AttendanceStatus,
   type ShiftWithAttendance,
   getAttendanceStatus,
   getStatusConfig,
-} from '../../utils/attendanceStatus';
-import type { ShiftReference, ShiftViewData } from '../../api/dataverse/types';
+} from '@/utils/attendanceStatus';
+import type { ShiftReference, ShiftViewData } from '@/api/dataverse/types';
+import { isShiftEditable, isShiftViewDataEditable } from '@/utils/shiftUtils';
 
 // =============================================================================
 // Types & Schema
@@ -103,16 +103,26 @@ function convertDataverseOptionSetValue(value: number | null | undefined): numbe
 function formatRefTime(hour: number | null | undefined, minute: number | null | undefined): string {
   const actualHour = convertDataverseOptionSetValue(hour);
   const actualMinute = convertDataverseOptionSetValue(minute);
-  
-  if (actualHour == null || actualMinute == null || actualHour < 0 || actualHour > 23 || actualMinute < 0 || actualMinute > 59) {
+
+  if (
+    actualHour == null ||
+    actualMinute == null ||
+    actualHour < 0 ||
+    actualHour > 23 ||
+    actualMinute < 0 ||
+    actualMinute > 59
+  ) {
     return '';
   }
-  
+
   return `${actualHour.toString().padStart(2, '0')}:${actualMinute.toString().padStart(2, '0')}`;
 }
 
 function formatRefTimeRange(ref: ShiftReference): string {
-  const start = formatRefTime(ref.cp365_shiftreferencestarthour, ref.cp365_shiftreferencestartminute);
+  const start = formatRefTime(
+    ref.cp365_shiftreferencestarthour,
+    ref.cp365_shiftreferencestartminute
+  );
   const end = formatRefTime(ref.cp365_shiftreferenceendhour, ref.cp365_shiftreferenceendminute);
   return `${start}-${end}`;
 }
@@ -121,7 +131,7 @@ function getInitials(name: string): string {
   if (!name || name === 'Unassigned') return '?';
   return name
     .split(' ')
-    .map(n => n[0])
+    .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
@@ -136,16 +146,16 @@ function calculateWorkingHours(
 ): string {
   const start = parseInt(startHour) * 60 + parseInt(startMinute);
   let end = parseInt(endHour) * 60 + parseInt(endMinute);
-  
+
   // Handle overnight
   if (end < start) {
     end += 24 * 60;
   }
-  
+
   const totalMinutes = end - start - breakMinutes;
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
-  
+
   return `${hours}h ${mins}m`;
 }
 
@@ -175,7 +185,10 @@ export function DailyShiftFlyout({
   const shift = shiftData || fetchedShift;
 
   // Fetch dropdown data
-  const { data: shiftReferences = [], isLoading: isLoadingRefs } = useShiftReferences(sublocationId, locationId);
+  const { data: shiftReferences = [], isLoading: isLoadingRefs } = useShiftReferences(
+    sublocationId,
+    locationId
+  );
   const { data: shiftActivities = [], isLoading: isLoadingActivities } = useShiftActivities();
 
   // Mutations
@@ -185,17 +198,32 @@ export function DailyShiftFlyout({
   const isSubmitting = updateShiftMutation.isPending;
   const isDeleting = deleteShiftMutation.isPending;
 
+  // Check if shift is editable (past/started shifts cannot be edited)
+  const editability = useMemo(() => {
+    if (!shift) return { editable: true };
+    
+    // Handle ShiftViewData format
+    if ('Shift Date' in shift) {
+      return isShiftViewDataEditable(shift);
+    }
+    // Handle Shift entity format
+    return isShiftEditable(shift);
+  }, [shift]);
+  
+  const isPastOrStarted = !editability.editable;
+
   // Get attendance status
   const attendanceStatus = useMemo<AttendanceStatus>(() => {
     if (!shift) return 'scheduled';
     // Handle both ShiftViewData and Shift types
-    const shiftForStatus = 'Shift Start Time' in shift 
-      ? shift as ShiftViewData
-      : {
-          'Shift Start Time': (shift as any).cp365_shiftstarttime,
-          'Shift End Time': (shift as any).cp365_shiftendtime,
-          'Shift Status': (shift as any).cp365_shiftstatus,
-        } as unknown as ShiftViewData;
+    const isShiftViewData = 'Shift Start Time' in shift;
+    const shiftForStatus: ShiftViewData = isShiftViewData
+      ? (shift)
+      : ({
+          'Shift Start Time': (shift).cp365_shiftstarttime,
+          'Shift End Time': (shift).cp365_shiftendtime,
+          'Shift Status': (shift).cp365_shiftstatus,
+        } as ShiftViewData);
     return getAttendanceStatus(shiftForStatus as ShiftWithAttendance);
   }, [shift]);
 
@@ -209,7 +237,7 @@ export function DailyShiftFlyout({
     reset,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { isDirty },
   } = useForm<DailyShiftFormData>({
     resolver: zodResolver(dailyShiftSchema),
     defaultValues: {
@@ -247,17 +275,23 @@ export function DailyShiftFlyout({
 
     // Handle ShiftViewData format
     if ('Shift Start Time' in shift) {
-      const viewData = shift as ShiftViewData;
-      const startTime = viewData['Shift Start Time'] ? new Date(viewData['Shift Start Time']) : null;
+      const viewData = shift;
+      const startTime = viewData['Shift Start Time']
+        ? new Date(viewData['Shift Start Time'])
+        : null;
       const endTime = viewData['Shift End Time'] ? new Date(viewData['Shift End Time']) : null;
 
       reset({
         shiftReferenceId: viewData['Shift Reference'] || '',
         shiftActivityId: '', // Would need to look up from activity name
         startHour: startTime ? startTime.getHours().toString().padStart(2, '0') : '09',
-        startMinute: startTime ? (Math.floor(startTime.getMinutes() / 15) * 15).toString().padStart(2, '0') : '00',
+        startMinute: startTime
+          ? (Math.floor(startTime.getMinutes() / 15) * 15).toString().padStart(2, '0')
+          : '00',
         endHour: endTime ? endTime.getHours().toString().padStart(2, '0') : '17',
-        endMinute: endTime ? (Math.floor(endTime.getMinutes() / 15) * 15).toString().padStart(2, '0') : '00',
+        endMinute: endTime
+          ? (Math.floor(endTime.getMinutes() / 15) * 15).toString().padStart(2, '0')
+          : '00',
         breakDuration: viewData['Shift Break Duration'] || 0,
         isOvertime: viewData['Overtime Shift'] || false,
         isSleepIn: viewData['Sleep In'] || false,
@@ -267,18 +301,26 @@ export function DailyShiftFlyout({
       });
     } else {
       // Handle Shift entity format
-      const entityShift = shift as any;
-      const startTime = entityShift.cp365_shiftstarttime ? new Date(entityShift.cp365_shiftstarttime) : null;
-      const endTime = entityShift.cp365_shiftendtime ? new Date(entityShift.cp365_shiftendtime) : null;
+      const entityShift = shift;
+      const startTime = entityShift.cp365_shiftstarttime
+        ? new Date(entityShift.cp365_shiftstarttime)
+        : null;
+      const endTime = entityShift.cp365_shiftendtime
+        ? new Date(entityShift.cp365_shiftendtime)
+        : null;
 
       reset({
         shiftReferenceId: entityShift._cp365_shiftreference_value || '',
         shiftActivityId: entityShift._cp365_shiftactivity_value || '',
         startHour: startTime ? startTime.getHours().toString().padStart(2, '0') : '09',
-        startMinute: startTime ? (Math.floor(startTime.getMinutes() / 15) * 15).toString().padStart(2, '0') : '00',
+        startMinute: startTime
+          ? (Math.floor(startTime.getMinutes() / 15) * 15).toString().padStart(2, '0')
+          : '00',
         endHour: endTime ? endTime.getHours().toString().padStart(2, '0') : '17',
-        endMinute: endTime ? (Math.floor(endTime.getMinutes() / 15) * 15).toString().padStart(2, '0') : '00',
-        breakDuration: (entityShift as any).cr1e2_shiftbreakduration || 0,
+        endMinute: endTime
+          ? (Math.floor(endTime.getMinutes() / 15) * 15).toString().padStart(2, '0')
+          : '00',
+        breakDuration: entityShift.cr1e2_shiftbreakduration || 0,
         isOvertime: entityShift.cp365_overtimeshift || false,
         isSleepIn: entityShift.cp365_sleepin || false,
         isShiftLeader: entityShift.cp365_shiftleader || false,
@@ -294,14 +336,25 @@ export function DailyShiftFlyout({
       const ref = shiftReferences.find((r) => r.cp365_shiftreferenceid === selectedRefId);
       if (ref) {
         const actualStartHour = convertDataverseOptionSetValue(ref.cp365_shiftreferencestarthour);
-        const actualStartMinute = convertDataverseOptionSetValue(ref.cp365_shiftreferencestartminute);
+        const actualStartMinute = convertDataverseOptionSetValue(
+          ref.cp365_shiftreferencestartminute
+        );
         const actualEndHour = convertDataverseOptionSetValue(ref.cp365_shiftreferenceendhour);
         const actualEndMinute = convertDataverseOptionSetValue(ref.cp365_shiftreferenceendminute);
 
-        if (actualStartHour != null) setValue('startHour', actualStartHour.toString().padStart(2, '0'));
-        if (actualStartMinute != null) setValue('startMinute', (Math.floor(actualStartMinute / 15) * 15).toString().padStart(2, '0'));
+        if (actualStartHour != null)
+          setValue('startHour', actualStartHour.toString().padStart(2, '0'));
+        if (actualStartMinute != null)
+          setValue(
+            'startMinute',
+            (Math.floor(actualStartMinute / 15) * 15).toString().padStart(2, '0')
+          );
         if (actualEndHour != null) setValue('endHour', actualEndHour.toString().padStart(2, '0'));
-        if (actualEndMinute != null) setValue('endMinute', (Math.floor(actualEndMinute / 15) * 15).toString().padStart(2, '0'));
+        if (actualEndMinute != null)
+          setValue(
+            'endMinute',
+            (Math.floor(actualEndMinute / 15) * 15).toString().padStart(2, '0')
+          );
         setValue('isSleepIn', ref.cp365_sleepin || false);
       }
     }
@@ -325,11 +378,12 @@ export function DailyShiftFlyout({
 
     try {
       // Get the shift date from the shift data
-      const shiftDate = shift && 'Shift Date' in shift 
-        ? (shift as ShiftViewData)['Shift Date']?.split('T')[0]
-        : shift && 'cp365_shiftdate' in shift
-          ? (shift as any).cp365_shiftdate?.split('T')[0]
-          : format(new Date(), 'yyyy-MM-dd');
+      const shiftDate =
+        shift && 'Shift Date' in shift
+          ? (shift)['Shift Date']?.split('T')[0]
+          : shift && 'cp365_shiftdate' in shift
+            ? (shift).cp365_shiftdate?.split('T')[0]
+            : format(new Date(), 'yyyy-MM-dd');
 
       const shiftUpdateData: Record<string, unknown> = {
         cp365_shiftstarttime: `${shiftDate}T${data.startHour}:${data.startMinute}:00Z`,
@@ -343,10 +397,12 @@ export function DailyShiftFlyout({
 
       // IMPORTANT: For cp365_shifts, navigation property names MUST be PascalCase for @odata.bind
       if (data.shiftReferenceId) {
-        shiftUpdateData['cp365_ShiftReference@odata.bind'] = `/cp365_shiftreferences(${data.shiftReferenceId})`;
+        shiftUpdateData['cp365_ShiftReference@odata.bind'] =
+          `/cp365_shiftreferences(${data.shiftReferenceId})`;
       }
       if (data.shiftActivityId) {
-        shiftUpdateData['cp365_ShiftActivity@odata.bind'] = `/cp365_shiftactivities(${data.shiftActivityId})`;
+        shiftUpdateData['cp365_ShiftActivity@odata.bind'] =
+          `/cp365_shiftactivities(${data.shiftActivityId})`;
       }
 
       await updateShiftMutation.mutateAsync({ shiftId, data: shiftUpdateData });
@@ -376,7 +432,6 @@ export function DailyShiftFlyout({
   const handleMarkAbsent = async () => {
     if (!shiftId) return;
     // TODO: Implement mark absent functionality
-    console.log('Mark absent:', shiftId);
   };
 
   // Quick action: Toggle shift leader
@@ -389,12 +444,12 @@ export function DailyShiftFlyout({
   const isLoading = isLoadingShift || isLoadingRefs || isLoadingActivities;
 
   // Get staff info from shift
-  const staffName = shift && 'Staff Member Name' in shift 
-    ? (shift as ShiftViewData)['Staff Member Name'] || 'Unassigned'
-    : 'Staff Member';
-  const jobTitle = shift && 'Job Title' in shift
-    ? (shift as ShiftViewData)['Job Title'] || 'Standard Care'
-    : '';
+  const staffName =
+    shift && 'Staff Member Name' in shift
+      ? (shift)['Staff Member Name'] || 'Unassigned'
+      : 'Staff Member';
+  const jobTitle =
+    shift && 'Job Title' in shift ? (shift)['Job Title'] || 'Standard Care' : '';
   const initials = getInitials(staffName);
 
   return (
@@ -416,7 +471,7 @@ export function DailyShiftFlyout({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-grey bg-primary px-4 py-3">
           <h2 id="flyout-title" className="text-lg font-semibold text-white">
-            Edit Shift
+            {isPastOrStarted ? 'View Shift' : 'Edit Shift'}
           </h2>
           <button
             onClick={onClose}
@@ -427,29 +482,31 @@ export function DailyShiftFlyout({
           </button>
         </div>
 
-        {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 border-b border-border-grey bg-gray-50 px-4 py-2">
-          <button
-            type="button"
-            onClick={handleMarkAbsent}
-            className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
-          >
-            <XCircle className="h-4 w-4" />
-            Mark Absent
-          </button>
-          <button
-            type="button"
-            onClick={handleToggleLeader}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              watch('isShiftLeader')
-                ? 'bg-green-100 text-green-800'
-                : 'border border-green-300 bg-white text-green-700 hover:bg-green-50'
-            }`}
-          >
-            <UserCheck className="h-4 w-4" />
-            {watch('isShiftLeader') ? 'Leader ✓' : 'Assign Leader'}
-          </button>
-        </div>
+        {/* Quick Actions Bar (hidden for past/started shifts) */}
+        {!isPastOrStarted && (
+          <div className="flex items-center gap-2 border-b border-border-grey bg-gray-50 px-4 py-2">
+            <button
+              type="button"
+              onClick={handleMarkAbsent}
+              className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              <XCircle className="h-4 w-4" />
+              Mark Absent
+            </button>
+            <button
+              type="button"
+              onClick={handleToggleLeader}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                watch('isShiftLeader')
+                  ? 'bg-green-100 text-green-800'
+                  : 'border border-green-300 bg-white text-green-700 hover:bg-green-50'
+              }`}
+            >
+              <UserCheck className="h-4 w-4" />
+              {watch('isShiftLeader') ? 'Leader ✓' : 'Assign Leader'}
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
@@ -467,6 +524,16 @@ export function DailyShiftFlyout({
                 </div>
               )}
 
+              {/* Read-only Banner for Past/Started Shifts */}
+              {isPastOrStarted && editability.reason && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div className="text-sm text-amber-800">
+                    <span className="font-medium">View Only:</span> {editability.reason}
+                  </div>
+                </div>
+              )}
+
               {/* Staff Info Section (Read-only) */}
               <div className="rounded-lg border border-border-grey bg-gray-50 p-4">
                 <div className="flex items-center gap-3">
@@ -478,7 +545,9 @@ export function DailyShiftFlyout({
                     <div className="text-sm text-gray-500">{jobTitle}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}
+                    >
                       <StatusDot status={attendanceStatus} size="sm" />
                       {statusConfig.label}
                     </span>
@@ -494,7 +563,8 @@ export function DailyShiftFlyout({
                 <div className="relative">
                   <select
                     {...register('shiftReferenceId')}
-                    className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                   >
                     <option value="">Select shift reference...</option>
                     {shiftReferences.map((ref) => (
@@ -522,10 +592,13 @@ export function DailyShiftFlyout({
                       <div className="relative flex-1">
                         <select
                           {...register('startHour')}
-                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={isPastOrStarted}
+                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                         >
                           {HOURS.map((h) => (
-                            <option key={h} value={h}>{h}</option>
+                            <option key={h} value={h}>
+                              {h}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -533,10 +606,13 @@ export function DailyShiftFlyout({
                       <div className="relative flex-1">
                         <select
                           {...register('startMinute')}
-                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={isPastOrStarted}
+                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                         >
                           {MINUTES.map((m) => (
-                            <option key={m} value={m}>{m}</option>
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -550,10 +626,13 @@ export function DailyShiftFlyout({
                       <div className="relative flex-1">
                         <select
                           {...register('endHour')}
-                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={isPastOrStarted}
+                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                         >
                           {HOURS.map((h) => (
-                            <option key={h} value={h}>{h}</option>
+                            <option key={h} value={h}>
+                              {h}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -561,10 +640,13 @@ export function DailyShiftFlyout({
                       <div className="relative flex-1">
                         <select
                           {...register('endMinute')}
-                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={isPastOrStarted}
+                          className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                         >
                           {MINUTES.map((m) => (
-                            <option key={m} value={m}>{m}</option>
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -575,17 +657,19 @@ export function DailyShiftFlyout({
 
               {/* Activity */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Activity
-                </label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Activity</label>
                 <div className="relative">
                   <select
                     {...register('shiftActivityId')}
-                    className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                   >
                     <option value="">Select activity...</option>
                     {shiftActivities.map((activity) => (
-                      <option key={activity.cp365_shiftactivityid} value={activity.cp365_shiftactivityid}>
+                      <option
+                        key={activity.cp365_shiftactivityid}
+                        value={activity.cp365_shiftactivityid}
+                      >
                         {activity.cp365_shiftactivityname}
                       </option>
                     ))}
@@ -607,10 +691,11 @@ export function DailyShiftFlyout({
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      disabled={isPastOrStarted}
                       min={0}
                       max={480}
                       step={15}
-                      className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                     />
                   )}
                 />
@@ -620,38 +705,42 @@ export function DailyShiftFlyout({
               <div className="space-y-3 rounded-lg border border-border-grey p-4">
                 <p className="text-sm font-medium text-gray-700">Shift Options</p>
 
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className={`flex items-center gap-3 ${isPastOrStarted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   <input
                     type="checkbox"
                     {...register('isSleepIn')}
-                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-gray-700">Sleep In</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className={`flex items-center gap-3 ${isPastOrStarted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   <input
                     type="checkbox"
                     {...register('isOvertime')}
-                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-gray-700">Overtime</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className={`flex items-center gap-3 ${isPastOrStarted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   <input
                     type="checkbox"
                     {...register('isShiftLeader')}
-                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-gray-700">Shift Leader</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className={`flex items-center gap-3 ${isPastOrStarted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   <input
                     type="checkbox"
                     {...register('isActUp')}
-                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary"
+                    disabled={isPastOrStarted}
+                    className="h-4 w-4 rounded border-border-grey text-primary focus:ring-primary disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-gray-700">Act Up</span>
                 </label>
@@ -659,14 +748,13 @@ export function DailyShiftFlyout({
 
               {/* Notes */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Notes
-                </label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Notes</label>
                 <textarea
                   {...register('notes')}
                   rows={3}
-                  placeholder="Add any notes about this shift..."
-                  className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  disabled={isPastOrStarted}
+                  placeholder={isPastOrStarted ? '' : 'Add any notes about this shift...'}
+                  className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
             </form>
@@ -695,43 +783,55 @@ export function DailyShiftFlyout({
                   disabled={isDeleting}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                   Delete
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex gap-2">
-              {/* Delete button */}
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {/* Delete button (hidden for past/started shifts) */}
+              {!isPastOrStarted && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
 
               <div className="flex-1" />
 
-              {/* Cancel */}
+              {/* Close/Cancel */}
               <button
                 type="button"
                 onClick={onClose}
                 className="rounded-lg border border-border-grey bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                {isPastOrStarted ? 'Close' : 'Cancel'}
               </button>
 
-              {/* Save */}
-              <button
-                type="submit"
-                form="daily-shift-form"
-                disabled={isSubmitting || !isDirty}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-              >
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save
-              </button>
+              {/* Save (hidden for past/started shifts) */}
+              {!isPastOrStarted && (
+                <button
+                  type="submit"
+                  form="daily-shift-form"
+                  disabled={isSubmitting || !isDirty}
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -741,4 +841,3 @@ export function DailyShiftFlyout({
 }
 
 export default DailyShiftFlyout;
-

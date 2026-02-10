@@ -1,0 +1,33 @@
+---
+description: TypeScript strictness and type safety rules
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## Type Safety
+- Never use `any` — use `unknown`, generics, or proper types
+- Prefer `interface` for object shapes (extendable), `type` for unions and complex types
+- Always type function parameters and return values for exported functions
+
+## Patterns
+```typescript
+// Bad
+const processData = (data: any) => data.value;
+
+// Good
+const processData = <T extends { value: string }>(data: T): string => data.value;
+
+// Bad: unused imports/variables
+import { unused } from './module';
+
+// Good: prefix unused params with _
+const handler = (_event: Event, data: Data) => process(data);
+```
+
+## Avoid
+- `as` type assertions (prefer type guards or generics)
+- Non-null assertions (`!`) unless absolutely certain
+- `// @ts-ignore` — fix the type error instead
+- Enums — prefer union types or `as const` objects

@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import { useCreateUnit, useUpdateUnit } from '../../hooks/useUnits';
-import type { Unit } from '../../api/dataverse/types';
-import { UnitTypeCode } from '../../api/dataverse/types';
+import { useCreateUnit, useUpdateUnit } from '@/hooks/useUnits';
+import type { Unit } from '@/api/dataverse/types';
+import { UnitTypeCode } from '@/api/dataverse/types';
 
 interface UnitFormProps {
   /** Unit to edit (null for create mode) */
@@ -34,7 +34,7 @@ const unitTypeOptions = [
 
 export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps) {
   const isEditMode = !!unit;
-  
+
   // Form state
   const [formData, setFormData] = useState({
     unitName: '',
@@ -52,7 +52,8 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
 
   const isSubmitting = createUnitMutation.isPending || updateUnitMutation.isPending;
 
-  // Populate form when editing
+  // Populate form when editing - intentionally sync props to state for form editing
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (unit) {
       setFormData({
@@ -65,6 +66,7 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
       });
     }
   }, [unit]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Handle input changes
   const handleChange = (
@@ -177,9 +179,7 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
                     : 'border-border-grey focus:border-primary focus:ring-primary'
                 }`}
               />
-              {errors.unitName && (
-                <p className="mt-1 text-xs text-error">{errors.unitName}</p>
-              )}
+              {errors.unitName && <p className="mt-1 text-xs text-error">{errors.unitName}</p>}
             </div>
 
             {/* Ward Name and Floor Level (side by side) */}
@@ -201,12 +201,13 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
                       : 'border-border-grey focus:border-primary focus:ring-primary'
                   }`}
                 />
-                {errors.wardName && (
-                  <p className="mt-1 text-xs text-error">{errors.wardName}</p>
-                )}
+                {errors.wardName && <p className="mt-1 text-xs text-error">{errors.wardName}</p>}
               </div>
               <div>
-                <label htmlFor="floorLevel" className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="floorLevel"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Floor Level
                 </label>
                 <input
@@ -231,7 +232,10 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
             {/* Unit Type and Display Order (side by side) */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="unitTypeCode" className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="unitTypeCode"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Unit Type
                 </label>
                 <select
@@ -249,7 +253,10 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
                 </select>
               </div>
               <div>
-                <label htmlFor="displayOrder" className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="displayOrder"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Display Order
                 </label>
                 <input
@@ -322,4 +329,3 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
     </div>
   );
 }
-

@@ -14,4 +14,3 @@ export * from './PatternDisplay';
 
 // Coverage Analysis
 export * from './CoverageAnalysis';
-

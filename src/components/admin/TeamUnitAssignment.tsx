@@ -5,8 +5,8 @@
 
 import { useState } from 'react';
 import { X, Users, Plus, Minus, Loader2, Search, AlertCircle } from 'lucide-react';
-import { useTeamsForUnit, useUnassignedTeams, useAssignTeamToUnit } from '../../hooks/useUnits';
-import type { Unit, StaffTeam } from '../../api/dataverse/types';
+import { useTeamsForUnit, useUnassignedTeams, useAssignTeamToUnit } from '@/hooks/useUnits';
+import type { Unit, StaffTeam } from '@/api/dataverse/types';
 
 interface TeamUnitAssignmentProps {
   /** The unit to manage teams for */
@@ -19,9 +19,13 @@ export function TeamUnitAssignment({ unit, onClose }: TeamUnitAssignmentProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Data fetching
-  const { data: assignedTeams = [], isLoading: isLoadingAssigned } = useTeamsForUnit(unit.cp365_unitid);
-  const { data: unassignedTeams = [], isLoading: isLoadingUnassigned } = useUnassignedTeams(unit._cp365_location_value);
-  
+  const { data: assignedTeams = [], isLoading: isLoadingAssigned } = useTeamsForUnit(
+    unit.cp365_unitid
+  );
+  const { data: unassignedTeams = [], isLoading: isLoadingUnassigned } = useUnassignedTeams(
+    unit._cp365_location_value
+  );
+
   // Mutation
   const assignTeamMutation = useAssignTeamToUnit();
 
@@ -135,7 +139,7 @@ export function TeamUnitAssignment({ unit, onClose }: TeamUnitAssignmentProps) {
                   <Users className="h-4 w-4 text-gray-400" />
                   Available Teams ({filteredUnassignedTeams.length})
                 </h3>
-                
+
                 {/* Search */}
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -164,9 +168,7 @@ export function TeamUnitAssignment({ unit, onClose }: TeamUnitAssignmentProps) {
                           key={team.cp365_staffteamid}
                           className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
                         >
-                          <span className="text-sm text-gray-700">
-                            {team.cp365_staffteamname}
-                          </span>
+                          <span className="text-sm text-gray-700">{team.cp365_staffteamname}</span>
                           <button
                             onClick={() => handleAssignTeam(team)}
                             disabled={assignTeamMutation.isPending}
@@ -190,8 +192,9 @@ export function TeamUnitAssignment({ unit, onClose }: TeamUnitAssignmentProps) {
           <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
-              Teams assigned to this unit will be grouped together in the hierarchical rota view.
-              A team can only belong to one unit at a time. Unassigned teams appear in a separate "Other Teams" section.
+              Teams assigned to this unit will be grouped together in the hierarchical rota view. A
+              team can only belong to one unit at a time. Unassigned teams appear in a separate
+              "Other Teams" section.
             </p>
           </div>
         </div>
@@ -209,4 +212,3 @@ export function TeamUnitAssignment({ unit, onClose }: TeamUnitAssignmentProps) {
     </div>
   );
 }
-

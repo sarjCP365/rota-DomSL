@@ -1,6 +1,6 @@
 /**
  * Pattern Assignment Page - Bulk Assignment Wizard
- * 
+ *
  * A step-by-step wizard for assigning patterns to multiple staff members.
  * Steps:
  * 1. Select Pattern
@@ -16,7 +16,6 @@ import { format, addWeeks, startOfWeek, parseISO } from 'date-fns';
 import {
   ChevronLeft,
   ChevronRight,
-  Users,
   CalendarClock,
   Check,
   AlertTriangle,
@@ -31,22 +30,15 @@ import {
   Layers,
   User,
   Building2,
-  Filter,
-  X,
 } from 'lucide-react';
-import { SideNav, useSideNav } from '../../../components/common/SideNav';
+import { SideNav, useSideNav } from '@/components/common/SideNav';
 import { usePatternTemplates } from '../hooks/usePatternTemplates';
-import { usePatternDays } from '../hooks/usePatternTemplates';
-import { useStaffMembers } from '../../../hooks/useStaff';
-import { useBulkAssignPattern, useStaffPatternAssignments } from '../hooks/usePatternAssignments';
-import { useLocationSettings } from '../../../store/settingsStore';
-import type {
-  ShiftPatternTemplate,
-  StaffPatternAssignment,
-  BulkAssignmentOptions,
-} from '../types';
-import { PatternStatus, PatternPublishStatus, DayOfWeekLabels } from '../types';
-import type { StaffMember } from '../../../api/dataverse/types';
+import { useStaffMembers } from '@/hooks/useStaff';
+import { useBulkAssignPattern } from '../hooks/usePatternAssignments';
+import { useLocationSettings } from '@/store/settingsStore';
+import type { BulkAssignmentOptions } from '../types';
+import { PatternStatus, PatternPublishStatus } from '../types';
+import type { StaffMember } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -83,10 +75,10 @@ interface StepProps {
 }
 
 // Step 1: Select Pattern
-function Step1PatternSelection({ state, setState, onNext }: StepProps) {
+function Step1PatternSelection({ state, setState, onNext: _onNext }: StepProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedLocationId } = useLocationSettings();
-  const { data: patterns = [], isLoading } = usePatternTemplates({ 
+  const { data: patterns = [], isLoading } = usePatternTemplates({
     status: PatternStatus.Active,
     locationId: selectedLocationId || undefined,
   });
@@ -109,7 +101,9 @@ function Step1PatternSelection({ state, setState, onNext }: StepProps) {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Select a Pattern Template</h2>
-        <p className="text-sm text-slate-500">Choose the shift pattern you want to assign to staff</p>
+        <p className="text-sm text-slate-500">
+          Choose the shift pattern you want to assign to staff
+        </p>
       </div>
 
       {/* Search */}
@@ -137,7 +131,7 @@ function Step1PatternSelection({ state, setState, onNext }: StepProps) {
         </div>
       ) : filteredPatterns.length === 0 ? (
         <div className="py-12 text-center text-slate-500">
-          {selectedLocationId 
+          {selectedLocationId
             ? 'No patterns found for this location. Create a pattern first.'
             : 'Select a location to view available patterns.'}
         </div>
@@ -148,7 +142,8 @@ function Step1PatternSelection({ state, setState, onNext }: StepProps) {
               key={pattern.cp365_shiftpatterntemplatenewid}
               onClick={() => handleSelectPattern(pattern)}
               className={`rounded-lg border p-4 text-left transition-all ${
-                state.selectedPattern?.cp365_shiftpatterntemplatenewid === pattern.cp365_shiftpatterntemplatenewid
+                state.selectedPattern?.cp365_shiftpatterntemplatenewid ===
+                pattern.cp365_shiftpatterntemplatenewid
                   ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
               }`}
@@ -162,13 +157,15 @@ function Step1PatternSelection({ state, setState, onNext }: StepProps) {
                     </p>
                   )}
                 </div>
-                {state.selectedPattern?.cp365_shiftpatterntemplatenewid === pattern.cp365_shiftpatterntemplatenewid && (
+                {state.selectedPattern?.cp365_shiftpatterntemplatenewid ===
+                  pattern.cp365_shiftpatterntemplatenewid && (
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" />
                 )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
-                  {pattern.cp365_sp_rotationcycleweeks} week{pattern.cp365_sp_rotationcycleweeks > 1 ? 's' : ''}
+                  {pattern.cp365_sp_rotationcycleweeks} week
+                  {pattern.cp365_sp_rotationcycleweeks > 1 ? 's' : ''}
                 </span>
                 {pattern.cp365_sp_averageweeklyhours && (
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
@@ -284,9 +281,7 @@ function Step2StaffSelection({ state, setState }: StepProps) {
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         </div>
       ) : filteredStaff.length === 0 ? (
-        <div className="py-12 text-center text-slate-500">
-          No staff found for this location.
-        </div>
+        <div className="py-12 text-center text-slate-500">No staff found for this location.</div>
       ) : (
         <div className="max-h-96 space-y-2 overflow-auto rounded-lg border border-slate-200 bg-white p-2">
           {filteredStaff.map((staff) => {
@@ -319,13 +314,13 @@ function Step2StaffSelection({ state, setState }: StepProps) {
                     .toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{staff.cp365_staffmembername}</p>
+                  <p className="font-medium text-slate-900 truncate">
+                    {staff.cp365_staffmembername}
+                  </p>
                   <p className="text-xs text-slate-500">{staff.cp365_jobtitle || 'Staff Member'}</p>
                 </div>
                 {staff.cp365_requiredhours && (
-                  <span className="text-xs text-slate-500">
-                    {staff.cp365_requiredhours} hrs
-                  </span>
+                  <span className="text-xs text-slate-500">{staff.cp365_requiredhours} hrs</span>
                 )}
               </button>
             );
@@ -339,12 +334,12 @@ function Step2StaffSelection({ state, setState }: StepProps) {
 // Step 3: Configure
 function Step3Configuration({ state, setState }: StepProps) {
   const rotationWeeks = state.selectedPattern?.cp365_sp_rotationcycleweeks || 1;
-  
+
   // Apply stagger when option changes
   const handleStaggerChange = (staggerType: 'same' | 'stagger' | 'custom') => {
     setState((prev) => {
       const newSelected = new Map(prev.selectedStaff);
-      
+
       if (staggerType === 'same') {
         // All start at week 1
         newSelected.forEach((selection, id) => {
@@ -360,7 +355,7 @@ function Step3Configuration({ state, setState }: StepProps) {
         });
       }
       // 'custom' - leave as is
-      
+
       return { ...prev, staggerType, selectedStaff: newSelected };
     });
   };
@@ -399,9 +394,21 @@ function Step3Configuration({ state, setState }: StepProps) {
           </p>
           <div className="mt-3 space-y-2">
             {[
-              { value: 'same' as const, label: 'All start same week', desc: 'Everyone starts at Week 1' },
-              { value: 'stagger' as const, label: 'Auto-stagger', desc: `Distribute evenly across ${rotationWeeks} weeks` },
-              { value: 'custom' as const, label: 'Custom per staff', desc: 'Set rotation week for each person' },
+              {
+                value: 'same' as const,
+                label: 'All start same week',
+                desc: 'Everyone starts at Week 1',
+              },
+              {
+                value: 'stagger' as const,
+                label: 'Auto-stagger',
+                desc: `Distribute evenly across ${rotationWeeks} weeks`,
+              },
+              {
+                value: 'custom' as const,
+                label: 'Custom per staff',
+                desc: 'Set rotation week for each person',
+              },
             ].map((option) => (
               <label
                 key={option.value}
@@ -431,8 +438,13 @@ function Step3Configuration({ state, setState }: StepProps) {
           {state.staggerType === 'custom' && (
             <div className="mt-4 max-h-48 space-y-2 overflow-auto">
               {Array.from(state.selectedStaff.entries()).map(([id, selection]) => (
-                <div key={id} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2">
-                  <span className="text-sm text-slate-700">{selection.staff.cp365_staffmembername}</span>
+                <div
+                  key={id}
+                  className="flex items-center justify-between rounded bg-slate-50 px-3 py-2"
+                >
+                  <span className="text-sm text-slate-700">
+                    {selection.staff.cp365_staffmembername}
+                  </span>
                   <select
                     value={selection.rotationStartWeek}
                     onChange={(e) =>
@@ -440,7 +452,10 @@ function Step3Configuration({ state, setState }: StepProps) {
                         const newSelected = new Map(prev.selectedStaff);
                         const sel = newSelected.get(id);
                         if (sel) {
-                          newSelected.set(id, { ...sel, rotationStartWeek: parseInt(e.target.value) });
+                          newSelected.set(id, {
+                            ...sel,
+                            rotationStartWeek: parseInt(e.target.value),
+                          });
                         }
                         return { ...prev, selectedStaff: newSelected };
                       })
@@ -466,12 +481,30 @@ function Step3Configuration({ state, setState }: StepProps) {
           <Clock className="h-4 w-4 text-emerald-600" />
           Publish Status
         </h3>
-        <p className="mt-1 text-xs text-slate-500">Should generated shifts be published immediately?</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Should generated shifts be published immediately?
+        </p>
         <div className="mt-3 space-y-2">
           {[
-            { value: 'pattern_default' as const, label: 'Use pattern default', desc: state.selectedPattern?.cp365_sp_defaultpublishstatus === PatternPublishStatus.Published ? 'Published' : 'Unpublished' },
-            { value: 'published' as const, label: 'Published', desc: 'Shifts visible to staff immediately' },
-            { value: 'unpublished' as const, label: 'Unpublished', desc: 'Draft mode - publish manually later' },
+            {
+              value: 'pattern_default' as const,
+              label: 'Use pattern default',
+              desc:
+                state.selectedPattern?.cp365_sp_defaultpublishstatus ===
+                PatternPublishStatus.Published
+                  ? 'Published'
+                  : 'Unpublished',
+            },
+            {
+              value: 'published' as const,
+              label: 'Published',
+              desc: 'Shifts visible to staff immediately',
+            },
+            {
+              value: 'unpublished' as const,
+              label: 'Unpublished',
+              desc: 'Draft mode - publish manually later',
+            },
           ].map((option) => (
             <label
               key={option.value}
@@ -512,7 +545,9 @@ function Step3Configuration({ state, setState }: StepProps) {
           min="1"
           max="99"
           value={state.priority}
-          onChange={(e) => setState((prev) => ({ ...prev, priority: parseInt(e.target.value) || 1 }))}
+          onChange={(e) =>
+            setState((prev) => ({ ...prev, priority: parseInt(e.target.value) || 1 }))
+          }
           className="mt-2 w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
       </div>
@@ -588,13 +623,21 @@ function Step4Review({ state }: StepProps) {
           <div className="flex justify-between">
             <dt className="text-slate-500">Stagger</dt>
             <dd className="font-medium text-slate-700">
-              {state.staggerType === 'same' ? 'All same week' : state.staggerType === 'stagger' ? 'Auto-distributed' : 'Custom'}
+              {state.staggerType === 'same'
+                ? 'All same week'
+                : state.staggerType === 'stagger'
+                  ? 'Auto-distributed'
+                  : 'Custom'}
             </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-slate-500">Publish Status</dt>
             <dd className="font-medium text-slate-700">
-              {state.publishStatus === 'pattern_default' ? 'Pattern default' : state.publishStatus === 'published' ? 'Published' : 'Unpublished'}
+              {state.publishStatus === 'pattern_default'
+                ? 'Pattern default'
+                : state.publishStatus === 'published'
+                  ? 'Published'
+                  : 'Unpublished'}
             </dd>
           </div>
           <div className="flex justify-between">
@@ -611,8 +654,8 @@ function Step4Review({ state }: StepProps) {
           <div className="text-sm text-amber-800">
             <p className="font-medium">Conflict Detection</p>
             <p className="mt-1">
-              The system will check for existing shifts and leave before generating. 
-              Any conflicts will be skipped by default.
+              The system will check for existing shifts and leave before generating. Any conflicts
+              will be skipped by default.
             </p>
           </div>
         </div>
@@ -652,14 +695,10 @@ function Step5Confirm({
         </h2>
         <p className="mt-2 text-slate-500">{result.message}</p>
         {result.created > 0 && (
-          <p className="mt-2 text-sm text-emerald-600">
-            {result.created} assignments created
-          </p>
+          <p className="mt-2 text-sm text-emerald-600">{result.created} assignments created</p>
         )}
         {result.errors > 0 && (
-          <p className="mt-1 text-sm text-red-600">
-            {result.errors} errors occurred
-          </p>
+          <p className="mt-1 text-sm text-red-600">{result.errors} errors occurred</p>
         )}
       </div>
     );
@@ -730,13 +769,18 @@ function Step5Confirm({
 // =============================================================================
 
 export function PatternAssignmentPage() {
-  const navigate = useNavigate();
-  const { isOpen: isSideNavOpen, toggle: toggleSideNav, close: closeSideNav } = useSideNav();
-  
+  const _navigate = useNavigate();
+  const { isOpen: isSideNavOpen, close: closeSideNav } = useSideNav();
+
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; created: number; errors: number } | null>(null);
-  
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+    created: number;
+    errors: number;
+  } | null>(null);
+
   const [wizardState, setWizardState] = useState<WizardState>({
     selectedPattern: null,
     selectedStaff: new Map(),
@@ -774,7 +818,7 @@ export function PatternAssignmentPage() {
   }, [currentStep]);
 
   const handleComplete = useCallback(
-    async (generateShifts: boolean) => {
+    async (_generateShifts: boolean) => {
       if (!wizardState.selectedPattern) return;
 
       setIsProcessing(true);
@@ -784,21 +828,22 @@ export function PatternAssignmentPage() {
           staffMemberIds: Array.from(wizardState.selectedStaff.keys()),
           startDate: wizardState.startDate,
           staggerType: wizardState.staggerType,
-          staggerSettings: wizardState.staggerType === 'custom'
-            ? new Map(
-                Array.from(wizardState.selectedStaff.entries()).map(([id, sel]) => [
-                  id,
-                  sel.rotationStartWeek,
-                ])
-              )
-            : undefined,
+          staggerSettings:
+            wizardState.staggerType === 'custom'
+              ? new Map(
+                  Array.from(wizardState.selectedStaff.entries()).map(([id, sel]) => [
+                    id,
+                    sel.rotationStartWeek,
+                  ])
+                )
+              : undefined,
           overridePublishStatus: wizardState.publishStatus !== 'pattern_default',
           publishStatus:
             wizardState.publishStatus === 'published'
               ? PatternPublishStatus.Published
               : wizardState.publishStatus === 'unpublished'
-              ? PatternPublishStatus.Unpublished
-              : undefined,
+                ? PatternPublishStatus.Unpublished
+                : undefined,
         };
 
         const result = await bulkAssignMutation.mutateAsync(options);
@@ -847,7 +892,9 @@ export function PatternAssignmentPage() {
               </Link>
               <div>
                 <h1 className="text-xl font-bold">Bulk Pattern Assignment</h1>
-                <p className="text-sm text-emerald-100">Assign patterns to multiple staff members</p>
+                <p className="text-sm text-emerald-100">
+                  Assign patterns to multiple staff members
+                </p>
               </div>
             </div>
           </div>
@@ -865,8 +912,8 @@ export function PatternAssignmentPage() {
                     step.number === currentStep
                       ? 'bg-emerald-100 text-emerald-700'
                       : step.number < currentStep
-                      ? 'text-emerald-600 hover:bg-emerald-50'
-                      : 'text-slate-400'
+                        ? 'text-emerald-600 hover:bg-emerald-50'
+                        : 'text-slate-400'
                   }`}
                 >
                   <div
@@ -874,8 +921,8 @@ export function PatternAssignmentPage() {
                       step.number === currentStep
                         ? 'bg-emerald-600 text-white'
                         : step.number < currentStep
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-slate-100 text-slate-400'
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : 'bg-slate-100 text-slate-400'
                     }`}
                   >
                     {step.number < currentStep ? <Check className="h-3 w-3" /> : step.number}
@@ -952,7 +999,10 @@ export function PatternAssignmentPage() {
                   setWizardState({
                     selectedPattern: null,
                     selectedStaff: new Map(),
-                    startDate: format(startOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+                    startDate: format(
+                      startOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 }),
+                      'yyyy-MM-dd'
+                    ),
                     staggerType: 'same',
                     publishStatus: 'pattern_default',
                     priority: 1,

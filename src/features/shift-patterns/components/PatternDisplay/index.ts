@@ -4,4 +4,3 @@
 
 export { StaffPatternView } from './StaffPatternView';
 export { LeaveEntitlementCard } from './LeaveEntitlementCard';
-

@@ -1,9 +1,9 @@
 /**
  * AnnualLeaveCell Component
- * 
+ *
  * Displays annual leave and other absence types that span multiple days.
  * Shows as a merged cell across consecutive days.
- * 
+ *
  * Features:
  * - Spans multiple day columns
  * - Different colours by leave type
@@ -15,16 +15,8 @@
 
 import { useMemo, useState } from 'react';
 import { format, differenceInDays, isWithinInterval, parseISO } from 'date-fns';
-import { 
-  User, 
-  Calendar, 
-  AlertTriangle,
-  BookOpen,
-  Heart,
-  Plane,
-  Clock,
-} from 'lucide-react';
-import type { StaffAbsenceLog, AbsenceType, Shift } from '../../api/dataverse/types';
+import { User, Calendar, AlertTriangle, BookOpen, Heart, Plane, Clock } from 'lucide-react';
+import type { StaffAbsenceLog, AbsenceType, Shift } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -64,13 +56,16 @@ interface LeaveBlockProps {
 // CONSTANTS
 // =============================================================================
 
-const LEAVE_TYPE_STYLES: Record<string, {
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
-  icon: React.ComponentType<{ className?: string }>;
-}> = {
-  'annual': {
+const LEAVE_TYPE_STYLES: Record<
+  string,
+  {
+    bgColor: string;
+    borderColor: string;
+    textColor: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  annual: {
     bgColor: 'bg-[#FFF3E0]',
     borderColor: 'border-orange-300',
     textColor: 'text-orange-800',
@@ -82,13 +77,13 @@ const LEAVE_TYPE_STYLES: Record<string, {
     textColor: 'text-orange-800',
     icon: Plane,
   },
-  'holiday': {
+  holiday: {
     bgColor: 'bg-[#FFF3E0]',
     borderColor: 'border-orange-300',
     textColor: 'text-orange-800',
     icon: Plane,
   },
-  'sick': {
+  sick: {
     bgColor: 'bg-red-50',
     borderColor: 'border-red-300',
     textColor: 'text-red-800',
@@ -100,61 +95,61 @@ const LEAVE_TYPE_STYLES: Record<string, {
     textColor: 'text-red-800',
     icon: Heart,
   },
-  'sickness': {
+  sickness: {
     bgColor: 'bg-red-50',
     borderColor: 'border-red-300',
     textColor: 'text-red-800',
     icon: Heart,
   },
-  'training': {
+  training: {
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-300',
     textColor: 'text-blue-800',
     icon: BookOpen,
   },
-  'study': {
+  study: {
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-300',
     textColor: 'text-blue-800',
     icon: BookOpen,
   },
-  'compassionate': {
+  compassionate: {
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-300',
     textColor: 'text-purple-800',
     icon: Heart,
   },
-  'bereavement': {
+  bereavement: {
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-300',
     textColor: 'text-purple-800',
     icon: Heart,
   },
-  'parental': {
+  parental: {
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-300',
     textColor: 'text-pink-800',
     icon: User,
   },
-  'maternity': {
+  maternity: {
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-300',
     textColor: 'text-pink-800',
     icon: User,
   },
-  'paternity': {
+  paternity: {
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-300',
     textColor: 'text-pink-800',
     icon: User,
   },
-  'unpaid': {
+  unpaid: {
     bgColor: 'bg-gray-100',
     borderColor: 'border-gray-300',
     textColor: 'text-gray-700',
     icon: Clock,
   },
-  'default': {
+  default: {
     bgColor: 'bg-gray-100',
     borderColor: 'border-gray-300',
     textColor: 'text-gray-700',
@@ -168,32 +163,32 @@ const LEAVE_TYPE_STYLES: Record<string, {
 
 function getLeaveTypeStyle(absenceTypeName?: string) {
   if (!absenceTypeName) return LEAVE_TYPE_STYLES.default;
-  
+
   const nameLower = absenceTypeName.toLowerCase();
-  
+
   // Try exact match first
   if (LEAVE_TYPE_STYLES[nameLower]) {
     return LEAVE_TYPE_STYLES[nameLower];
   }
-  
+
   // Try partial match
   for (const [key, style] of Object.entries(LEAVE_TYPE_STYLES)) {
     if (key !== 'default' && nameLower.includes(key)) {
       return style;
     }
   }
-  
+
   return LEAVE_TYPE_STYLES.default;
 }
 
 function formatDateRange(startDate: Date, endDate: Date): string {
   const start = format(startDate, 'd MMM');
   const end = format(endDate, 'd MMM');
-  
+
   if (start === end) {
     return start;
   }
-  
+
   return `${start} - ${end}`;
 }
 
@@ -203,7 +198,7 @@ function formatDateRange(startDate: Date, endDate: Date): string {
 
 export function AnnualLeaveCell({
   leave,
-  startColumn,
+  startColumn: _startColumn,
   spanDays,
   absenceType,
   hasOverlap,
@@ -244,23 +239,15 @@ export function AnnualLeaveCell({
         }}
       >
         <Icon className="h-4 w-4 shrink-0" />
-        {spanDays >= 2 && (
-          <span className="truncate text-xs font-medium">
-            {getLabelText()}
-          </span>
-        )}
-        {hasOverlap && (
-          <AlertTriangle className="ml-auto h-3.5 w-3.5 shrink-0 text-red-500" />
-        )}
+        {spanDays >= 2 && <span className="truncate text-xs font-medium">{getLabelText()}</span>}
+        {hasOverlap && <AlertTriangle className="ml-auto h-3.5 w-3.5 shrink-0 text-red-500" />}
       </button>
 
       {/* Tooltip */}
       {showTooltip && (
         <div className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg">
           <div className="font-semibold">{typeName}</div>
-          <div className="mt-1 text-gray-300">
-            {formatDateRange(leaveStart, leaveEnd)}
-          </div>
+          <div className="mt-1 text-gray-300">{formatDateRange(leaveStart, leaveEnd)}</div>
           {hasOverlap && (
             <div className="mt-1 flex items-center gap-1 text-red-300">
               <AlertTriangle className="h-3 w-3" />
@@ -269,7 +256,8 @@ export function AnnualLeaveCell({
           )}
           {!leave.cp365_sensitive && overlappingShifts.length > 0 && (
             <div className="mt-1 text-gray-400">
-              {overlappingShifts.length} overlapping {overlappingShifts.length === 1 ? 'shift' : 'shifts'}
+              {overlappingShifts.length} overlapping{' '}
+              {overlappingShifts.length === 1 ? 'shift' : 'shifts'}
             </div>
           )}
           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
@@ -300,28 +288,28 @@ export function LeaveBlock({
   const { startCol, spanDays, isPartialStart, isPartialEnd } = useMemo(() => {
     const leaveStart = parseISO(leave.cp365_startdate);
     const leaveEnd = parseISO(leave.cp365_enddate);
-    
+
     let startCol = -1;
     let endCol = -1;
-    
+
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
       const isInRange = isWithinInterval(date, { start: leaveStart, end: leaveEnd });
-      
+
       if (isInRange) {
         if (startCol === -1) startCol = i;
         endCol = i;
       }
     }
-    
+
     if (startCol === -1) {
       return { startCol: -1, spanDays: 0, isPartialStart: false, isPartialEnd: false };
     }
-    
+
     const spanDays = endCol - startCol + 1;
     const isPartialStart = leaveStart < dates[0];
     const isPartialEnd = leaveEnd > dates[dates.length - 1];
-    
+
     return { startCol, spanDays, isPartialStart, isPartialEnd };
   }, [leave, dates]);
 
@@ -366,12 +354,8 @@ export function LeaveBlock({
         `}
       >
         <Icon className="h-4 w-4 shrink-0" />
-        <span className="truncate text-sm font-medium">
-          {getLabel()}
-        </span>
-        {hasOverlap && (
-          <AlertTriangle className="ml-auto h-4 w-4 shrink-0 text-red-500" />
-        )}
+        <span className="truncate text-sm font-medium">{getLabel()}</span>
+        {hasOverlap && <AlertTriangle className="ml-auto h-4 w-4 shrink-0 text-red-500" />}
       </button>
 
       {/* Tooltip */}
@@ -438,7 +422,8 @@ export function LeaveIndicator({ typeName, isPartialDay, compact }: LeaveIndicat
     >
       <Icon className="h-3.5 w-3.5" />
       <span className="text-xs font-medium">
-        {isPartialDay ? 'Partial ' : ''}{typeName}
+        {isPartialDay ? 'Partial ' : ''}
+        {typeName}
       </span>
     </div>
   );
@@ -466,7 +451,7 @@ export function LeaveRow({ staffName, leaves, dates, absenceTypes }: LeaveRowPro
   // Find the primary leave (longest or first)
   const primaryLeave = useMemo(() => {
     if (leaves.length === 0) return null;
-    
+
     return leaves.reduce((longest, leave) => {
       const longestDays = differenceInDays(
         parseISO(longest.cp365_enddate),
@@ -493,9 +478,14 @@ export function LeaveRow({ staffName, leaves, dates, absenceTypes }: LeaveRowPro
   return (
     <tr className={style.bgColor}>
       {/* Staff info */}
-      <td className="sticky left-0 z-10 w-52 min-w-52 border-b border-r border-border-grey px-3 py-2" style={{ backgroundColor: 'inherit' }}>
+      <td
+        className="sticky left-0 z-10 w-52 min-w-52 border-b border-r border-border-grey px-3 py-2"
+        style={{ backgroundColor: 'inherit' }}
+      >
         <div className="flex items-center gap-2">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-full ${style.bgColor} border ${style.borderColor}`}>
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${style.bgColor} border ${style.borderColor}`}
+          >
             <Icon className={`h-4 w-4 ${style.textColor}`} />
           </div>
           <div>
@@ -506,18 +496,13 @@ export function LeaveRow({ staffName, leaves, dates, absenceTypes }: LeaveRowPro
       </td>
 
       {/* Spanning leave cell */}
-      <td 
-        colSpan={dates.length}
-        className={`border-b border-border-grey p-2 ${style.bgColor}`}
-      >
-        <div className={`flex items-center justify-center gap-2 rounded-md border px-4 py-2 ${style.borderColor}`}>
+      <td colSpan={dates.length} className={`border-b border-border-grey p-2 ${style.bgColor}`}>
+        <div
+          className={`flex items-center justify-center gap-2 rounded-md border px-4 py-2 ${style.borderColor}`}
+        >
           <Icon className={`h-5 w-5 ${style.textColor}`} />
-          <span className={`text-sm font-medium ${style.textColor}`}>
-            {typeName}
-          </span>
-          <span className="text-xs text-gray-500">
-            {formatDateRange(leaveStart, leaveEnd)}
-          </span>
+          <span className={`text-sm font-medium ${style.textColor}`}>{typeName}</span>
+          <span className="text-xs text-gray-500">{formatDateRange(leaveStart, leaveEnd)}</span>
         </div>
       </td>
     </tr>
@@ -529,4 +514,3 @@ export function LeaveRow({ staffName, leaves, dates, absenceTypes }: LeaveRowPro
 // =============================================================================
 
 export type { AnnualLeaveCellProps, LeaveBlockProps, LeaveIndicatorProps, LeaveRowProps };
-

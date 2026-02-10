@@ -3,7 +3,7 @@
  * Displayed when user is not authenticated
  */
 
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
   const { login, loginRedirect, isLoading, error } = useAuth();
@@ -35,9 +35,7 @@ export function LoginPage() {
 
           {/* Error message */}
           {error && (
-            <div className="mb-6 rounded-lg bg-error/10 p-3 text-sm text-error">
-              {error}
-            </div>
+            <div className="mb-6 rounded-lg bg-error/10 p-3 text-sm text-error">{error}</div>
           )}
 
           {/* Login buttons */}
@@ -98,19 +96,8 @@ function MicrosoftLogo() {
  */
 function LoadingSpinner() {
   return (
-    <svg
-      className="h-5 w-5 animate-spin"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -119,4 +106,3 @@ function LoadingSpinner() {
     </svg>
   );
 }
-

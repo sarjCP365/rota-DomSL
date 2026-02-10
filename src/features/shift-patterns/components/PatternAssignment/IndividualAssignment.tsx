@@ -1,48 +1,28 @@
 /**
  * Individual Assignment Component
  * Assigns a pattern template to a single staff member
- * 
+ *
  * Can be triggered from:
  * - Staff profile page
  * - "Assign" button on pattern card
  * - Assignment wizard
  */
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, addDays, addWeeks, startOfWeek, isSameDay } from 'date-fns';
-import {
-  User,
-  CalendarClock,
-  AlertTriangle,
-  Info,
-  ChevronRight,
-  Clock,
-  Calendar,
-  Check,
-  X,
-  Loader2,
-  Play,
-  Search,
-} from 'lucide-react';
+import { CalendarClock, AlertTriangle, Clock, Check, X, Loader2, Play, Search } from 'lucide-react';
 import { usePatternTemplates, usePatternTemplate } from '../../hooks/usePatternTemplates';
-import { useStaffPatternAssignments, useCreatePatternAssignment } from '../../hooks/usePatternAssignments';
-import { useStaffMember, useStaffMembers } from '../../../../hooks/useStaff';
-import { useLocationSettings } from '../../../../store/settingsStore';
-import { useSublocations, useActiveRota, useLocations } from '../../../../hooks/useLocations';
+import {
+  useStaffPatternAssignments,
+  useCreatePatternAssignment,
+} from '../../hooks/usePatternAssignments';
+import { useStaffMember, useStaffMembers } from '@/hooks/useStaff';
+import { useLocationSettings } from '@/store/settingsStore';
+import { useSublocations, useActiveRota, useLocations } from '@/hooks/useLocations';
 import { MapPin } from 'lucide-react';
 import { generateShiftsFromPattern } from '../../api/patternGeneration';
-import type {
-  ShiftPatternTemplate,
-  AssignmentFormData,
-  PatternDayFormData,
-} from '../../types';
-import {
-  DayOfWeek,
-  DayOfWeekLabels,
-  DayOfWeekShortLabels,
-  PatternPublishStatus,
-  PatternStatus,
-} from '../../types';
+import type { AssignmentFormData, PatternDayFormData } from '../../types';
+import { DayOfWeek, DayOfWeekShortLabels, PatternPublishStatus, PatternStatus } from '../../types';
 
 // =============================================================================
 // TYPES
@@ -61,7 +41,7 @@ interface IndividualAssignmentProps {
   variant?: 'modal' | 'inline';
 }
 
-interface StaffSearchResult {
+interface _StaffSearchResult {
   cp365_staffmemberid: string;
   cp365_staffmembername: string;
   cp365_forename: string;
@@ -98,15 +78,18 @@ function generatePatternPreview(
 
   // Start from the Monday of the start week
   const weekStart = startOfWeek(startDate, { weekStartsOn: 1 });
-  
+
   for (let day = 0; day < weeksToShow * 7; day++) {
     const currentDate = addDays(weekStart, day);
     const currentDayOfWeek = ((currentDate.getDay() + 6) % 7) + 1; // Convert to Mon=1, Sun=7
-    
+
     // Calculate which week of the rotation we're in
-    const daysSinceStart = Math.floor((currentDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
-    const weekNumber = ((Math.floor(daysSinceStart / 7) + rotationStartWeek - 1) % rotationCycleWeeks) + 1;
-    
+    const daysSinceStart = Math.floor(
+      (currentDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const weekNumber =
+      ((Math.floor(daysSinceStart / 7) + rotationStartWeek - 1) % rotationCycleWeeks) + 1;
+
     // Find matching pattern day
     const patternDay = patternDays.find(
       (pd) => pd.weekNumber === weekNumber && pd.dayOfWeek === currentDayOfWeek
@@ -142,14 +125,11 @@ function MiniCalendar({ preview, startDate }: MiniCalendarProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <h4 className="mb-3 text-sm font-medium text-slate-700">4-Week Preview</h4>
-      
+
       {/* Day headers */}
       <div className="mb-2 grid grid-cols-7 gap-1">
         {Object.entries(DayOfWeekShortLabels).map(([value, label]) => (
-          <div
-            key={value}
-            className="text-center text-xs font-medium text-slate-500"
-          >
+          <div key={value} className="text-center text-xs font-medium text-slate-500">
             {label}
           </div>
         ))}
@@ -162,7 +142,7 @@ function MiniCalendar({ preview, startDate }: MiniCalendarProps) {
             {week.map((day, dayIndex) => {
               const isBeforeStart = day.date < startDate;
               const isStartDate = isSameDay(day.date, startDate);
-              
+
               return (
                 <div
                   key={dayIndex}
@@ -170,8 +150,8 @@ function MiniCalendar({ preview, startDate }: MiniCalendarProps) {
                     isBeforeStart
                       ? 'bg-slate-50 text-slate-300'
                       : day.isWorkingDay
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-50 text-slate-400'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-50 text-slate-400'
                   } ${isStartDate ? 'ring-2 ring-emerald-500 ring-offset-1' : ''}`}
                   title={
                     day.isWorkingDay && day.startTime && day.endTime
@@ -222,7 +202,7 @@ export function IndividualAssignment({
   // ==========================================================================
   // STATE
   // ==========================================================================
-  
+
   const [selectedStaffId, setSelectedStaffId] = useState(initialStaffId || '');
   const [selectedPatternId, setSelectedPatternId] = useState(initialPatternId || '');
   const [startDate, setStartDate] = useState(() => {
@@ -234,6 +214,7 @@ export function IndividualAssignment({
   const [endDate, setEndDate] = useState('');
   const [rotationStartWeek, setRotationStartWeek] = useState(1);
   const [priority, setPriority] = useState(1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [appliesToDays, setAppliesToDays] = useState<string[]>([]);
   const [overridePublishStatus, setOverridePublishStatus] = useState(false);
   const [publishStatus, setPublishStatus] = useState<PatternPublishStatus>(
@@ -246,53 +227,50 @@ export function IndividualAssignment({
     shiftsCreated: number;
     errors: string[];
   } | null>(null);
-  
+
   // Staff search state
   const [staffSearchTerm, setStaffSearchTerm] = useState('');
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
   const staffDropdownRef = useRef<HTMLDivElement>(null);
-  
+
   // Location settings for staff filtering
   const { selectedSublocationId, selectedLocationId } = useLocationSettings();
-  
+
   // Fetch all locations for display
   const { data: allLocations = [] } = useLocations();
-  
+
   // Fetch the selected pattern with its actual days (must be before useMemos that depend on it)
-  const { data: selectedPatternWithDays, isLoading: isLoadingPatternDetails } = 
-    usePatternTemplate(selectedPatternId || undefined);
-  
+  const { data: selectedPatternWithDays, isLoading: isLoadingPatternDetails } = usePatternTemplate(
+    selectedPatternId || undefined
+  );
+
   // Local sublocation state - defaults to the global selection
   const [localSublocationId, setLocalSublocationId] = useState(selectedSublocationId || '');
-  
+
   // Get the pattern's location - this determines which location/sublocations to use
   // If pattern is pre-selected, use its location; otherwise use the global location
   // Note: Uses _cr482_location_value (different publisher prefix)
   const effectiveLocationId = useMemo(() => {
     // First priority: pattern's assigned location
     if (selectedPatternWithDays?._cr482_location_value) {
-      console.log('[IndividualAssignment] Using pattern location:', selectedPatternWithDays._cr482_location_value);
       return selectedPatternWithDays._cr482_location_value;
     }
     // Fallback: global selected location
     if (selectedLocationId) {
-      console.log('[IndividualAssignment] Using global location:', selectedLocationId);
       return selectedLocationId;
     }
-    console.log('[IndividualAssignment] No location available');
     return null;
   }, [selectedPatternWithDays, selectedLocationId]);
-  
+
   // Track previous pattern ID to detect when pattern changes
   const prevPatternIdRef = useRef<string | undefined>(undefined);
-  
+
   // Update local sublocation when pattern CHANGES (not on every render)
   useEffect(() => {
     const currentPatternId = selectedPatternWithDays?.cp365_shiftpatterntemplatenewid;
-    
+
     // Only reset sublocation if pattern actually changed (not just on re-renders)
     if (currentPatternId && currentPatternId !== prevPatternIdRef.current) {
-      console.log('[IndividualAssignment] Pattern changed, resetting sublocation selection');
       prevPatternIdRef.current = currentPatternId;
       // Pattern changed - reset sublocation selection to pick from the pattern's location
       setLocalSublocationId('');
@@ -301,21 +279,26 @@ export function IndividualAssignment({
       setLocalSublocationId(selectedSublocationId);
     }
   }, [selectedPatternWithDays?.cp365_shiftpatterntemplatenewid, selectedSublocationId]); // Don't include localSublocationId to avoid loops
-  
+
   // Fetch sublocations for the pattern's location (or selected location)
-  const { data: sublocations = [], isLoading: isLoadingSublocations } = useSublocations(effectiveLocationId);
-  
+  const { data: sublocations = [], isLoading: isLoadingSublocations } =
+    useSublocations(effectiveLocationId);
+
   // Get the location name for display
   // Note: Uses _cr482_location_value (different publisher prefix)
   const patternLocationName = useMemo(() => {
     if (!selectedPatternWithDays?._cr482_location_value) return null;
-    const loc = allLocations.find(l => l.cp365_locationid === selectedPatternWithDays._cr482_location_value);
+    const loc = allLocations.find(
+      (l) => l.cp365_locationid === selectedPatternWithDays._cr482_location_value
+    );
     return loc?.cp365_locationname || 'Unknown Location';
   }, [selectedPatternWithDays, allLocations]);
-  
+
   // Fetch the active rota for the selected sublocation
-  const { data: activeRota, isLoading: isLoadingRota } = useActiveRota(localSublocationId || undefined);
-  
+  const { data: activeRota, isLoading: isLoadingRota } = useActiveRota(
+    localSublocationId || undefined
+  );
+
   // Click-outside handler for staff dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -323,7 +306,7 @@ export function IndividualAssignment({
         setIsStaffDropdownOpen(false);
       }
     };
-    
+
     if (isStaffDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -333,33 +316,36 @@ export function IndividualAssignment({
   // ==========================================================================
   // QUERIES
   // ==========================================================================
-  
+
   // Fetch patterns filtered by location (only show patterns for the selected location)
   const { data: patterns = [], isLoading: isLoadingPatterns } = usePatternTemplates({
     status: PatternStatus.Active,
     locationId: selectedLocationId || undefined, // Filter by currently selected location
   });
-  
+
   // Fetch staff members for the selected location
-  const { data: allStaff = [], isLoading: isLoadingStaff } = useStaffMembers(localSublocationId || undefined);
-  
+  const { data: allStaff = [], isLoading: isLoadingStaff } = useStaffMembers(
+    localSublocationId || undefined
+  );
+
   const { data: staffMember } = useStaffMember(selectedStaffId || undefined);
-  
-  const { data: existingAssignments = [], isLoading: isLoadingAssignments } = 
-    useStaffPatternAssignments(selectedStaffId || undefined);
-  
+
+  const { data: existingAssignments = [] } = useStaffPatternAssignments(
+    selectedStaffId || undefined
+  );
+
   const createAssignment = useCreatePatternAssignment();
 
   // ==========================================================================
   // DERIVED DATA
   // ==========================================================================
-  
+
   const selectedPattern = useMemo(() => {
     // Prefer the detailed pattern if loaded, otherwise fall back to list item
     if (selectedPatternWithDays) return selectedPatternWithDays;
     return patterns.find((p) => p.cp365_shiftpatterntemplatenewid === selectedPatternId);
   }, [patterns, selectedPatternId, selectedPatternWithDays]);
-  
+
   // Filter staff based on search term
   const filteredStaff = useMemo(() => {
     if (!staffSearchTerm) return allStaff;
@@ -367,7 +353,7 @@ export function IndividualAssignment({
     return allStaff.filter(
       (s) =>
         s.cp365_staffmembername?.toLowerCase().includes(search) ||
-        (s as any).cp365_jobtitle?.toLowerCase().includes(search)
+        s.cp365_jobtitle?.toLowerCase().includes(search)
     );
   }, [allStaff, staffSearchTerm]);
 
@@ -375,7 +361,7 @@ export function IndividualAssignment({
   const patternDays = useMemo<PatternDayFormData[]>(() => {
     // Use actual pattern days from the loaded template
     const loadedDays = selectedPatternWithDays?.cp365_shiftpatterntemplate_days;
-    
+
     if (loadedDays && loadedDays.length > 0) {
       // Extract time from Dataverse datetime format
       const extractTime = (dateTimeStr?: string): string | undefined => {
@@ -387,7 +373,7 @@ export function IndividualAssignment({
           return undefined;
         }
       };
-      
+
       return loadedDays.map((day) => ({
         weekNumber: day.cp365_sp_weeknumber,
         dayOfWeek: day.cp365_sp_dayofweek,
@@ -400,7 +386,7 @@ export function IndividualAssignment({
         shiftActivityId: day._cp365_shiftactivity_value,
       }));
     }
-    
+
     // Fallback: if no days loaded yet but pattern is selected, create placeholders
     // This ensures the preview shows something while loading
     if (selectedPattern && !selectedPatternWithDays) {
@@ -417,7 +403,7 @@ export function IndividualAssignment({
       }
       return days;
     }
-    
+
     return [];
   }, [selectedPattern, selectedPatternWithDays]);
 
@@ -434,13 +420,12 @@ export function IndividualAssignment({
   // Contract validation
   const contractMismatch = useMemo(() => {
     if (!staffMember || !selectedPattern) return null;
-    
+
     // Get contracted hours - this field may vary
-    const contractedHours = (staffMember as any).cp365_requiredhours || 
-                           (staffMember as any).cp365_contractedhours || 
-                           37.5; // Default
+    const contractedHours =
+      staffMember.cp365_requiredhours ?? staffMember.cp365_contractedhours ?? 37.5; // Default
     const patternHours = selectedPattern.cp365_sp_averageweeklyhours || 0;
-    
+
     if (Math.abs(contractedHours - patternHours) > 0.5) {
       return {
         contractedHours,
@@ -454,32 +439,32 @@ export function IndividualAssignment({
   // Check for overlapping assignments
   const overlappingAssignments = useMemo(() => {
     if (!startDate) return [];
-    
+
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
-    
+
     return existingAssignments.filter((assignment) => {
       const assignmentStart = new Date(assignment.cp365_sp_startdate);
-      const assignmentEnd = assignment.cp365_sp_enddate 
-        ? new Date(assignment.cp365_sp_enddate) 
+      const assignmentEnd = assignment.cp365_sp_enddate
+        ? new Date(assignment.cp365_sp_enddate)
         : null;
-      
+
       // Check for overlap
       if (end === null && assignmentEnd === null) {
         // Both are ongoing - they will overlap
         return true;
       }
-      
+
       if (end === null) {
         // New assignment is ongoing - overlaps if existing starts before new
         return !assignmentEnd || assignmentEnd >= start;
       }
-      
+
       if (assignmentEnd === null) {
         // Existing is ongoing - overlaps if new ends after existing starts
         return end >= assignmentStart;
       }
-      
+
       // Both have end dates - standard overlap check
       return start <= assignmentEnd && end >= assignmentStart;
     });
@@ -488,7 +473,7 @@ export function IndividualAssignment({
   // ==========================================================================
   // HANDLERS
   // ==========================================================================
-  
+
   const handleSubmit = async () => {
     if (!selectedStaffId || !selectedPatternId || !startDate) {
       return;
@@ -519,25 +504,22 @@ export function IndividualAssignment({
     if (!createdAssignmentId || !startDate) {
       return;
     }
-    
+
     setIsGenerating(true);
     setGenerationResult(null);
-    
+
     try {
       // Validate rota is available
       if (!activeRota?.cp365_rotaid) {
-        throw new Error('No active rota found for the selected location. Please ensure the location has an active rota.');
+        throw new Error(
+          'No active rota found for the selected location. Please ensure the location has an active rota.'
+        );
       }
-      
+
       // Calculate generation period - default to 4 weeks from start date
       const genStartDate = new Date(startDate);
       const genEndDate = addWeeks(genStartDate, 4);
-      
-      console.log('[IndividualAssignment] Starting shift generation for assignment:', createdAssignmentId);
-      console.log('[IndividualAssignment] Period:', format(genStartDate, 'yyyy-MM-dd'), 'to', format(genEndDate, 'yyyy-MM-dd'));
-      console.log('[IndividualAssignment] Rota ID:', activeRota.cp365_rotaid);
-      console.log('[IndividualAssignment] Sublocation ID:', localSublocationId);
-      
+
       const result = await generateShiftsFromPattern({
         assignmentId: createdAssignmentId,
         startDate: genStartDate,
@@ -545,14 +527,12 @@ export function IndividualAssignment({
         rotaId: activeRota.cp365_rotaid,
         sublocationId: localSublocationId,
       });
-      
-      console.log('[IndividualAssignment] Generation result:', result);
-      
+
       setGenerationResult({
         shiftsCreated: result.shiftsCreated.length,
         errors: result.errors,
       });
-      
+
       // If successful, close after a short delay to show the result
       if (result.errors.length === 0) {
         setTimeout(() => {
@@ -577,42 +557,44 @@ export function IndividualAssignment({
   // ==========================================================================
   // VALIDATION
   // ==========================================================================
-  
+
   const hasValidRota = !!activeRota?.cp365_rotaid;
-  
-  const canSubmit = 
+
+  const canSubmit =
     localSublocationId &&
     hasValidRota &&
-    selectedStaffId && 
-    selectedPatternId && 
-    startDate && 
+    selectedStaffId &&
+    selectedPatternId &&
+    startDate &&
     !createAssignment.isPending;
 
   // ==========================================================================
   // RENDER
   // ==========================================================================
-  
-  const containerClasses = variant === 'modal'
-    ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50'
-    : '';
 
-  const panelClasses = variant === 'modal'
-    ? 'mx-4 max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl bg-white shadow-2xl'
-    : 'rounded-xl border border-slate-200 bg-white shadow-sm';
+  const containerClasses =
+    variant === 'modal' ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50' : '';
+
+  const panelClasses =
+    variant === 'modal'
+      ? 'mx-4 max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl bg-white shadow-2xl'
+      : 'rounded-xl border border-slate-200 bg-white shadow-sm';
 
   // Show generate prompt after successful creation
   if (showGeneratePrompt) {
     // Show generation result
     if (generationResult) {
       const hasErrors = generationResult.errors.length > 0;
-      
+
       return (
         <div className={containerClasses}>
           <div className={`${panelClasses} p-6`}>
             <div className="text-center">
-              <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
-                hasErrors ? 'bg-amber-100' : 'bg-emerald-100'
-              }`}>
+              <div
+                className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+                  hasErrors ? 'bg-amber-100' : 'bg-emerald-100'
+                }`}
+              >
                 {hasErrors ? (
                   <AlertTriangle className="h-8 w-8 text-amber-600" />
                 ) : (
@@ -650,7 +632,7 @@ export function IndividualAssignment({
         </div>
       );
     }
-    
+
     // Show generating state
     if (isGenerating) {
       return (
@@ -664,15 +646,13 @@ export function IndividualAssignment({
               <p className="mt-2 text-slate-600">
                 Creating shifts for {staffMember?.cp365_forename} {staffMember?.cp365_surname}.
               </p>
-              <p className="mt-1 text-sm text-slate-500">
-                This may take a few moments.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">This may take a few moments.</p>
             </div>
           </div>
         </div>
       );
     }
-    
+
     // Show initial prompt
     return (
       <div className={containerClasses}>
@@ -683,12 +663,10 @@ export function IndividualAssignment({
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Pattern Assigned</h2>
             <p className="mt-2 text-slate-600">
-              The pattern has been assigned to{' '}
-              {staffMember?.cp365_forename} {staffMember?.cp365_surname}.
+              The pattern has been assigned to {staffMember?.cp365_forename}{' '}
+              {staffMember?.cp365_surname}.
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Would you like to generate shifts now?
-            </p>
+            <p className="mt-1 text-sm text-slate-500">Would you like to generate shifts now?</p>
           </div>
 
           <div className="mt-6 flex justify-center gap-3">
@@ -744,7 +722,9 @@ export function IndividualAssignment({
             {patternLocationName && (
               <div className="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                 <MapPin className="h-4 w-4" />
-                <span>Showing sublocations for: <strong>{patternLocationName}</strong></span>
+                <span>
+                  Showing sublocations for: <strong>{patternLocationName}</strong>
+                </span>
               </div>
             )}
             {isLoadingPatternDetails ? (
@@ -765,7 +745,9 @@ export function IndividualAssignment({
                 disabled={isLoadingSublocations || !effectiveLocationId}
               >
                 <option value="">
-                  {!effectiveLocationId ? 'No location set for this pattern' : 'Select a sublocation...'}
+                  {!effectiveLocationId
+                    ? 'No location set for this pattern'
+                    : 'Select a sublocation...'}
                 </option>
                 {sublocations.map((sub) => (
                   <option key={sub.cp365_sublocationid} value={sub.cp365_sublocationid}>
@@ -777,7 +759,8 @@ export function IndividualAssignment({
             {!effectiveLocationId && !isLoadingPatternDetails && (
               <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />
-                This pattern is not assigned to a location. Please edit the pattern and assign it to a location first.
+                This pattern is not assigned to a location. Please edit the pattern and assign it to
+                a location first.
               </p>
             )}
             {localSublocationId && !hasValidRota && !isLoadingRota && (
@@ -803,14 +786,15 @@ export function IndividualAssignment({
               // Read-only display when staff is pre-selected
               <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                  {staffMember.cp365_forename?.[0]}{staffMember.cp365_surname?.[0]}
+                  {staffMember.cp365_forename?.[0]}
+                  {staffMember.cp365_surname?.[0]}
                 </div>
                 <div>
                   <p className="font-medium text-slate-900">
                     {staffMember.cp365_forename} {staffMember.cp365_surname}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {(staffMember as any).cp365_jobtitle || 'Staff Member'}
+                    {staffMember.cp365_jobtitle || 'Staff Member'}
                   </p>
                 </div>
               </div>
@@ -818,14 +802,15 @@ export function IndividualAssignment({
               // Show selected staff with option to change
               <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                  {staffMember.cp365_forename?.[0]}{staffMember.cp365_surname?.[0]}
+                  {staffMember.cp365_forename?.[0]}
+                  {staffMember.cp365_surname?.[0]}
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-slate-900">
                     {staffMember.cp365_forename} {staffMember.cp365_surname}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {(staffMember as any).cp365_jobtitle || 'Staff Member'}
+                    {staffMember.cp365_jobtitle || 'Staff Member'}
                   </p>
                 </div>
                 <button
@@ -860,7 +845,7 @@ export function IndividualAssignment({
                     <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
                   )}
                 </div>
-                
+
                 {/* Staff Dropdown */}
                 {isStaffDropdownOpen && (
                   <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg max-h-60 overflow-auto">
@@ -893,7 +878,7 @@ export function IndividualAssignment({
                               {staff.cp365_staffmembername}
                             </p>
                             <p className="text-xs text-slate-500 truncate">
-                              {(staff as any).cp365_jobtitle || 'Staff Member'}
+                              {staff.cp365_jobtitle || 'Staff Member'}
                             </p>
                           </div>
                         </button>
@@ -910,7 +895,7 @@ export function IndividualAssignment({
             <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Pattern Template <span className="text-red-500">*</span>
             </label>
-            
+
             {/* Show info if no location is selected */}
             {!selectedLocationId && (
               <div className="mb-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
@@ -918,7 +903,7 @@ export function IndividualAssignment({
                 <span>Select a location in the header to see patterns for that location</span>
               </div>
             )}
-            
+
             <select
               value={selectedPatternId}
               onChange={(e) => setSelectedPatternId(e.target.value)}
@@ -929,18 +914,22 @@ export function IndividualAssignment({
                 {!selectedLocationId ? 'Select a location first...' : 'Select a pattern...'}
               </option>
               {patterns.map((pattern) => (
-                <option key={pattern.cp365_shiftpatterntemplatenewid} value={pattern.cp365_shiftpatterntemplatenewid}>
-                  {pattern.cp365_name} ({pattern.cp365_sp_averageweeklyhours?.toFixed(1) || '0'}h/week)
+                <option
+                  key={pattern.cp365_shiftpatterntemplatenewid}
+                  value={pattern.cp365_shiftpatterntemplatenewid}
+                >
+                  {pattern.cp365_name} ({pattern.cp365_sp_averageweeklyhours?.toFixed(1) || '0'}
+                  h/week)
                 </option>
               ))}
             </select>
-            
+
             {selectedLocationId && patterns.length === 0 && !isLoadingPatterns && (
               <p className="mt-2 text-sm text-slate-500">
                 No patterns found for this location. Create a pattern first.
               </p>
             )}
-            
+
             {selectedPattern && (
               <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
@@ -948,7 +937,9 @@ export function IndividualAssignment({
                   <span>{selectedPattern.cp365_sp_rotationcycleweeks}-week rotation</span>
                   <span className="text-slate-300">•</span>
                   <Clock className="h-4 w-4 text-slate-400" />
-                  <span>{selectedPattern.cp365_sp_averageweeklyhours?.toFixed(1) || '0'} hours/week</span>
+                  <span>
+                    {selectedPattern.cp365_sp_averageweeklyhours?.toFixed(1) || '0'} hours/week
+                  </span>
                 </div>
                 {patternLocationName && (
                   <div className="mt-1 flex items-center gap-1 text-xs text-emerald-600">
@@ -957,7 +948,9 @@ export function IndividualAssignment({
                   </div>
                 )}
                 {selectedPattern.cp365_sp_description && (
-                  <p className="mt-1 text-xs text-slate-500">{selectedPattern.cp365_sp_description}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {selectedPattern.cp365_sp_description}
+                  </p>
                 )}
               </div>
             )}
@@ -970,8 +963,9 @@ export function IndividualAssignment({
               <div className="text-sm">
                 <p className="font-medium text-amber-800">Hours Mismatch</p>
                 <p className="text-amber-700">
-                  Pattern hours ({contractMismatch.patternHours}h/week) differ from contracted hours 
-                  ({contractMismatch.contractedHours}h/week) by {Math.abs(contractMismatch.difference).toFixed(1)} hours.
+                  Pattern hours ({contractMismatch.patternHours}h/week) differ from contracted hours
+                  ({contractMismatch.contractedHours}h/week) by{' '}
+                  {Math.abs(contractMismatch.difference).toFixed(1)} hours.
                 </p>
               </div>
             </div>
@@ -989,9 +983,7 @@ export function IndividualAssignment({
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
-              <p className="mt-1 text-xs text-slate-500">
-                Recommended: Start on a Monday
-              </p>
+              <p className="mt-1 text-xs text-slate-500">Recommended: Start on a Monday</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -1004,9 +996,7 @@ export function IndividualAssignment({
                 min={startDate}
                 className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
-              <p className="mt-1 text-xs text-slate-500">
-                Leave empty for ongoing assignment
-              </p>
+              <p className="mt-1 text-xs text-slate-500">Leave empty for ongoing assignment</p>
             </div>
           </div>
 
@@ -1035,9 +1025,7 @@ export function IndividualAssignment({
 
           {/* Priority */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Priority
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Priority</label>
             <input
               type="number"
               value={priority}
@@ -1065,7 +1053,7 @@ export function IndividualAssignment({
                 Override default publish status
               </label>
             </div>
-            
+
             {overridePublishStatus && (
               <div className="mt-2 ml-6">
                 <select
@@ -1087,13 +1075,13 @@ export function IndividualAssignment({
               <div className="text-sm">
                 <p className="font-medium text-amber-800">Overlapping Assignments</p>
                 <p className="text-amber-700">
-                  This staff member has {overlappingAssignments.length} existing assignment(s) that 
+                  This staff member has {overlappingAssignments.length} existing assignment(s) that
                   overlap with this date range:
                 </p>
                 <ul className="mt-1 space-y-1">
                   {overlappingAssignments.map((assignment) => (
                     <li key={assignment.cp365_staffpatternassignmentid} className="text-amber-700">
-                      • {assignment.cp365_shiftpatterntemplate?.cp365_name || 'Pattern'} 
+                      • {assignment.cp365_shiftpatterntemplate?.cp365_name || 'Pattern'}
                       (Priority {assignment.cp365_sp_priority})
                     </li>
                   ))}
@@ -1149,4 +1137,3 @@ export function IndividualAssignment({
     </div>
   );
 }
-

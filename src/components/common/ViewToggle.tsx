@@ -7,7 +7,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { useSettingsStore, type ViewMode } from '../../store/settingsStore';
+import { useSettingsStore, type NavigationView } from '@/store/settingsStore';
 
 // =============================================================================
 // Types
@@ -15,7 +15,7 @@ import { useSettingsStore, type ViewMode } from '../../store/settingsStore';
 
 interface ViewToggleProps {
   /** Current active view */
-  currentView: ViewMode;
+  currentView: NavigationView;
   /** Current selected date (for navigation context) */
   currentDate?: Date;
   /** Variant for different backgrounds */
@@ -28,8 +28,8 @@ interface ViewToggleProps {
 // Component
 // =============================================================================
 
-export function ViewToggle({ 
-  currentView, 
+export function ViewToggle({
+  currentView,
   currentDate = new Date(),
   variant = 'emerald',
   size = 'md',
@@ -38,28 +38,31 @@ export function ViewToggle({
   const setLastViewMode = useSettingsStore((s) => s.setLastViewMode);
   const setLastSelectedDate = useSettingsStore((s) => s.setLastSelectedDate);
 
-  const handleViewChange = useCallback((view: ViewMode) => {
-    if (view === currentView) return;
-    
-    // Save preferences
-    setLastViewMode(view);
-    setLastSelectedDate(currentDate);
-    
-    // Navigate to appropriate view with date context
-    // For day view, default to today's date instead of the week start
-    if (view === 'day') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = format(today, 'yyyy-MM-dd');
-      navigate(`/daily?date=${todayStr}`);
-    } else if (view === 'week') {
-      const dateStr = format(currentDate, 'yyyy-MM-dd');
-      navigate(`/rota/7?date=${dateStr}`);
-    } else if (view === 'month') {
-      const dateStr = format(currentDate, 'yyyy-MM-dd');
-      navigate(`/rota/28?date=${dateStr}`);
-    }
-  }, [currentView, currentDate, navigate, setLastViewMode, setLastSelectedDate]);
+  const handleViewChange = useCallback(
+    (view: NavigationView) => {
+      if (view === currentView) return;
+
+      // Save preferences
+      setLastViewMode(view);
+      setLastSelectedDate(currentDate);
+
+      // Navigate to appropriate view with date context
+      // For day view, default to today's date instead of the week start
+      if (view === 'day') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = format(today, 'yyyy-MM-dd');
+        void navigate(`/daily?date=${todayStr}`);
+      } else if (view === 'week') {
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+        void navigate(`/rota/7?date=${dateStr}`);
+      } else if (view === 'month') {
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+        void navigate(`/rota/28?date=${dateStr}`);
+      }
+    },
+    [currentView, currentDate, navigate, setLastViewMode, setLastSelectedDate]
+  );
 
   // Styling based on variant
   const getStyles = () => {
@@ -88,9 +91,7 @@ export function ViewToggle({
 
   const styles = getStyles();
 
-  const sizeClasses = size === 'sm' 
-    ? 'px-2.5 py-1 text-xs'
-    : 'px-3 py-1.5 text-sm';
+  const sizeClasses = size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm';
 
   const containerPadding = size === 'sm' ? 'p-0.5' : 'p-1';
 
@@ -125,4 +126,3 @@ export function ViewToggle({
 }
 
 export default ViewToggle;
-

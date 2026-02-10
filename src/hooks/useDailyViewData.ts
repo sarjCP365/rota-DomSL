@@ -7,9 +7,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
-import { getRotaGridData, type RotaGridData } from '../api/dataverse/shifts';
-import { useAuthStore } from '../store/authStore';
-import type { ShiftViewData } from '../api/dataverse/types';
+import { getRotaGridData, type RotaGridData } from '@/api/dataverse/shifts';
+import { useAuthStore } from '@/store/authStore';
+import type { ShiftViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // Types
@@ -88,7 +88,7 @@ export function useDailyViewData({
     const handleVisibilityChange = () => {
       const visible = document.visibilityState === 'visible';
       setIsPageVisible(visible);
-      
+
       // Refetch when page becomes visible again if auto-refresh is enabled
       if (visible && isAutoRefreshEnabled) {
         queryClient.invalidateQueries({
@@ -153,21 +153,17 @@ export function useDailyViewData({
     },
   });
 
-  // Update lastUpdated on successful fetch
-  useEffect(() => {
-    if (query.isSuccess && query.data) {
-      setLastUpdated(new Date());
-    }
-  }, [query.isSuccess, query.dataUpdatedAt]);
+  // Note: lastUpdated is updated via onSuccess callback in the query options
 
   // -------------------------------------------------------------------------
   // Filter shifts for selected date
   // -------------------------------------------------------------------------
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const shiftsForDate = useMemo(() => {
     if (!query.data?.shifts) return [];
-    
-    return query.data.shifts.filter(shift => {
+
+    return query.data.shifts.filter((shift) => {
       const shiftDate = shift['Shift Date'];
       if (!shiftDate) return false;
       const shiftDateStr = format(new Date(shiftDate), 'yyyy-MM-dd');
@@ -192,7 +188,7 @@ export function useDailyViewData({
     staff: query.data?.staff || [],
     isLoading: query.isLoading,
     isRefreshing: query.isFetching && !query.isLoading,
-    error: query.error as Error | null,
+    error: query.error,
     lastUpdated,
     lastUpdatedText,
     refetch,
@@ -253,4 +249,3 @@ export function useLastUpdatedIndicator(
 }
 
 export default useDailyViewData;
-

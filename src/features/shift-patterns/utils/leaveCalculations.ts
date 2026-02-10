@@ -1,6 +1,6 @@
 /**
  * CarePoint 365 - Leave Calculation Utilities
- * 
+ *
  * Calculates annual leave entitlement based on pattern assignments,
  * supporting UK statutory requirements (5.6 weeks) and pro-rata
  * calculations for part-time workers and mid-year pattern changes.
@@ -15,18 +15,12 @@ import {
   differenceInDays,
   isBefore,
   isAfter,
-  isWithinInterval,
   getYear,
-  addDays,
   startOfWeek,
 } from 'date-fns';
-import type {
-  StaffPatternAssignment,
-  ShiftPatternTemplate,
-  ShiftPatternDay,
-} from '../types';
+import type { StaffPatternAssignment, ShiftPatternTemplate, ShiftPatternDay } from '../types';
 import { DayOfWeek, DayOfWeekLabels, AssignmentStatus } from '../types';
-import type { StaffAbsenceLog, Contract } from '../../../api/dataverse/types';
+import type { StaffAbsenceLog, Contract } from '@/api/dataverse/types';
 
 // =============================================================================
 // CONSTANTS
@@ -180,8 +174,7 @@ function getPatternDayForDate(
   );
 
   return patternDays.find(
-    (pd) =>
-      pd.cp365_sp_weeknumber === rotationWeek && pd.cp365_sp_dayofweek === dayOfWeek
+    (pd) => pd.cp365_sp_weeknumber === rotationWeek && pd.cp365_sp_dayofweek === dayOfWeek
   );
 }
 
@@ -219,10 +212,7 @@ function calculateAverageShiftHours(patternDays: ShiftPatternDay[]): number {
   const workingDays = patternDays.filter((pd) => !pd.cp365_sp_isrestday);
   if (workingDays.length === 0) return 7.5; // Default
 
-  const totalHours = workingDays.reduce(
-    (sum, pd) => sum + calculateShiftHours(pd),
-    0
-  );
+  const totalHours = workingDays.reduce((sum, pd) => sum + calculateShiftHours(pd), 0);
 
   return totalHours / workingDays.length;
 }
@@ -237,7 +227,7 @@ function getActiveAssignmentForDate(
     template: ShiftPatternTemplate;
     patternDays: ShiftPatternDay[];
   }>
-): typeof assignments[0] | undefined {
+): (typeof assignments)[0] | undefined {
   // Sort by priority (lower = higher priority)
   const sorted = [...assignments].sort(
     (a, b) => a.assignment.cp365_sp_priority - b.assignment.cp365_sp_priority
@@ -251,9 +241,7 @@ function getActiveAssignmentForDate(
 
     // Check date range
     const startDate = parseISO(assignment.cp365_sp_startdate);
-    const endDate = assignment.cp365_sp_enddate
-      ? parseISO(assignment.cp365_sp_enddate)
-      : null;
+    const endDate = assignment.cp365_sp_enddate ? parseISO(assignment.cp365_sp_enddate) : null;
 
     if (isBefore(date, startDate)) continue;
     if (endDate && isAfter(date, endDate)) continue;
@@ -270,7 +258,7 @@ function getActiveAssignmentForDate(
 
 /**
  * Calculate annual leave entitlement based on pattern assignments
- * 
+ *
  * Uses UK statutory 5.6 weeks formula with pattern-derived weekly hours.
  * Falls back to contract hours, then default if no pattern.
  */
@@ -290,9 +278,7 @@ export function calculateAnnualLeaveEntitlement(
   // Get active assignments for this year
   const relevantAssignments = assignments.filter(({ assignment }) => {
     const startDate = parseISO(assignment.cp365_sp_startdate);
-    const endDate = assignment.cp365_sp_enddate
-      ? parseISO(assignment.cp365_sp_enddate)
-      : yearEnd;
+    const endDate = assignment.cp365_sp_enddate ? parseISO(assignment.cp365_sp_enddate) : yearEnd;
 
     // Check if assignment overlaps with the year
     return !(isAfter(startDate, yearEnd) || isBefore(endDate, yearStart));
@@ -300,7 +286,7 @@ export function calculateAnnualLeaveEntitlement(
 
   let calculationMethod: 'pattern' | 'contract' | 'actual' = 'pattern';
   let totalLeaveHours = 0;
-  let averageWeeklyHours = 0;
+  let _averageWeeklyHours = 0;
   const periodBreakdown: LeaveEntitlementPeriod[] = [];
 
   if (relevantAssignments.length === 0) {
@@ -308,7 +294,7 @@ export function calculateAnnualLeaveEntitlement(
     calculationMethod = 'contract';
     const weeklyHours = contract?.cp365_requiredhours || STANDARD_WEEKLY_HOURS;
     totalLeaveHours = weeklyHours * UK_STATUTORY_LEAVE_WEEKS;
-    averageWeeklyHours = weeklyHours;
+    _averageWeeklyHours = weeklyHours;
 
     periodBreakdown.push({
       startDate: format(yearStart, 'yyyy-MM-dd'),
@@ -320,8 +306,7 @@ export function calculateAnnualLeaveEntitlement(
   } else if (relevantAssignments.length === 1) {
     // Single pattern for the year
     const { assignment, template } = relevantAssignments[0];
-    const weeklyHours =
-      template.cp365_sp_averageweeklyhours || STANDARD_WEEKLY_HOURS;
+    const weeklyHours = template.cp365_sp_averageweeklyhours || STANDARD_WEEKLY_HOURS;
 
     // Calculate pro-rata if assignment doesn't cover full year
     const assignmentStart = parseISO(assignment.cp365_sp_startdate);
@@ -329,9 +314,7 @@ export function calculateAnnualLeaveEntitlement(
       ? parseISO(assignment.cp365_sp_enddate)
       : yearEnd;
 
-    const effectiveStart = isBefore(assignmentStart, yearStart)
-      ? yearStart
-      : assignmentStart;
+    const effectiveStart = isBefore(assignmentStart, yearStart) ? yearStart : assignmentStart;
     const effectiveEnd = isAfter(assignmentEnd, yearEnd) ? yearEnd : assignmentEnd;
 
     const daysInYear = differenceInDays(yearEnd, yearStart) + 1;
@@ -339,7 +322,8 @@ export function calculateAnnualLeaveEntitlement(
     const proRataFactor = coveredDays / daysInYear;
 
     totalLeaveHours = weeklyHours * UK_STATUTORY_LEAVE_WEEKS * proRataFactor;
-    averageWeeklyHours = weeklyHours;
+    // Note: averageWeeklyHours could be used for display purposes
+    // averageWeeklyHours = weeklyHours;
 
     periodBreakdown.push({
       startDate: format(effectiveStart, 'yyyy-MM-dd'),
@@ -356,21 +340,16 @@ export function calculateAnnualLeaveEntitlement(
     );
 
     const daysInYear = differenceInDays(yearEnd, yearStart) + 1;
-    let totalWeightedHours = 0;
-    let totalCoveredDays = 0;
 
     for (const { assignment, template } of sortedAssignments) {
-      const weeklyHours =
-        template.cp365_sp_averageweeklyhours || STANDARD_WEEKLY_HOURS;
+      const weeklyHours = template.cp365_sp_averageweeklyhours || STANDARD_WEEKLY_HOURS;
 
       const assignmentStart = parseISO(assignment.cp365_sp_startdate);
       const assignmentEnd = assignment.cp365_sp_enddate
         ? parseISO(assignment.cp365_sp_enddate)
         : yearEnd;
 
-      const effectiveStart = isBefore(assignmentStart, yearStart)
-        ? yearStart
-        : assignmentStart;
+      const effectiveStart = isBefore(assignmentStart, yearStart) ? yearStart : assignmentStart;
       const effectiveEnd = isAfter(assignmentEnd, yearEnd) ? yearEnd : assignmentEnd;
 
       const coveredDays = differenceInDays(effectiveEnd, effectiveStart) + 1;
@@ -378,8 +357,6 @@ export function calculateAnnualLeaveEntitlement(
       const periodLeaveHours = weeklyHours * UK_STATUTORY_LEAVE_WEEKS * proRataFactor;
 
       totalLeaveHours += periodLeaveHours;
-      totalWeightedHours += weeklyHours * coveredDays;
-      totalCoveredDays += coveredDays;
 
       periodBreakdown.push({
         startDate: format(effectiveStart, 'yyyy-MM-dd'),
@@ -391,8 +368,8 @@ export function calculateAnnualLeaveEntitlement(
       });
     }
 
-    averageWeeklyHours =
-      totalCoveredDays > 0 ? totalWeightedHours / totalCoveredDays : STANDARD_WEEKLY_HOURS;
+    // Note: Could use average for pro-rata calculations
+    // averageWeeklyHours = totalCoveredDays > 0 ? totalWeightedHours / totalCoveredDays : STANDARD_WEEKLY_HOURS;
   }
 
   // Calculate used leave hours
@@ -407,7 +384,7 @@ export function calculateAnnualLeaveEntitlement(
     const leaveStart = parseISO(leave.cp365_startdate);
     const leaveEnd = parseISO(leave.cp365_enddate);
     const days = differenceInDays(leaveEnd, leaveStart) + 1;
-    
+
     // Rough estimate - average 7.5 hours per day
     return sum + days * 7.5;
   }, 0);
@@ -438,7 +415,7 @@ export function calculateAnnualLeaveEntitlement(
 
 /**
  * Calculate public holiday entitlement based on pattern
- * 
+ *
  * Checks which public holidays fall on pattern working days
  * to determine additional leave owed.
  */
@@ -464,12 +441,7 @@ export function calculatePublicHolidayEntitlement(
 
     if (activeAssignment) {
       const { assignment, template, patternDays } = activeAssignment;
-      const patternDay = getPatternDayForDate(
-        date,
-        patternDays,
-        assignment,
-        template
-      );
+      const patternDay = getPatternDayForDate(date, patternDays, assignment, template);
 
       const isWorkingDay = patternDay && !patternDay.cp365_sp_isrestday;
       const shiftHours = patternDay ? calculateShiftHours(patternDay) : 0;
@@ -515,7 +487,7 @@ export function calculatePublicHolidayEntitlement(
 
 /**
  * Validate a leave request against pattern
- * 
+ *
  * Calculates hours required based on pattern working days
  * and available leave balance.
  */
@@ -545,12 +517,7 @@ export function validateLeaveRequest(
 
     if (activeAssignment) {
       const { assignment, template, patternDays } = activeAssignment;
-      const patternDay = getPatternDayForDate(
-        date,
-        patternDays,
-        assignment,
-        template
-      );
+      const patternDay = getPatternDayForDate(date, patternDays, assignment, template);
 
       if (patternDay && !patternDay.cp365_sp_isrestday) {
         const shiftHours = calculateShiftHours(patternDay);
@@ -667,4 +634,3 @@ function getHolidayName(dateStr: string): string {
   };
   return holidayNames[dateStr] || 'Bank Holiday';
 }
-

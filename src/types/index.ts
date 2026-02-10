@@ -23,6 +23,68 @@ export type {
 
 export { ShiftStatus, UnitTypeCode, StateCode } from '../api/dataverse/types';
 
+// Re-export Domiciliary/Supported Living types
+export type {
+  // Core entities
+  DomiciliaryServiceUser,
+  Visit,
+  VisitActivity,
+  StaffAvailability,
+  ServiceUserStaffRelationship,
+  Round,
+  GeographicArea,
+  // Availability types
+  AvailabilitySlot,
+  DayAvailability,
+  WeeklyAvailabilityPattern,
+  AvailabilityException,
+  StaffAvailabilityForDate,
+  // View types
+  ServiceUserWithVisits,
+  VisitWithDetails,
+  RoundWithStats,
+  // Matching types
+  MatchingCriteria,
+  MatchScoreBreakdown,
+  MatchResult,
+  // Travel types
+  TravelEstimate,
+  RoundConstraints,
+  // Utility types
+  DateRange,
+  // Label types
+  VisitStatusLabel,
+  VisitTypeLabel,
+  ActivityCategoryLabel,
+  AvailabilityTypeLabel,
+  RelationshipStatusLabel,
+  FundingTypeLabel,
+  GenderPreferenceLabel,
+} from './domiciliary';
+
+export {
+  // Enums
+  VisitStatus,
+  VisitType,
+  ActivityCategory,
+  AvailabilityType,
+  RelationshipStatus,
+  FundingType,
+  GenderPreference,
+  CarePackageType,
+  // Type guards
+  isVisitStatus,
+  isVisitType,
+  isActivityCategory,
+  // Display helpers
+  getVisitStatusLabel,
+  getVisitTypeLabel,
+  getActivityCategoryLabel,
+  getVisitTypeDisplayName,
+  getVisitStatusDisplayName,
+  getActivityCategoryDisplayName,
+} from './domiciliary';
+
 // UI/View Types
 
 export interface ShiftView {
@@ -130,4 +192,3 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   hasMore: boolean;
 }
-

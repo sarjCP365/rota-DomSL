@@ -1,7 +1,7 @@
 /**
  * ShiftEditor Component
  * Modal/popover for editing individual day shifts in the pattern builder
- * 
+ *
  * Features:
  * - Is Rest Day toggle (collapses other fields when on)
  * - Shift Reference dropdown (shows times in format "Name (HH:mm-HH:mm)")
@@ -14,17 +14,10 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { 
-  X, 
-  Check, 
-  Trash2, 
-  Moon,
-  Coffee,
-  AlertCircle,
-} from 'lucide-react';
+import { X, Check, Trash2, Moon, Coffee, AlertCircle } from 'lucide-react';
 import type { PatternDayFormData, DayOfWeek } from '../../types';
 import { DayOfWeekLabels } from '../../types';
-import type { ShiftReference, ShiftActivity } from '../../../../api/dataverse/types';
+import type { ShiftReference, ShiftActivity } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -40,8 +33,6 @@ interface ShiftEditorProps {
   onClose: () => void;
 }
 
-
-
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
@@ -55,17 +46,17 @@ function calculateDurationMinutes(
   isOvernight: boolean
 ): number {
   if (!startTime || !endTime) return 0;
-  
+
   const [startH, startM] = startTime.split(':').map(Number);
   const [endH, endM] = endTime.split(':').map(Number);
-  
-  let startMinutes = startH * 60 + startM;
+
+  const startMinutes = startH * 60 + startM;
   let endMinutes = endH * 60 + endM;
-  
+
   if (isOvernight || endMinutes <= startMinutes) {
     endMinutes += 24 * 60;
   }
-  
+
   return endMinutes - startMinutes;
 }
 
@@ -100,21 +91,38 @@ export function ShiftEditor({
   const [breakMinutes, setBreakMinutes] = useState(dayData.breakMinutes || 0);
   const [isOvernight, setIsOvernight] = useState(dayData.isOvernight);
   const [shiftActivityId, setShiftActivityId] = useState(dayData.shiftActivityId || '');
-  
-  // Auto-detect overnight based on times
-  useEffect(() => {
-    if (!startTime || !endTime) return;
-    
-    const [startH] = startTime.split(':').map(Number);
-    const [endH] = endTime.split(':').map(Number);
-    
-    // Auto-set overnight if end time is before start time
-    // and start time is in the evening/night (after 18:00)
-    if (endH < startH && startH >= 18) {
-      setIsOvernight(true);
-    }
-  }, [startTime, endTime]);
-  
+
+  // Auto-detect overnight when times change
+  const handleStartTimeChange = useCallback(
+    (newStartTime: string) => {
+      setStartTime(newStartTime);
+      // Auto-detect overnight
+      if (newStartTime && endTime) {
+        const [startH] = newStartTime.split(':').map(Number);
+        const [endH] = endTime.split(':').map(Number);
+        if (endH < startH && startH >= 18) {
+          setIsOvernight(true);
+        }
+      }
+    },
+    [endTime]
+  );
+
+  const handleEndTimeChange = useCallback(
+    (newEndTime: string) => {
+      setEndTime(newEndTime);
+      // Auto-detect overnight
+      if (startTime && newEndTime) {
+        const [startH] = startTime.split(':').map(Number);
+        const [endH] = newEndTime.split(':').map(Number);
+        if (endH < startH && startH >= 18) {
+          setIsOvernight(true);
+        }
+      }
+    },
+    [startTime]
+  );
+
   // Format time helper
   // Dataverse stores hours/minutes as choice values (e.g., 599250008 for 8 o'clock)
   // Extract actual value using modulo 100
@@ -125,76 +133,80 @@ export function ShiftEditor({
     const m = String(actualMinute).padStart(2, '0');
     return `${h}:${m}`;
   }, []);
-  
+
   // Handle shift reference selection - immediately populate times
-  const handleShiftReferenceChange = useCallback((refId: string) => {
-    setShiftReferenceId(refId);
-    
-    if (!refId) return;
-    
-    const selectedRef = shiftReferences.find(
-      ref => ref.cp365_shiftreferenceid === refId
-    );
-    
-    if (selectedRef) {
-      const newStartTime = formatTime(
-        selectedRef.cp365_shiftreferencestarthour,
-        selectedRef.cp365_shiftreferencestartminute
-      );
-      const newEndTime = formatTime(
-        selectedRef.cp365_shiftreferenceendhour,
-        selectedRef.cp365_shiftreferenceendminute
-      );
-      
-      console.log('[ShiftEditor] Applying shift reference:', selectedRef.cp365_shiftreferencename);
-      console.log('[ShiftEditor] Start:', newStartTime, 'End:', newEndTime, 'Overnight:', selectedRef.cp365_endonnextday);
-      
-      setStartTime(newStartTime);
-      setEndTime(newEndTime);
-      setIsOvernight(selectedRef.cp365_endonnextday);
-      setIsRestDay(false);
-    }
-  }, [shiftReferences, formatTime]);
-  
+  const handleShiftReferenceChange = useCallback(
+    (refId: string) => {
+      setShiftReferenceId(refId);
+
+      if (!refId) return;
+
+      const selectedRef = shiftReferences.find((ref) => ref.cp365_shiftreferenceid === refId);
+
+      if (selectedRef) {
+        const newStartTime = formatTime(
+          selectedRef.cp365_shiftreferencestarthour,
+          selectedRef.cp365_shiftreferencestartminute
+        );
+        const newEndTime = formatTime(
+          selectedRef.cp365_shiftreferenceendhour,
+          selectedRef.cp365_shiftreferenceendminute
+        );
+
+        setStartTime(newStartTime);
+        setEndTime(newEndTime);
+        setIsOvernight(selectedRef.cp365_endonnextday);
+        setIsRestDay(false);
+      }
+    },
+    [shiftReferences, formatTime]
+  );
+
   // Format shift reference option label with times
-  const formatShiftReferenceOption = useCallback((ref: ShiftReference): string => {
-    const start = formatTime(ref.cp365_shiftreferencestarthour, ref.cp365_shiftreferencestartminute);
-    const end = formatTime(ref.cp365_shiftreferenceendhour, ref.cp365_shiftreferenceendminute);
-    const overnight = ref.cp365_endonnextday ? ' (+1)' : '';
-    return `${ref.cp365_shiftreferencename} (${start}-${end}${overnight})`;
-  }, [formatTime]);
-  
+  const formatShiftReferenceOption = useCallback(
+    (ref: ShiftReference): string => {
+      const start = formatTime(
+        ref.cp365_shiftreferencestarthour,
+        ref.cp365_shiftreferencestartminute
+      );
+      const end = formatTime(ref.cp365_shiftreferenceendhour, ref.cp365_shiftreferenceendminute);
+      const overnight = ref.cp365_endonnextday ? ' (+1)' : '';
+      return `${ref.cp365_shiftreferencename} (${start}-${end}${overnight})`;
+    },
+    [formatTime]
+  );
+
   // Calculate duration
-  const grossDuration = useMemo(() => 
-    calculateDurationMinutes(startTime, endTime, isOvernight),
+  const grossDuration = useMemo(
+    () => calculateDurationMinutes(startTime, endTime, isOvernight),
     [startTime, endTime, isOvernight]
   );
-  
-  const netDuration = useMemo(() => 
-    Math.max(0, grossDuration - breakMinutes),
+
+  const netDuration = useMemo(
+    () => Math.max(0, grossDuration - breakMinutes),
     [grossDuration, breakMinutes]
   );
-  
+
   // Validation
   const validation = useMemo(() => {
     const errors: string[] = [];
     const warnings: string[] = [];
-    
+
     if (!isRestDay) {
       // Must have times
       if (!startTime) errors.push('Start time is required');
       if (!endTime) errors.push('End time is required');
-      
+
       // End must be after start (unless overnight)
       if (startTime && endTime && grossDuration <= 0) {
         errors.push('End time must be after start time (or enable overnight shift)');
       }
-      
+
       // Break can't exceed shift
       if (breakMinutes >= grossDuration && grossDuration > 0) {
         errors.push('Break duration exceeds shift duration');
       }
-      
+
       // Duration warnings
       if (netDuration > 0 && netDuration < 4 * 60) {
         warnings.push(`Short shift (${formatDuration(netDuration)})`);
@@ -203,15 +215,14 @@ export function ShiftEditor({
         warnings.push(`Long shift (${formatDuration(netDuration)}) - exceeds 14 hours`);
       }
     }
-    
+
     return { errors, warnings, isValid: errors.length === 0 };
   }, [isRestDay, startTime, endTime, grossDuration, breakMinutes, netDuration]);
-  
-  
+
   // Handle save
   const handleSave = useCallback(() => {
     if (!validation.isValid) return;
-    
+
     onSave({
       weekNumber,
       dayOfWeek,
@@ -236,7 +247,7 @@ export function ShiftEditor({
     isOvernight,
     shiftActivityId,
   ]);
-  
+
   // Handle clear
   const handleClear = useCallback(() => {
     onSave({
@@ -246,7 +257,7 @@ export function ShiftEditor({
       isOvernight: false,
     });
   }, [onSave, weekNumber, dayOfWeek]);
-  
+
   // Handle keyboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -256,27 +267,22 @@ export function ShiftEditor({
         handleSave();
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose, handleSave]);
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative w-full max-w-md rounded-xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              {DayOfWeekLabels[dayOfWeek]}
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900">{DayOfWeekLabels[dayOfWeek]}</h2>
             <p className="text-sm text-slate-500">Week {weekNumber}</p>
           </div>
           <button
@@ -286,7 +292,7 @@ export function ShiftEditor({
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-5 space-y-5">
           {/* Rest Day Toggle */}
@@ -312,7 +318,7 @@ export function ShiftEditor({
               />
             </button>
           </div>
-          
+
           {/* Working Day Fields */}
           {!isRestDay && (
             <>
@@ -339,7 +345,7 @@ export function ShiftEditor({
                   </p>
                 )}
               </div>
-              
+
               {/* Times Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -349,23 +355,21 @@ export function ShiftEditor({
                   <input
                     type="time"
                     value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
+                    onChange={(e) => handleStartTimeChange(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    End Time
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">End Time</label>
                   <input
                     type="time"
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
+                    onChange={(e) => handleEndTimeChange(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
               </div>
-              
+
               {/* Overnight Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -387,7 +391,7 @@ export function ShiftEditor({
                   />
                 </button>
               </div>
-              
+
               {/* Break Duration */}
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -403,7 +407,7 @@ export function ShiftEditor({
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
-              
+
               {/* Shift Activity */}
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -416,18 +420,23 @@ export function ShiftEditor({
                 >
                   <option value="">Select activity (optional)...</option>
                   {shiftActivities.map((activity) => (
-                    <option key={activity.cp365_shiftactivityid} value={activity.cp365_shiftactivityid}>
+                    <option
+                      key={activity.cp365_shiftactivityid}
+                      value={activity.cp365_shiftactivityid}
+                    >
                       {activity.cp365_shiftactivityname}
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               {/* Calculated Duration */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Gross Duration</span>
-                  <span className="font-medium text-slate-900">{formatDuration(grossDuration)}</span>
+                  <span className="font-medium text-slate-900">
+                    {formatDuration(grossDuration)}
+                  </span>
                 </div>
                 {breakMinutes > 0 && (
                   <>
@@ -437,25 +446,33 @@ export function ShiftEditor({
                     </div>
                     <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
                       <span className="font-medium text-slate-700">Net Duration</span>
-                      <span className="font-semibold text-emerald-600">{formatDuration(netDuration)}</span>
+                      <span className="font-semibold text-emerald-600">
+                        {formatDuration(netDuration)}
+                      </span>
                     </div>
                   </>
                 )}
               </div>
             </>
           )}
-          
+
           {/* Validation Messages */}
           {(validation.errors.length > 0 || validation.warnings.length > 0) && (
             <div className="space-y-2">
               {validation.errors.map((error, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+                >
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   {error}
                 </div>
               ))}
               {validation.warnings.map((warning, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700"
+                >
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   {warning}
                 </div>
@@ -463,7 +480,7 @@ export function ShiftEditor({
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
           <button
@@ -474,7 +491,7 @@ export function ShiftEditor({
             <Trash2 className="h-4 w-4" />
             Clear
           </button>
-          
+
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -500,4 +517,3 @@ export function ShiftEditor({
 }
 
 export default ShiftEditor;
-

@@ -5,7 +5,18 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isToday } from 'date-fns';
+import {
+  format,
+  addDays,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameDay,
+  isSameMonth,
+  isToday,
+} from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-react';
 
 interface DateNavigationProps {
@@ -23,19 +34,23 @@ interface DateNavigationProps {
 function generateCalendarDays(date: Date): Date[] {
   const start = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
   const end = endOfWeek(endOfMonth(date), { weekStartsOn: 1 });
-  
+
   const days: Date[] = [];
   let current = start;
-  
+
   while (current <= end) {
     days.push(current);
     current = addDays(current, 1);
   }
-  
+
   return days;
 }
 
-export function DateNavigation({ selectedDate, onDateChange, isLoading = false }: DateNavigationProps) {
+export function DateNavigation({
+  selectedDate,
+  onDateChange,
+  isLoading = false,
+}: DateNavigationProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(selectedDate);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -78,13 +93,16 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
     setIsPickerOpen(false);
   }, [onDateChange]);
 
-  const handleDateSelect = useCallback((date: Date) => {
-    onDateChange(date);
-    setIsPickerOpen(false);
-  }, [onDateChange]);
+  const handleDateSelect = useCallback(
+    (date: Date) => {
+      onDateChange(date);
+      setIsPickerOpen(false);
+    },
+    [onDateChange]
+  );
 
   const handlePreviousMonth = useCallback(() => {
-    setViewMonth(prev => {
+    setViewMonth((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
@@ -92,7 +110,7 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
   }, []);
 
   const handleNextMonth = useCallback(() => {
-    setViewMonth(prev => {
+    setViewMonth((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
@@ -106,9 +124,11 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't handle if user is typing in an input
-      if (event.target instanceof HTMLInputElement || 
-          event.target instanceof HTMLTextAreaElement ||
-          event.target instanceof HTMLSelectElement) {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
         return;
       }
 
@@ -229,11 +249,9 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            
-            <span className="font-semibold text-slate-800">
-              {format(viewMonth, 'MMMM yyyy')}
-            </span>
-            
+
+            <span className="font-semibold text-slate-800">{format(viewMonth, 'MMMM yyyy')}</span>
+
             <button
               onClick={handleNextMonth}
               className="rounded-md p-1 text-slate-600 hover:bg-slate-100"
@@ -269,7 +287,7 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
           <div className="w-64">
             {/* Weekday Headers */}
             <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
-              {weekDays.map(day => (
+              {weekDays.map((day) => (
                 <div key={day} className="py-1">
                   {day}
                 </div>
@@ -289,13 +307,14 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
                     onClick={() => handleDateSelect(day)}
                     className={`
                       rounded-md py-2 text-sm transition-colors
-                      ${isSelected 
-                        ? 'bg-emerald-600 font-semibold text-white' 
-                        : isTodayDate 
-                          ? 'bg-emerald-50 font-semibold text-emerald-700' 
-                          : isCurrentMonth 
-                            ? 'text-slate-700 hover:bg-slate-100' 
-                            : 'text-slate-400 hover:bg-slate-50'
+                      ${
+                        isSelected
+                          ? 'bg-emerald-600 font-semibold text-white'
+                          : isTodayDate
+                            ? 'bg-emerald-50 font-semibold text-emerald-700'
+                            : isCurrentMonth
+                              ? 'text-slate-700 hover:bg-slate-100'
+                              : 'text-slate-400 hover:bg-slate-50'
                       }
                     `}
                     aria-selected={isSelected}
@@ -329,4 +348,3 @@ export function DateNavigation({ selectedDate, onDateChange, isLoading = false }
 }
 
 export default DateNavigation;
-

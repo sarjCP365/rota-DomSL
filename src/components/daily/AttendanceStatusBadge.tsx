@@ -12,7 +12,7 @@ import {
   getStatusConfig,
   formatAttendanceTime,
   formatLateBy,
-} from '../../utils/attendanceStatus';
+} from '@/utils/attendanceStatus';
 
 // =============================================================================
 // Types
@@ -181,7 +181,7 @@ interface StatusDotProps {
 
 export function StatusDot({ status, size = 'md', className = '' }: StatusDotProps) {
   const config = getStatusConfig(status);
-  
+
   const sizeClasses = {
     sm: 'h-2 w-2',
     md: 'h-3 w-3',
@@ -233,12 +233,12 @@ export function StatusSummary({ counts, showZero = false, className = '' }: Stat
 
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>
-      {statuses.map(status => {
+      {statuses.map((status) => {
         const count = counts[status];
         if (!showZero && count === 0) return null;
-        
+
         const config = getStatusConfig(status);
-        
+
         return (
           <div key={status} className="flex items-center gap-1.5">
             <StatusDot status={status} size="sm" />
@@ -253,4 +253,3 @@ export function StatusSummary({ counts, showZero = false, className = '' }: Stat
 }
 
 export default AttendanceStatusBadge;
-

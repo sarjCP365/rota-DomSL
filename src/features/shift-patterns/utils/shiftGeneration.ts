@@ -1,6 +1,6 @@
 /**
  * CarePoint 365 - Shift Generation Algorithm
- * 
+ *
  * This is the core logic for converting pattern assignments into actual shifts.
  * It handles rotation week calculations, conflict detection, and shift creation.
  */
@@ -22,18 +22,10 @@ import type {
   ShiftPatternTemplate,
   ShiftPatternDay,
   PatternConflict,
-  GenerationResult,
-  ShiftGenerationLog,
 } from '../types';
-import {
-  DayOfWeek,
-  DayOfWeekLabels,
-  PatternPublishStatus,
-  AssignmentStatus,
-  GenerationType,
-} from '../types';
-import type { Shift, StaffAbsenceLog } from '../../../api/dataverse/types';
-import { ShiftStatus } from '../../../api/dataverse/types';
+import { DayOfWeek, DayOfWeekLabels, PatternPublishStatus, AssignmentStatus } from '../types';
+import type { Shift, StaffAbsenceLog } from '@/api/dataverse/types';
+import { ShiftStatus, AbsenceStatus } from '@/api/dataverse/types';
 
 // =============================================================================
 // UTILITY FUNCTIONS
@@ -47,7 +39,8 @@ function isValidGuid(value: string | null | undefined): boolean {
   const trimmed = value.trim();
   if (trimmed === '') return false;
   // GUID regex pattern
-  const guidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  const guidPattern =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   return guidPattern.test(trimmed);
 }
 
@@ -142,7 +135,7 @@ export function getDayName(dayOfWeek: DayOfWeek): string {
 
 /**
  * Calculate which week of the rotation pattern applies to a target date
- * 
+ *
  * @param assignmentStartDate - When the assignment started (cp365_sp_startdate)
  * @param rotationStartWeek - Which week to start from (cp365_sp_rotationstartweek), 1-based
  * @param totalRotationWeeks - Total weeks in the pattern rotation (cp365_sp_rotationcycleweeks)
@@ -157,17 +150,17 @@ export function getRotationWeek(
 ): number {
   // Get the Monday of the week containing assignment start
   const startWeekMonday = startOfWeek(assignmentStartDate, { weekStartsOn: 1 });
-  
+
   // Get the Monday of the week containing target date
   const targetWeekMonday = startOfWeek(targetDate, { weekStartsOn: 1 });
-  
+
   // Calculate weeks since start
   const weeksSinceStart = differenceInWeeks(targetWeekMonday, startWeekMonday);
-  
+
   // Apply rotation calculation
   // rotationStartWeek is 1-based, we need to adjust for 0-based modulo
   const adjustedWeek = (weeksSinceStart + rotationStartWeek - 1) % totalRotationWeeks;
-  
+
   // Return 1-based week number
   return adjustedWeek + 1;
 }
@@ -193,7 +186,7 @@ export function isDayIncluded(dayName: string, appliesToDays: string[]): boolean
   // If no restriction, include all days
   if (appliesToDays.length === 0) return true;
   // Check if day is in the list
-  return appliesToDays.some(d => d.toLowerCase() === dayName.toLowerCase());
+  return appliesToDays.some((d) => d.toLowerCase() === dayName.toLowerCase());
 }
 
 /**
@@ -201,18 +194,16 @@ export function isDayIncluded(dayName: string, appliesToDays: string[]): boolean
  * Pattern days store time as DateTime with dummy date (e.g., 1900-01-01T09:00:00Z)
  */
 export function combineDateTime(targetDate: Date, timeString: string): Date {
-  const timeParts = timeString.includes('T') 
-    ? timeString.split('T')[1] 
-    : timeString;
-  
+  const timeParts = timeString.includes('T') ? timeString.split('T')[1] : timeString;
+
   const [hours, minutes] = timeParts.split(':').map(Number);
-  
+
   let result = new Date(targetDate);
   result = setHours(result, hours || 0);
   result = setMinutes(result, minutes || 0);
   result.setSeconds(0);
   result.setMilliseconds(0);
-  
+
   return result;
 }
 
@@ -221,10 +212,10 @@ export function combineDateTime(targetDate: Date, timeString: string): Date {
  */
 export function extractTimeString(dateTimeStr: string | undefined): string {
   if (!dateTimeStr) return '09:00';
-  
+
   try {
-    const timePart = dateTimeStr.includes('T') 
-      ? dateTimeStr.split('T')[1]?.substring(0, 5) 
+    const timePart = dateTimeStr.includes('T')
+      ? dateTimeStr.split('T')[1]?.substring(0, 5)
       : dateTimeStr.substring(0, 5);
     return timePart || '09:00';
   } catch {
@@ -245,7 +236,7 @@ export function detectConflictForDate(
   const dateStr = format(date, 'yyyy-MM-dd');
 
   // Check for existing shift on this date
-  const existingShift = existingShifts.find(shift => {
+  const existingShift = existingShifts.find((shift) => {
     const shiftDate = shift.cp365_shiftdate?.split('T')[0];
     return shiftDate === dateStr;
   });
@@ -260,7 +251,7 @@ export function detectConflictForDate(
       : '??:??';
 
     // Check if from another pattern
-    const isFromPattern = (existingShift as any).cr482_sp_isgeneratedfrompattern;
+    const isFromPattern = existingShift.cr482_sp_isgeneratedfrompattern;
 
     return {
       date: dateStr,
@@ -276,15 +267,15 @@ export function detectConflictForDate(
   }
 
   // Check for leave on this date
-  const leaveRecord = existingLeave.find(leave => {
+  const leaveRecord = existingLeave.find((leave) => {
     const leaveStart = parseISO(leave.cp365_startdate);
     const leaveEnd = parseISO(leave.cp365_enddate);
     return isWithinInterval(date, { start: leaveStart, end: leaveEnd });
   });
 
   if (leaveRecord) {
-    // Check if approved
-    const isApproved = (leaveRecord as any).cp365_absencestatus === 3;
+    // Check if approved using the proper AbsenceStatus enum
+    const isApproved = leaveRecord.cp365_absencestatus === AbsenceStatus.Approved;
     const leaveType = leaveRecord.cp365_absencetype?.cp365_absencetypename || 'Leave';
 
     return {
@@ -308,7 +299,7 @@ export function detectConflictForDate(
 
 /**
  * Generate shifts from a pattern assignment
- * 
+ *
  * This is the core generation function that converts pattern days into actual shifts.
  */
 export async function generateShiftsFromPattern(
@@ -323,9 +314,9 @@ export async function generateShiftsFromPattern(
     conflictResolutions = new Map(),
     existingShifts = [],
     existingLeave = [],
-    dryRun = false,
+    dryRun: _dryRun = false,
     rotaId,
-    sublocationId,
+    sublocationId: _sublocationId,
   } = options;
 
   // Validate required data
@@ -373,8 +364,8 @@ export async function generateShiftsFromPattern(
 
   const staffMemberId = assignment._cp365_staffmember_value;
   const assignmentStartDate = parseISO(assignment.cp365_sp_startdate);
-  const assignmentEndDate = assignment.cp365_sp_enddate 
-    ? parseISO(assignment.cp365_sp_enddate) 
+  const assignmentEndDate = assignment.cp365_sp_enddate
+    ? parseISO(assignment.cp365_sp_enddate)
     : null;
   const rotationStartWeek = assignment.cp365_sp_rotationstartweek;
   const totalRotationWeeks = template.cp365_sp_rotationcycleweeks;
@@ -382,7 +373,7 @@ export async function generateShiftsFromPattern(
 
   // Determine publish status
   const publishStatus = assignment.cp365_sp_overridepublishstatus
-    ? (assignment.cp365_sp_publishstatus || PatternPublishStatus.Unpublished)
+    ? assignment.cp365_sp_publishstatus || PatternPublishStatus.Unpublished
     : template.cp365_sp_defaultpublishstatus;
 
   // Iterate through each date in the range
@@ -436,7 +427,7 @@ export async function generateShiftsFromPattern(
 
       // Find the pattern day for this week + day
       const patternDay = patternDays.find(
-        pd => pd.cp365_sp_weeknumber === rotationWeek && pd.cp365_sp_dayofweek === dayOfWeek
+        (pd) => pd.cp365_sp_weeknumber === rotationWeek && pd.cp365_sp_dayofweek === dayOfWeek
       );
 
       if (!patternDay) {
@@ -487,15 +478,9 @@ export async function generateShiftsFromPattern(
       }
 
       // Build shift data
-      const shiftStartTime = combineDateTime(
-        currentDate,
-        patternDay.cp365_sp_starttime || '09:00'
-      );
-      
-      let shiftEndTime = combineDateTime(
-        currentDate,
-        patternDay.cp365_sp_endtime || '17:00'
-      );
+      const shiftStartTime = combineDateTime(currentDate, patternDay.cp365_sp_starttime || '09:00');
+
+      let shiftEndTime = combineDateTime(currentDate, patternDay.cp365_sp_endtime || '17:00');
 
       // Handle overnight shifts
       if (patternDay.cp365_sp_isovernight) {
@@ -506,9 +491,10 @@ export async function generateShiftsFromPattern(
         cp365_shiftdate: dateStr,
         cp365_shiftstarttime: shiftStartTime.toISOString(),
         cp365_shiftendtime: shiftEndTime.toISOString(),
-        cp365_shiftstatus: publishStatus === PatternPublishStatus.Published 
-          ? ShiftStatus.Published 
-          : ShiftStatus.Unpublished,
+        cp365_shiftstatus:
+          publishStatus === PatternPublishStatus.Published
+            ? ShiftStatus.Published
+            : ShiftStatus.Unpublished,
         cp365_shifttype: 1, // Day shift by default
         cp365_overtimeshift: false,
         cr1e2_shiftbreakduration: patternDay.cp365_sp_breakminutes || 0,
@@ -533,22 +519,21 @@ export async function generateShiftsFromPattern(
       }
 
       if (isValidGuid(patternDay._cp365_shiftreference_value)) {
-        shiftData['cp365_shiftreference@odata.bind'] = 
+        shiftData['cp365_shiftreference@odata.bind'] =
           `/cp365_shiftreferences(${patternDay._cp365_shiftreference_value})`;
       }
 
       if (isValidGuid(patternDay._cp365_shiftactivity_value)) {
-        shiftData['cp365_shiftactivity@odata.bind'] = 
+        shiftData['cp365_shiftactivity@odata.bind'] =
           `/cp365_shiftactivities(${patternDay._cp365_shiftactivity_value})`;
       }
 
       if (isValidGuid(options.assignmentId)) {
-        shiftData['cp365_staffpatternassignment@odata.bind'] = 
+        shiftData['cp365_staffpatternassignment@odata.bind'] =
           `/cp365_staffpatternassignments(${options.assignmentId})`;
       }
 
       result.shiftsCreated.push(shiftData as unknown as Partial<Shift>);
-
     } catch (error) {
       result.errors.push(
         `Error processing ${dateStr}: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -647,11 +632,11 @@ export function validateGenerationData(
     errors.push('Pattern must have at least one day defined');
   } else {
     // Check that we have valid days with times
-    const workingDays = patternDays.filter(pd => !pd.cp365_sp_isrestday);
+    const workingDays = patternDays.filter((pd) => !pd.cp365_sp_isrestday);
     if (workingDays.length === 0) {
       errors.push('Pattern has no working days defined');
     }
-    
+
     for (const day of workingDays) {
       if (!day.cp365_sp_starttime || !day.cp365_sp_endtime) {
         errors.push(
@@ -678,14 +663,13 @@ export function calculateShiftHours(
 ): number {
   const start = parseISO(startTime);
   let end = parseISO(endTime);
-  
+
   if (isOvernight) {
     end = addDays(end, 1);
   }
-  
+
   const totalMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
   const workingMinutes = totalMinutes - breakMinutes;
-  
+
   return workingMinutes / 60;
 }
-

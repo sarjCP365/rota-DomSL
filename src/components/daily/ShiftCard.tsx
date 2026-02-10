@@ -6,26 +6,16 @@
 
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import {
-  Sun,
-  Moon,
-  Bed,
-  Edit2,
-  UserCheck,
-  MoreHorizontal,
-  AlertCircle,
-  Cake,
-} from 'lucide-react';
+import { Sun, Moon, Bed, Edit2, UserCheck, MoreHorizontal, AlertCircle, Cake } from 'lucide-react';
 import { StatusDot } from './AttendanceStatusBadge';
 import {
-  type AttendanceStatus,
   type ShiftWithAttendance,
   getAttendanceStatus,
   getAttendanceDetails,
   getStatusConfig,
   formatLateBy,
-} from '../../utils/attendanceStatus';
-import type { ShiftViewData } from '../../api/dataverse/types';
+} from '@/utils/attendanceStatus';
+import type { ShiftViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // Types
@@ -87,11 +77,9 @@ const SHIFT_TYPE_STYLES: Record<ShiftType, { bg: string; text: string; icon: typ
  */
 function getShiftType(shift: ShiftViewData): ShiftType {
   if (shift['Sleep In']) return 'sleepin';
-  
-  const startHour = shift['Shift Start Time']
-    ? new Date(shift['Shift Start Time']).getHours()
-    : 8;
-  
+
+  const startHour = shift['Shift Start Time'] ? new Date(shift['Shift Start Time']).getHours() : 8;
+
   if (startHour >= 20 || startHour < 6) return 'night';
   return 'day';
 }
@@ -106,13 +94,13 @@ function calculateWorkingHours(shift: ShiftViewData): number {
 
   const startDate = new Date(start);
   const endDate = new Date(end);
-  
+
   // Handle overnight shifts
   let diffMs = endDate.getTime() - startDate.getTime();
   if (diffMs < 0) {
     diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
   }
-  
+
   const hours = diffMs / (1000 * 60 * 60);
   const breakHours = (shift['Shift Break Duration'] || 0) / 60;
   return Math.max(0, hours - breakHours);
@@ -146,7 +134,7 @@ function getInitials(name: string): string {
   if (!name || name === 'Unassigned') return '?';
   return name
     .split(' ')
-    .map(n => n[0])
+    .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
@@ -189,18 +177,20 @@ export function ShiftCard({
       return false;
     }
   }, [dateOfBirth, currentDate, isUnassigned]);
-  
+
   const startTime = shift['Shift Start Time']
     ? format(new Date(shift['Shift Start Time']), 'HH:mm')
     : '--:--';
   const endTime = shift['Shift End Time']
     ? format(new Date(shift['Shift End Time']), 'HH:mm')
     : '--:--';
-  
-  const isOvernight = shift['End on the following day'] || 
-    (shift['Shift Start Time'] && shift['Shift End Time'] && 
-     new Date(shift['Shift End Time']) < new Date(shift['Shift Start Time']));
-  
+
+  const isOvernight =
+    shift['End on the following day'] ||
+    (shift['Shift Start Time'] &&
+      shift['Shift End Time'] &&
+      new Date(shift['Shift End Time']) < new Date(shift['Shift Start Time']));
+
   const workingHours = useMemo(() => calculateWorkingHours(shift), [shift]);
   const shiftType = getShiftType(shift);
   const typeStyle = SHIFT_TYPE_STYLES[shiftType];
@@ -213,11 +203,13 @@ export function ShiftCard({
   const isSenior = shift['Senior'];
 
   // Attendance status
-  const attendanceStatus = useMemo(() => 
-    getAttendanceStatus(shift as ShiftWithAttendance), [shift]
+  const attendanceStatus = useMemo(
+    () => getAttendanceStatus(shift as ShiftWithAttendance),
+    [shift]
   );
-  const attendanceDetails = useMemo(() => 
-    getAttendanceDetails(shift as ShiftWithAttendance), [shift]
+  const attendanceDetails = useMemo(
+    () => getAttendanceDetails(shift as ShiftWithAttendance),
+    [shift]
   );
   const statusConfig = getStatusConfig(attendanceStatus);
 
@@ -281,7 +273,9 @@ export function ShiftCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className={`truncate font-semibold text-base ${isUnassigned ? 'text-gray-500 italic' : 'text-gray-900'}`}>
+                <span
+                  className={`truncate font-semibold text-base ${isUnassigned ? 'text-gray-500 italic' : 'text-gray-900'}`}
+                >
                   {staffName}
                 </span>
                 {isBirthday && (
@@ -302,16 +296,24 @@ export function ShiftCard({
             {(isShiftLeader || isActUp || isOvertime || isSenior) && (
               <div className="mt-1.5 flex flex-wrap gap-1">
                 {isShiftLeader && (
-                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">LEAD</span>
+                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">
+                    LEAD
+                  </span>
                 )}
                 {isActUp && (
-                  <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800">ACT-UP</span>
+                  <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800">
+                    ACT-UP
+                  </span>
                 )}
                 {isSenior && (
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">SENIOR</span>
+                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">
+                    SENIOR
+                  </span>
                 )}
                 {isOvertime && (
-                  <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">OT</span>
+                  <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">
+                    OT
+                  </span>
                 )}
               </div>
             )}
@@ -322,7 +324,9 @@ export function ShiftCard({
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-gray-500">⏰</span>
-            <span className="font-medium">{startTime} - {endTime}</span>
+            <span className="font-medium">
+              {startTime} - {endTime}
+            </span>
             {isOvernight && <span className="text-xs text-gray-400">+1</span>}
           </div>
           <div className="flex items-center gap-2">
@@ -341,12 +345,18 @@ export function ShiftCard({
 
         {/* Status & Type Row */}
         <div className="mt-3 flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}
+          >
             <TypeIcon className="h-3.5 w-3.5" />
-            {shiftType === 'sleepin' ? 'Sleep In' : shiftType.charAt(0).toUpperCase() + shiftType.slice(1)}
+            {shiftType === 'sleepin'
+              ? 'Sleep In'
+              : shiftType.charAt(0).toUpperCase() + shiftType.slice(1)}
           </span>
           <div className="flex flex-col items-end">
-            <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}
+            >
               <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotColour}`} />
               {statusConfig.label}
             </span>
@@ -362,7 +372,9 @@ export function ShiftCard({
         {/* External Location */}
         {isExternal && shift['Sublocation Name'] && (
           <div className="mt-2 text-sm text-gray-500">
-            <span className="rounded bg-gray-200 px-2 py-1 text-xs">📍 {shift['Sublocation Name']}</span>
+            <span className="rounded bg-gray-200 px-2 py-1 text-xs">
+              📍 {shift['Sublocation Name']}
+            </span>
           </div>
         )}
 
@@ -383,9 +395,10 @@ export function ShiftCard({
                 onClick={handleLeaderClick}
                 className={`
                   flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium
-                  ${isShiftLeader
-                    ? 'bg-green-100 text-green-800'
-                    : 'border border-green-600 text-green-700'
+                  ${
+                    isShiftLeader
+                      ? 'bg-green-100 text-green-800'
+                      : 'border border-green-600 text-green-700'
                   }
                 `}
               >
@@ -418,7 +431,9 @@ export function ShiftCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className={`truncate font-medium ${isUnassigned ? 'text-gray-500 italic' : 'text-gray-900'}`}>
+              <span
+                className={`truncate font-medium ${isUnassigned ? 'text-gray-500 italic' : 'text-gray-900'}`}
+              >
                 {staffName}
               </span>
               {isBirthday && (
@@ -439,16 +454,24 @@ export function ShiftCard({
             {(isShiftLeader || isActUp || isOvertime || isSenior) && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {isShiftLeader && (
-                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">LEAD</span>
+                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">
+                    LEAD
+                  </span>
                 )}
                 {isActUp && (
-                  <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800">ACT-UP</span>
+                  <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800">
+                    ACT-UP
+                  </span>
                 )}
                 {isSenior && (
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">SENIOR</span>
+                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">
+                    SENIOR
+                  </span>
                 )}
                 {isOvertime && (
-                  <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">OT</span>
+                  <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">
+                    OT
+                  </span>
                 )}
               </div>
             )}
@@ -457,16 +480,24 @@ export function ShiftCard({
 
         {/* Shift Time - hidden on tablet, visible on lg */}
         <div className="hidden lg:block min-w-[130px]">
-          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Shift Time</div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Shift Time
+          </div>
           <div className="flex items-center gap-1 font-medium text-gray-900">
             {startTime} - {endTime}
-            {isOvernight && <span className="text-xs text-gray-400" title="Overnight shift">+1</span>}
+            {isOvernight && (
+              <span className="text-xs text-gray-400" title="Overnight shift">
+                +1
+              </span>
+            )}
           </div>
         </div>
 
         {/* Time (condensed for tablet) */}
         <div className="lg:hidden min-w-[100px]">
-          <div className="font-medium text-gray-900">{startTime} - {endTime}</div>
+          <div className="font-medium text-gray-900">
+            {startTime} - {endTime}
+          </div>
           <div className="text-xs text-gray-500">{formatHours(workingHours)}</div>
         </div>
 
@@ -478,8 +509,13 @@ export function ShiftCard({
 
         {/* Activity - hidden on tablet, visible on lg */}
         <div className="hidden xl:block min-w-[160px] max-w-[160px]">
-          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Activity</div>
-          <div className="truncate font-medium text-gray-900" title={shift['Shift Activity'] || 'Standard Care'}>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Activity
+          </div>
+          <div
+            className="truncate font-medium text-gray-900"
+            title={shift['Shift Activity'] || 'Standard Care'}
+          >
             {shift['Shift Activity'] || 'Standard Care'}
           </div>
         </div>
@@ -487,23 +523,37 @@ export function ShiftCard({
         {/* Break - hidden on tablet */}
         <div className="hidden xl:block min-w-[80px]">
           <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Break</div>
-          <div className="font-medium text-gray-900">{formatBreak(shift['Shift Break Duration'])}</div>
+          <div className="font-medium text-gray-900">
+            {formatBreak(shift['Shift Break Duration'])}
+          </div>
         </div>
 
         {/* Shift Type Badge */}
         <div className="min-w-[70px] lg:min-w-[90px]">
-          <div className="hidden lg:block text-[10px] font-medium uppercase tracking-wide text-gray-400">Type</div>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
+          <div className="hidden lg:block text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Type
+          </div>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}
+          >
             <TypeIcon className="h-3 w-3" />
-            <span className="hidden lg:inline">{shiftType === 'sleepin' ? 'Sleep In' : shiftType.charAt(0).toUpperCase() + shiftType.slice(1)}</span>
+            <span className="hidden lg:inline">
+              {shiftType === 'sleepin'
+                ? 'Sleep In'
+                : shiftType.charAt(0).toUpperCase() + shiftType.slice(1)}
+            </span>
           </span>
         </div>
 
         {/* Status Badge */}
         <div className="min-w-[90px] lg:min-w-[110px]">
-          <div className="hidden lg:block text-[10px] font-medium uppercase tracking-wide text-gray-400">Status</div>
+          <div className="hidden lg:block text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            Status
+          </div>
           <div className="flex flex-col">
-            <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusConfig.bgColour} ${statusConfig.colour}`}
+            >
               <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotColour}`} />
               {statusConfig.label}
             </span>
@@ -537,9 +587,10 @@ export function ShiftCard({
                 onClick={handleLeaderClick}
                 className={`
                   flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
-                  ${isShiftLeader
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                    : 'border border-green-600 text-green-700 hover:bg-green-50'
+                  ${
+                    isShiftLeader
+                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                      : 'border border-green-600 text-green-700 hover:bg-green-50'
                   }
                 `}
                 title={isShiftLeader ? 'Shift Leader' : 'Assign as Shift Leader'}
@@ -560,7 +611,9 @@ export function ShiftCard({
         {/* External Location Badge */}
         {isExternal && shift['Sublocation Name'] && (
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="rounded bg-gray-200 px-2 py-1 text-xs">📍 {shift['Sublocation Name']}</span>
+            <span className="rounded bg-gray-200 px-2 py-1 text-xs">
+              📍 {shift['Sublocation Name']}
+            </span>
           </div>
         )}
       </div>
@@ -577,7 +630,7 @@ export function ShiftCardSkeleton() {
     <div className="flex animate-pulse items-center gap-3 px-4 py-3">
       {/* Status dot */}
       <div className="h-3 w-3 rounded-full bg-gray-200" />
-      
+
       {/* Avatar & Info */}
       <div className="flex min-w-[240px] items-center gap-3">
         <div className="h-10 w-10 rounded-full bg-gray-200" />
@@ -635,4 +688,3 @@ export function ShiftCardSkeleton() {
 }
 
 export default ShiftCard;
-

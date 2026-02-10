@@ -1,9 +1,9 @@
 /**
  * ShiftReferenceViewGrid Component
- * 
+ *
  * Displays the rota grouped by shift references/patterns (e.g., Early, Late, Night).
  * Shows coverage status per day for each shift type.
- * 
+ *
  * Features:
  * - Groups shifts by Shift Reference
  * - Shows coverage grid (required vs assigned)
@@ -16,31 +16,30 @@
 
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Clock, 
-  Users, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Users,
   AlertCircle,
   Check,
   Plus,
   TrendingUp,
   Calendar,
-  Filter,
   Send,
   CheckSquare,
   XCircle,
   UserPlus,
 } from 'lucide-react';
-import type { 
-  Shift, 
-  ShiftReference, 
+import type {
+  Shift,
+  ShiftReference,
   StaffMember,
   ShiftViewData,
   SublocationStaffViewData,
-} from '../../api/dataverse/types';
-import { ShiftStatus } from '../../api/dataverse/types';
-import { usePublishShifts } from '../../hooks/useShifts';
+} from '@/api/dataverse/types';
+import { ShiftStatus } from '@/api/dataverse/types';
+import { usePublishShifts } from '@/hooks/useShifts';
 import { QuickAssignPopover } from './QuickAssignPopover';
 import { BulkAssignModal } from './BulkAssignModal';
 
@@ -52,6 +51,9 @@ interface ShiftWithStaffName extends Shift {
 // =============================================================================
 // TYPES
 // =============================================================================
+
+/** Detail level for display */
+type DetailLevel = 'detailed' | 'compact' | 'hoursOnly';
 
 interface ShiftReferenceViewGridProps {
   /** All shift references available */
@@ -76,6 +78,8 @@ interface ShiftReferenceViewGridProps {
   unitFilter?: string | null;
   /** Filter by team ID */
   teamFilter?: string | null;
+  /** Detail level for display - defaults to 'detailed' */
+  detailLevel?: DetailLevel;
 }
 
 interface StaffingRequirement {
@@ -167,27 +171,25 @@ function convertTimeValue(value: number | null | undefined): number {
   return value;
 }
 
-function formatTime(hour: number, minute: number): string {
-  const h = convertTimeValue(hour);
-  const m = convertTimeValue(minute);
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-}
-
 function getShiftReferenceTimeLabel(ref: ShiftReference): string {
   const startHour = convertTimeValue(ref.cp365_shiftreferencestarthour);
   const startMin = convertTimeValue(ref.cp365_shiftreferencestartminute);
   const endHour = convertTimeValue(ref.cp365_shiftreferenceendhour);
   const endMin = convertTimeValue(ref.cp365_shiftreferenceendminute);
-  
+
   const start = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`;
   const end = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
   return `${start} - ${end}`;
 }
 
-function getCoverageStatus(required: number, assigned: number, totalScheduled: number): DayCoverage['status'] {
+function getCoverageStatus(
+  required: number,
+  assigned: number,
+  totalScheduled: number
+): DayCoverage['status'] {
   // No shifts scheduled - show neutral grey
   if (totalScheduled === 0) return 'none';
-  
+
   // If we have a requirement set, compare against it
   if (required > 0) {
     if (assigned > required) return 'over';
@@ -195,7 +197,7 @@ function getCoverageStatus(required: number, assigned: number, totalScheduled: n
     if (assigned >= required - 1) return 'partial'; // Under by 1
     return 'critical'; // Under by 2+
   }
-  
+
   // No requirement set - compare scheduled vs assigned
   if (assigned === totalScheduled) return 'full'; // All scheduled are assigned
   if (assigned > 0) return 'partial'; // Some assigned
@@ -210,19 +212,19 @@ function calculateDuration(ref: ShiftReference): string {
   const startMin = convertTimeValue(ref.cp365_shiftreferencestartminute);
   const endHour = convertTimeValue(ref.cp365_shiftreferenceendhour);
   const endMin = convertTimeValue(ref.cp365_shiftreferenceendminute);
-  
+
   let hours = endHour - startHour;
   let minutes = endMin - startMin;
-  
+
   if (ref.cp365_endonnextday) {
     hours += 24;
   }
-  
+
   if (minutes < 0) {
     hours -= 1;
     minutes += 60;
   }
-  
+
   // Format as hh:mm
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
@@ -241,12 +243,13 @@ export function ShiftReferenceViewGrid({
   onFillGap,
   onAddShift,
   onShiftClick,
-  unitFilter,
-  teamFilter,
+  unitFilter: _unitFilter,
+  teamFilter: _teamFilter,
+  detailLevel = 'detailed',
 }: ShiftReferenceViewGridProps) {
   // Start with all refs expanded by default so users can see coverage immediately
-  const [expandedRefs, setExpandedRefs] = useState<Set<string>>(() => 
-    new Set(shiftReferences.map(r => r.cp365_shiftreferenceid))
+  const [expandedRefs, setExpandedRefs] = useState<Set<string>>(
+    () => new Set(shiftReferences.map((r) => r.cp365_shiftreferenceid))
   );
   const [showFullyCovered, setShowFullyCovered] = useState(true);
 
@@ -273,11 +276,11 @@ export function ShiftReferenceViewGrid({
         setShowPublishMenu(false);
       }
     };
-    
+
     if (showPublishMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -296,7 +299,7 @@ export function ShiftReferenceViewGrid({
   };
 
   const handleToggleShiftSelection = useCallback((shiftId: string) => {
-    setSelectedForPublish(prev => {
+    setSelectedForPublish((prev) => {
       const next = new Set(prev);
       if (next.has(shiftId)) {
         next.delete(shiftId);
@@ -321,7 +324,7 @@ export function ShiftReferenceViewGrid({
 
   const handleOpenFlyoutFromQuickAssign = useCallback(() => {
     if (quickAssignShift) {
-      const shift = shifts.find(s => s.cp365_shiftid === quickAssignShift.shiftId);
+      const shift = shifts.find((s) => s.cp365_shiftid === quickAssignShift.shiftId);
       if (shift) {
         onShiftClick?.(shift);
       }
@@ -346,35 +349,8 @@ export function ShiftReferenceViewGrid({
   const processedRefs = useMemo(() => {
     const result: ProcessedShiftReference[] = [];
 
-    // Debug: Log data to help troubleshoot
-    console.log('[ShiftRefView] Processing:', {
-      shiftReferences: shiftReferences.length,
-      shiftsReceived: shifts.length,
-      staffMembers: staffMembers.size,
-      dateRange: dateRange.map(d => format(d, 'yyyy-MM-dd')),
-    });
-
-    // Debug: Count shifts by date to see distribution
-    const shiftsByDateCount: Record<string, number> = {};
-    for (const shift of shifts) {
-      const rawDate = shift.cp365_shiftdate;
-      const dateKey = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
-      shiftsByDateCount[dateKey] = (shiftsByDateCount[dateKey] || 0) + 1;
-    }
-    console.log('[ShiftRefView] SHIFTS BY DATE (total received):', shiftsByDateCount);
-    console.log('[ShiftRefView] Total shifts received:', shifts.length);
-
     // Create a set of valid date keys for the current date range
-    const validDateKeys = new Set(dateRange.map(d => format(d, 'yyyy-MM-dd')));
-    console.log('[ShiftRefView] Valid date keys for range:', Array.from(validDateKeys));
-    
-    // Filter shifts to only those within the date range FIRST
-    const shiftsInRange = shifts.filter(s => {
-      const rawDate = s.cp365_shiftdate;
-      const dateKey = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
-      return validDateKeys.has(dateKey);
-    });
-    console.log('[ShiftRefView] Shifts WITHIN date range:', shiftsInRange.length, '(out of', shifts.length, 'total)');
+    const validDateKeys = new Set(dateRange.map((d) => format(d, 'yyyy-MM-dd')));
 
     for (const ref of shiftReferences) {
       // Get shifts for this reference that are within the date range
@@ -390,21 +366,21 @@ export function ShiftReferenceViewGrid({
 
       // Group by date
       const shiftsByDate = new Map<string, ProcessedShift[]>();
-      
+
       for (const shift of refShifts) {
         // Normalise date key to yyyy-MM-dd format (strip time component)
         const rawDate = shift.cp365_shiftdate;
         const dateKey = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
-        
+
         if (!shiftsByDate.has(dateKey)) {
           shiftsByDate.set(dateKey, []);
         }
-        
+
         // Use staff name directly from the shift (passed from ShiftViewData)
         // Fall back to lookup if not available
         const staffMemberId = shift._cp365_staffmember_value;
         let staffName: string | null = shift._staffMemberName || null;
-        
+
         // Fallback to lookup if name not directly available
         if (!staffName && staffMemberId && staffMembers.has(staffMemberId)) {
           staffName = staffMembers.get(staffMemberId)?.cp365_staffmembername || null;
@@ -422,32 +398,8 @@ export function ShiftReferenceViewGrid({
       // Calculate stats
       const assignedShifts = refShifts.filter((s) => s._cp365_staffmember_value).length;
       const unassignedShifts = refShifts.length - assignedShifts;
-      const coveragePercentage = refShifts.length > 0
-        ? Math.round((assignedShifts / refShifts.length) * 100)
-        : 100;
-
-      // Debug: Log per-reference stats including staff details
-      // Show ALL staff details for this reference
-      const staffDetails = refShifts.map(s => {
-        const rawDate = s.cp365_shiftdate;
-        const dateKey = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
-        return {
-          staffMemberId: s._cp365_staffmember_value,
-          staffMemberName: s._staffMemberName,
-          rawDate: s.cp365_shiftdate,
-          normalisedDate: dateKey,
-        };
-      });
-      console.log(`[ShiftRefView] ${ref.cp365_shiftreferencename}:`, {
-        shiftRefId: ref.cp365_shiftreferenceid,
-        totalShifts: refShifts.length,
-        assignedShifts,
-        unassignedShifts,
-        shiftsPerDate: Object.fromEntries(
-          Array.from(shiftsByDate.entries()).map(([date, shifts]) => [date, shifts.length])
-        ),
-        staffDetails,
-      });
+      const coveragePercentage =
+        refShifts.length > 0 ? Math.round((assignedShifts / refShifts.length) * 100) : 100;
 
       result.push({
         reference: ref,
@@ -460,7 +412,7 @@ export function ShiftReferenceViewGrid({
     }
 
     // Sort by name
-    result.sort((a, b) => 
+    result.sort((a, b) =>
       a.reference.cp365_shiftreferencename.localeCompare(b.reference.cp365_shiftreferencename)
     );
 
@@ -468,13 +420,16 @@ export function ShiftReferenceViewGrid({
   }, [shiftReferences, shifts, staffMembers, dateRange]);
 
   // Get staffing requirement for a reference on a specific day
-  const getRequirement = useCallback((refId: string, date: Date): number => {
-    const dayOfWeek = date.getDay();
-    const req = staffingRequirements.find(
-      (r) => r.shiftReferenceId === refId && r.dayOfWeek === dayOfWeek
-    );
-    return req?.requiredCount ?? 0;
-  }, [staffingRequirements]);
+  const getRequirement = useCallback(
+    (refId: string, date: Date): number => {
+      const dayOfWeek = date.getDay();
+      const req = staffingRequirements.find(
+        (r) => r.shiftReferenceId === refId && r.dayOfWeek === dayOfWeek
+      );
+      return req?.requiredCount ?? 0;
+    },
+    [staffingRequirements]
+  );
 
   // Calculate overall stats
   const overallStats = useMemo(() => {
@@ -490,7 +445,7 @@ export function ShiftReferenceViewGrid({
       totalShifts += ref.totalShifts;
       totalAssigned += ref.assignedShifts;
       totalUnassigned += ref.unassignedShifts;
-      
+
       // Count unpublished shifts and collect IDs
       for (const [, dayShifts] of ref.shiftsByDate) {
         for (const s of dayShifts) {
@@ -503,7 +458,7 @@ export function ShiftReferenceViewGrid({
           }
         }
       }
-      
+
       for (const date of dateRange) {
         totalRequired += getRequirement(ref.reference.cp365_shiftreferenceid, date);
       }
@@ -511,9 +466,8 @@ export function ShiftReferenceViewGrid({
 
     // Calculate coverage percentage based on scheduled shifts (not requirements)
     // Coverage = assigned / total scheduled
-    const coveragePercentage = totalShifts > 0
-      ? Math.round((totalAssigned / totalShifts) * 100)
-      : 100; // No shifts = nothing to cover
+    const coveragePercentage =
+      totalShifts > 0 ? Math.round((totalAssigned / totalShifts) * 100) : 100; // No shifts = nothing to cover
 
     return {
       totalShifts,
@@ -538,9 +492,11 @@ export function ShiftReferenceViewGrid({
 
   // Get unassigned shifts for bulk assign modal (converted to ShiftViewData format)
   const unassignedShiftsList = useMemo(() => {
-    const unassignedShifts = shifts.filter(s => overallStats.unassignedShiftIds.has(s.cp365_shiftid));
+    const unassignedShifts = shifts.filter((s) =>
+      overallStats.unassignedShiftIds.has(s.cp365_shiftid)
+    );
     // Convert to ShiftViewData format for BulkAssignModal
-    return unassignedShifts.map(s => ({
+    return unassignedShifts.map((s) => ({
       'Shift ID': s.cp365_shiftid,
       'Shift Date': s.cp365_shiftdate,
       'Shift Start Time': s.cp365_shiftstarttime,
@@ -590,15 +546,18 @@ export function ShiftReferenceViewGrid({
             <span className="font-medium text-gray-900">{shiftReferences.length}</span> Shift Types
           </span>
           <span className="text-sm text-gray-600">
-            <span className="font-medium text-gray-900">{overallStats.totalShifts}</span> Total Shifts
+            <span className="font-medium text-gray-900">{overallStats.totalShifts}</span> Total
+            Shifts
           </span>
-          <div className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${
-            overallStats.coveragePercentage === 100 
-              ? 'bg-green-100 text-green-700' 
-              : overallStats.coveragePercentage >= 80 
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-700'
-          }`}>
+          <div
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${
+              overallStats.coveragePercentage === 100
+                ? 'bg-green-100 text-green-700'
+                : overallStats.coveragePercentage >= 80
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700'
+            }`}
+          >
             <Calendar className="h-4 w-4" />
             <span className="text-sm font-medium">
               Coverage: {overallStats.coveragePercentage}%
@@ -609,27 +568,21 @@ export function ShiftReferenceViewGrid({
             onClick={() => overallStats.totalUnassigned > 0 && setShowBulkAssignModal(true)}
             disabled={overallStats.totalUnassigned === 0}
             className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${
-              overallStats.totalUnassigned > 0 
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer' 
+              overallStats.totalUnassigned > 0
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer'
                 : 'bg-gray-100 text-gray-500 cursor-default'
             }`}
           >
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              {overallStats.totalUnassigned} Unassigned
-            </span>
-            {overallStats.totalUnassigned > 0 && (
-              <UserPlus className="h-3.5 w-3.5 ml-1" />
-            )}
+            <span className="text-sm font-medium">{overallStats.totalUnassigned} Unassigned</span>
+            {overallStats.totalUnassigned > 0 && <UserPlus className="h-3.5 w-3.5 ml-1" />}
           </button>
           {/* Publish controls */}
           {isSelectionMode ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-red-700">
                 <CheckSquare className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {selectedForPublish.size} selected
-                </span>
+                <span className="text-sm font-medium">{selectedForPublish.size} selected</span>
               </div>
               <button
                 onClick={handlePublishSelected}
@@ -701,9 +654,7 @@ export function ShiftReferenceViewGrid({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Check className="mb-4 h-12 w-12 text-green-400" />
             <h3 className="text-sm font-medium text-gray-900">All shifts fully covered</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              There are no gaps in your rota coverage.
-            </p>
+            <p className="mt-1 text-sm text-gray-500">There are no gaps in your rota coverage.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -722,6 +673,7 @@ export function ShiftReferenceViewGrid({
                 selectedForPublish={selectedForPublish}
                 onTogglePublishSelection={handleToggleShiftSelection}
                 onQuickAssignClick={handleQuickAssignClick}
+                detailLevel={detailLevel}
               />
             ))}
           </div>
@@ -769,6 +721,7 @@ interface ShiftReferenceSectionProps {
   selectedForPublish?: Set<string>;
   onTogglePublishSelection?: (shiftId: string) => void;
   onQuickAssignClick?: (shiftId: string, event: React.MouseEvent) => void;
+  detailLevel?: DetailLevel;
 }
 
 function ShiftReferenceSection({
@@ -784,12 +737,12 @@ function ShiftReferenceSection({
   selectedForPublish,
   onTogglePublishSelection,
   onQuickAssignClick,
+  detailLevel = 'detailed',
 }: ShiftReferenceSectionProps) {
   const { reference, shiftsByDate, coveragePercentage, totalShifts, unassignedShifts } = processed;
-  
+
   const timeLabel = getShiftReferenceTimeLabel(reference);
   const duration = calculateDuration(reference);
-  const hasIssues = coveragePercentage < 100;
 
   // Calculate coverage per day
   const dayCoverages = useMemo(() => {
@@ -800,7 +753,7 @@ function ShiftReferenceSection({
       const totalScheduled = dayShifts.length;
       const assigned = dayShifts.filter((s) => s.isAssigned).length;
       const unassigned = dayShifts.filter((s) => !s.isAssigned).length;
-      
+
       return {
         date,
         required,
@@ -832,15 +785,13 @@ function ShiftReferenceSection({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Clock className="h-5 w-5 text-primary" />
           </div>
-          
+
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-900">
                 {reference.cp365_shiftreferencename}
               </span>
-              <span className="text-sm text-gray-500">
-                ({timeLabel})
-              </span>
+              <span className="text-sm text-gray-500">({timeLabel})</span>
               {reference.cp365_endonnextday && (
                 <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-600">
                   Overnight
@@ -863,32 +814,30 @@ function ShiftReferenceSection({
             </span>
             <span className="text-xs text-gray-500">assigned</span>
           </div>
-          
+
           {/* Coverage percentage badge */}
-          <div className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${
-            coveragePercentage === 100 
-              ? 'bg-green-100 text-green-700' 
-              : coveragePercentage >= 80 
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-700'
-          }`}>
+          <div
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 ${
+              coveragePercentage === 100
+                ? 'bg-green-100 text-green-700'
+                : coveragePercentage >= 80
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700'
+            }`}
+          >
             {coveragePercentage === 100 ? (
               <Check className="h-4 w-4" />
             ) : (
               <AlertCircle className="h-4 w-4" />
             )}
-            <span className="text-sm font-medium">
-              {coveragePercentage}%
-            </span>
+            <span className="text-sm font-medium">{coveragePercentage}%</span>
           </div>
-          
+
           {/* Unassigned count */}
           {unassignedShifts > 0 && (
             <div className="flex items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-red-700">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {unassignedShifts} unassigned
-              </span>
+              <span className="text-sm font-medium">{unassignedShifts} unassigned</span>
             </div>
           )}
         </div>
@@ -908,7 +857,7 @@ function ShiftReferenceSection({
                   {dateRange.map((date, idx) => {
                     const isToday = isSameDay(date, new Date());
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                    
+
                     return (
                       <th
                         key={idx}
@@ -919,7 +868,9 @@ function ShiftReferenceSection({
                         <div className="text-xs font-medium text-gray-500">
                           {format(date, 'EEE')}
                         </div>
-                        <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}>
+                        <div
+                          className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-gray-900'}`}
+                        >
                           {format(date, 'd MMM')}
                         </div>
                       </th>
@@ -948,6 +899,7 @@ function ShiftReferenceSection({
                       selectedForPublish={selectedForPublish}
                       onTogglePublishSelection={onTogglePublishSelection}
                       onQuickAssignClick={onQuickAssignClick}
+                      detailLevel={detailLevel}
                     />
                   ))}
                 </tr>
@@ -1005,17 +957,28 @@ interface CoverageCellProps {
   selectedForPublish?: Set<string>;
   onTogglePublishSelection?: (shiftId: string) => void;
   onQuickAssignClick?: (shiftId: string, event: React.MouseEvent) => void;
+  detailLevel?: DetailLevel;
 }
 
-function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShiftClick, isSelectionMode, selectedForPublish, onTogglePublishSelection, onQuickAssignClick }: CoverageCellProps) {
+function CoverageCell({
+  coverage,
+  shiftReferenceId,
+  onFillGap,
+  onAddShift,
+  onShiftClick,
+  isSelectionMode,
+  selectedForPublish,
+  onTogglePublishSelection,
+  onQuickAssignClick,
+  detailLevel = 'detailed',
+}: CoverageCellProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { required, assigned, totalScheduled, status, date, shifts } = coverage;
   const style = COVERAGE_STYLES[status];
   const Icon = style.icon;
-  
+
   // Determine if action is needed
   const hasUnassigned = totalScheduled > assigned;
-  const needsAction = status === 'partial' || status === 'critical';
 
   // Get assigned and unassigned staff
   const assignedStaff = shifts.filter((s) => s.isAssigned);
@@ -1029,6 +992,131 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
   const visibleStaff = isExpanded ? assignedStaff : assignedStaff.slice(0, 4);
   const hasMore = assignedStaff.length > 4;
 
+  // Hours Only view - just show count/hours
+  if (detailLevel === 'hoursOnly') {
+    return (
+      <td className="px-2 py-2 align-top">
+        <div
+          className={`
+            flex flex-col items-center justify-center rounded-lg border p-2 min-h-[60px]
+            ${style.bgColor} ${style.borderColor}
+          `}
+        >
+          <div className="flex items-center gap-1">
+            <span className={`text-xl font-bold ${style.textColor}`}>{assigned}</span>
+            {showDenominator && (
+              <span className="text-sm text-gray-500">/ {displayDenominator}</span>
+            )}
+          </div>
+          <Icon className={`h-4 w-4 mt-1 ${style.textColor}`} />
+          {/* Show unassigned count if any */}
+          {unassignedShifts.length > 0 && (
+            <span className="mt-1 text-[10px] font-medium text-red-600">
+              {unassignedShifts.length} unassigned
+            </span>
+          )}
+          {/* Always show Add button */}
+          {onAddShift && (
+            <button
+              onClick={() => onAddShift(shiftReferenceId, date)}
+              className="mt-1 flex items-center justify-center gap-0.5 rounded bg-white/30 px-2 py-0.5 text-[10px] font-medium text-gray-400 hover:bg-white/60 hover:text-gray-600 transition-all"
+            >
+              <Plus className="h-2.5 w-2.5" />
+              Add
+            </button>
+          )}
+        </div>
+      </td>
+    );
+  }
+
+  // Compact view - show count and initials only
+  if (detailLevel === 'compact') {
+    return (
+      <td className="px-2 py-2 align-top">
+        <div
+          className={`
+            flex flex-col rounded-lg border p-2 min-h-[60px]
+            ${style.bgColor} ${style.borderColor}
+          `}
+        >
+          {/* Count display and status */}
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-1">
+              <span className={`text-lg font-bold ${style.textColor}`}>{assigned}</span>
+              {showDenominator && (
+                <span className="text-sm text-gray-500">/ {displayDenominator}</span>
+              )}
+            </div>
+            <Icon className={`h-4 w-4 ${style.textColor}`} />
+          </div>
+
+          {/* Compact staff display - just initials */}
+          {assignedStaff.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {assignedStaff.slice(0, 6).map((s, idx) => {
+                const shiftId = s.shift.cp365_shiftid;
+                const isUnpublished = s.shift.cp365_shiftstatus !== ShiftStatus.Published;
+                const isSelectedForPublish = selectedForPublish?.has(shiftId);
+
+                const handleClick = () => {
+                  if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
+                    onTogglePublishSelection(shiftId);
+                  } else {
+                    onShiftClick?.(s.shift);
+                  }
+                };
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={handleClick}
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium transition-all hover:scale-110 ${
+                      isSelectedForPublish
+                        ? 'bg-red-500 text-white ring-2 ring-red-500'
+                        : isUnpublished
+                          ? 'bg-white/80 text-primary border border-dashed border-gray-400'
+                          : 'bg-primary/20 text-primary'
+                    }`}
+                    title={s.staffName || 'Unknown'}
+                  >
+                    {(s.staffName || 'U').charAt(0).toUpperCase()}
+                  </button>
+                );
+              })}
+              {assignedStaff.length > 6 && (
+                <span className="flex h-6 items-center text-[10px] text-gray-500 font-medium">
+                  +{assignedStaff.length - 6}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Unassigned count */}
+          {unassignedShifts.length > 0 && (
+            <div className="mt-1 flex items-center gap-1">
+              <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                ⚠️ {unassignedShifts.length} unassigned
+              </span>
+            </div>
+          )}
+
+          {/* Action buttons - compact - always show Add */}
+          {onAddShift && (
+            <button
+              onClick={() => onAddShift(shiftReferenceId, date)}
+              className="mt-1 flex w-full items-center justify-center gap-0.5 rounded bg-white/50 px-2 py-1 text-xs font-medium text-gray-400 hover:bg-white hover:text-gray-600 hover:shadow-sm transition-all"
+            >
+              <Plus className="h-3 w-3" />
+              Add
+            </button>
+          )}
+        </div>
+      </td>
+    );
+  }
+
+  // Detailed view (default) - show all staff names and details
   return (
     <td className="px-2 py-2 align-top">
       <div
@@ -1040,9 +1128,7 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
         {/* Count display and status */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-1">
-            <span className={`text-lg font-bold ${style.textColor}`}>
-              {assigned}
-            </span>
+            <span className={`text-lg font-bold ${style.textColor}`}>{assigned}</span>
             {showDenominator && (
               <span className="text-sm text-gray-500">/ {displayDenominator}</span>
             )}
@@ -1057,7 +1143,7 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
               const shiftId = s.shift.cp365_shiftid;
               const isUnpublished = s.shift.cp365_shiftstatus !== ShiftStatus.Published;
               const isSelectedForPublish = selectedForPublish?.has(shiftId);
-              
+
               // In selection mode, clicking unpublished shifts toggles selection
               const handleClick = () => {
                 if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
@@ -1066,10 +1152,10 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
                   onShiftClick?.(s.shift);
                 }
               };
-              
+
               const isLeader = s.shift.cp365_shiftleader;
               const isActUp = s.shift.cp365_actup;
-              
+
               return (
                 <button
                   key={idx}
@@ -1077,8 +1163,8 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
                   className={`flex w-full items-center gap-1 rounded px-1.5 py-0.5 text-left hover:bg-white hover:shadow-sm transition-all ${
                     isSelectedForPublish
                       ? 'bg-white ring-2 ring-red-500'
-                      : isUnpublished 
-                        ? 'bg-white/80 border border-dashed border-gray-400' 
+                      : isUnpublished
+                        ? 'bg-white/80 border border-dashed border-gray-400'
                         : 'bg-white/60'
                   } ${isSelectionMode && isUnpublished ? 'cursor-pointer hover:ring-2 hover:ring-red-300' : ''}`}
                   title={`${isUnpublished ? (isSelectionMode ? 'Click to select for publishing' : '[Unpublished] ') : ''}${!isSelectionMode ? `Click to view shift for ${s.staffName || 'Unknown'}` : ''}${isLeader ? ' (Shift Leader)' : ''}${isActUp ? ' (Act Up)' : ''}`}
@@ -1086,15 +1172,17 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
                   <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[9px] font-medium text-primary">
                     {(s.staffName || 'U').charAt(0).toUpperCase()}
                   </div>
-                  <span className="truncate text-xs text-gray-700">
-                    {s.staffName || 'Unknown'}
-                  </span>
+                  <span className="truncate text-xs text-gray-700">{s.staffName || 'Unknown'}</span>
                   {/* Role badges */}
                   {isLeader && (
-                    <span className="shrink-0 rounded bg-orange-100 px-1 text-[8px] font-bold text-orange-700">SL</span>
+                    <span className="shrink-0 rounded bg-orange-100 px-1 text-[8px] font-bold text-orange-700">
+                      SL
+                    </span>
                   )}
                   {isActUp && (
-                    <span className="shrink-0 rounded bg-purple-100 px-1 text-[8px] font-bold text-purple-700">AU</span>
+                    <span className="shrink-0 rounded bg-purple-100 px-1 text-[8px] font-bold text-purple-700">
+                      AU
+                    </span>
                   )}
                   {isUnpublished && !isSelectedForPublish && (
                     <span className="ml-auto text-[9px] font-bold text-gray-500">*</span>
@@ -1123,7 +1211,7 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
               const shiftId = s.shift.cp365_shiftid;
               const isUnpublished = s.shift.cp365_shiftstatus !== ShiftStatus.Published;
               const isSelectedForPublish = selectedForPublish?.has(shiftId);
-              
+
               // Handle click - selection mode for publish, otherwise quick assign
               const handleClick = (e: React.MouseEvent) => {
                 if (isSelectionMode && isUnpublished && onTogglePublishSelection) {
@@ -1135,7 +1223,7 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
                   onShiftClick?.(s.shift);
                 }
               };
-              
+
               return (
                 <button
                   key={idx}
@@ -1147,7 +1235,9 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
                   } ${isSelectionMode && isUnpublished ? 'cursor-pointer hover:ring-2 hover:ring-red-300' : ''}`}
                   title={`${isUnpublished ? (isSelectionMode ? 'Click to select for publishing' : '[Unpublished] ') : ''}${!isSelectionMode ? 'Click to quickly assign staff' : ''}`}
                 >
-                  {isSelectedForPublish ? '✓ Selected' : `⚠️ Unassigned${isUnpublished && !isSelectedForPublish ? ' *' : ''}`}
+                  {isSelectedForPublish
+                    ? '✓ Selected'
+                    : `⚠️ Unassigned${isUnpublished && !isSelectedForPublish ? ' *' : ''}`}
                 </button>
               );
             })}
@@ -1168,11 +1258,16 @@ function CoverageCell({ coverage, shiftReferenceId, onFillGap, onAddShift, onShi
             Assign Staff
           </button>
         )}
-        
-        {totalScheduled === 0 && onAddShift && (
+
+        {/* Always show Add button to create new shifts */}
+        {onAddShift && (
           <button
             onClick={() => onAddShift(shiftReferenceId, date)}
-            className="mt-1 flex w-full items-center justify-center gap-0.5 rounded bg-white/50 px-2 py-1 text-xs font-medium text-gray-400 hover:bg-white hover:text-gray-600 hover:shadow-sm transition-all"
+            className={`mt-1 flex w-full items-center justify-center gap-0.5 rounded px-2 py-1 text-xs font-medium transition-all ${
+              totalScheduled === 0
+                ? 'bg-white/50 text-gray-400 hover:bg-white hover:text-gray-600 hover:shadow-sm'
+                : 'bg-white/30 text-gray-400 hover:bg-white/60 hover:text-gray-600'
+            }`}
           >
             <Plus className="h-3 w-3" />
             Add
@@ -1196,14 +1291,18 @@ interface ShiftReferenceStatsProps {
 /**
  * Summary statistics for shift reference coverage
  */
-export function ShiftReferenceStats({ shiftReferences, shifts, dateRange }: ShiftReferenceStatsProps) {
+export function ShiftReferenceStats({
+  shiftReferences,
+  shifts,
+  dateRange: _dateRange,
+}: ShiftReferenceStatsProps) {
   const stats = useMemo(() => {
     const byRef = new Map<string, { total: number; assigned: number }>();
-    
+
     for (const ref of shiftReferences) {
       byRef.set(ref.cp365_shiftreferenceid, { total: 0, assigned: 0 });
     }
-    
+
     for (const shift of shifts) {
       const refId = shift._cp365_shiftreference_value;
       if (refId && byRef.has(refId)) {
@@ -1214,22 +1313,22 @@ export function ShiftReferenceStats({ shiftReferences, shifts, dateRange }: Shif
         }
       }
     }
-    
+
     let totalShifts = 0;
     let totalAssigned = 0;
     const refStats: { name: string; coverage: number }[] = [];
-    
+
     for (const ref of shiftReferences) {
       const s = byRef.get(ref.cp365_shiftreferenceid)!;
       totalShifts += s.total;
       totalAssigned += s.assigned;
-      
+
       refStats.push({
         name: ref.cp365_shiftreferencename,
         coverage: s.total > 0 ? Math.round((s.assigned / s.total) * 100) : 100,
       });
     }
-    
+
     return {
       totalShifts,
       totalAssigned,
@@ -1241,21 +1340,23 @@ export function ShiftReferenceStats({ shiftReferences, shifts, dateRange }: Shif
   return (
     <div className="rounded-lg border border-border-grey bg-white p-4">
       <h3 className="mb-3 text-sm font-semibold text-gray-900">Coverage by Shift Type</h3>
-      
+
       {/* Overall */}
       <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
         <span className="text-sm font-medium text-gray-700">Overall Coverage</span>
-        <span className={`text-lg font-bold ${
-          stats.overallCoverage === 100 
-            ? 'text-green-600' 
-            : stats.overallCoverage >= 80 
-              ? 'text-amber-600' 
-              : 'text-red-600'
-        }`}>
+        <span
+          className={`text-lg font-bold ${
+            stats.overallCoverage === 100
+              ? 'text-green-600'
+              : stats.overallCoverage >= 80
+                ? 'text-amber-600'
+                : 'text-red-600'
+          }`}
+        >
           {stats.overallCoverage}%
         </span>
       </div>
-      
+
       {/* Per reference */}
       <div className="space-y-2">
         {stats.refStats.map((ref, idx) => (
@@ -1265,10 +1366,10 @@ export function ShiftReferenceStats({ shiftReferences, shifts, dateRange }: Shif
               <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
                 <div
                   className={`h-full rounded-full ${
-                    ref.coverage === 100 
-                      ? 'bg-green-500' 
-                      : ref.coverage >= 80 
-                        ? 'bg-amber-500' 
+                    ref.coverage === 100
+                      ? 'bg-green-500'
+                      : ref.coverage >= 80
+                        ? 'bg-amber-500'
                         : 'bg-red-500'
                   }`}
                   style={{ width: `${ref.coverage}%` }}
@@ -1289,10 +1390,9 @@ export function ShiftReferenceStats({ shiftReferences, shifts, dateRange }: Shif
 // EXPORTS
 // =============================================================================
 
-export type { 
-  ShiftReferenceViewGridProps, 
-  StaffingRequirement, 
+export type {
+  ShiftReferenceViewGridProps,
+  StaffingRequirement,
   ProcessedShiftReference,
   DayCoverage,
 };
-

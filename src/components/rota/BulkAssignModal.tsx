@@ -1,6 +1,6 @@
 /**
  * BulkAssignModal Component
- * 
+ *
  * A modal for bulk assigning multiple unassigned shifts to different staff members.
  * Shows a table of unassigned shifts with individual staff dropdowns.
  */
@@ -8,8 +8,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { X, Users, Loader2, ChevronDown, Wand2, AlertCircle } from 'lucide-react';
-import { useUpdateShift } from '../../hooks/useShifts';
-import type { ShiftViewData, SublocationStaffViewData } from '../../api/dataverse/types';
+import { useUpdateShift } from '@/hooks/useShifts';
+import type { ShiftViewData, SublocationStaffViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -28,7 +28,7 @@ interface BulkAssignModalProps {
   onAssigned?: () => void;
 }
 
-interface ShiftAssignment {
+interface _ShiftAssignment {
   shiftId: string;
   staffMemberId: string | null;
 }
@@ -47,17 +47,17 @@ export function BulkAssignModal({
   // Track assignments for each shift
   const [assignments, setAssignments] = useState<Map<string, string | null>>(() => {
     const map = new Map<string, string | null>();
-    unassignedShifts.forEach(shift => {
+    unassignedShifts.forEach((shift) => {
       map.set(shift['Shift ID'], null);
     });
     return map;
   });
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const updateShiftMutation = useUpdateShift();
-  
+
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -67,23 +67,27 @@ export function BulkAssignModal({
     };
   }, []);
 
-  // Reset assignments when shifts change
-  useMemo(() => {
-    const map = new Map<string, string | null>();
-    unassignedShifts.forEach(shift => {
-      map.set(shift['Shift ID'], assignments.get(shift['Shift ID']) ?? null);
+  // Reset assignments when shifts change - intentional sync for dynamic shift list
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setAssignments((prev) => {
+      const map = new Map<string, string | null>();
+      unassignedShifts.forEach((shift) => {
+        map.set(shift['Shift ID'], prev.get(shift['Shift ID']) ?? null);
+      });
+      return map;
     });
-    setAssignments(map);
   }, [unassignedShifts]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Get assigned count
   const assignedCount = useMemo(() => {
-    return Array.from(assignments.values()).filter(v => v !== null).length;
+    return Array.from(assignments.values()).filter((v) => v !== null).length;
   }, [assignments]);
 
   // Handle assignment change for a shift
   const handleAssignmentChange = (shiftId: string, staffMemberId: string | null) => {
-    setAssignments(prev => {
+    setAssignments((prev) => {
       const next = new Map(prev);
       next.set(shiftId, staffMemberId);
       return next;
@@ -94,33 +98,33 @@ export function BulkAssignModal({
   // using round-robin to give each staff member one shift before anyone gets a second
   const handleAutoSuggest = () => {
     if (staff.length === 0) return;
-    
+
     const newAssignments = new Map<string, string | null>();
-    
+
     // Track how many shifts each staff member has been assigned
     const assignmentCount = new Map<string, number>();
-    staff.forEach(s => assignmentCount.set(s['Staff Member ID'], 0));
-    
+    staff.forEach((s) => assignmentCount.set(s['Staff Member ID'], 0));
+
     // Sort shifts by date then time for logical ordering
     const sortedShifts = [...unassignedShifts].sort((a, b) => {
       const dateCompare = (a['Shift Date'] || '').localeCompare(b['Shift Date'] || '');
       if (dateCompare !== 0) return dateCompare;
       return (a['Shift Start Time'] || '').localeCompare(b['Shift Start Time'] || '');
     });
-    
+
     // Assign each shift to the staff member with fewest assignments
-    sortedShifts.forEach(shift => {
+    sortedShifts.forEach((shift) => {
       // Find staff with lowest assignment count
       let minCount = Infinity;
       let selectedStaffId: string | null = null;
-      
+
       for (const [staffId, count] of assignmentCount) {
         if (count < minCount) {
           minCount = count;
           selectedStaffId = staffId;
         }
       }
-      
+
       if (selectedStaffId) {
         newAssignments.set(shift['Shift ID'], selectedStaffId);
         assignmentCount.set(selectedStaffId, minCount + 1);
@@ -128,14 +132,14 @@ export function BulkAssignModal({
         newAssignments.set(shift['Shift ID'], null);
       }
     });
-    
+
     setAssignments(newAssignments);
   };
 
   // Clear all assignments
   const handleClearAll = () => {
     const map = new Map<string, string | null>();
-    unassignedShifts.forEach(shift => {
+    unassignedShifts.forEach((shift) => {
       map.set(shift['Shift ID'], null);
     });
     setAssignments(map);
@@ -143,9 +147,10 @@ export function BulkAssignModal({
 
   // Save all assignments
   const handleSaveAll = async () => {
-    const assignmentsToSave = Array.from(assignments.entries())
-      .filter(([_, staffId]) => staffId !== null) as [string, string][];
-    
+    const assignmentsToSave = Array.from(assignments.entries()).filter(
+      ([_, staffId]) => staffId !== null
+    ) as [string, string][];
+
     if (assignmentsToSave.length === 0) {
       setError('Please assign at least one shift before saving.');
       return;
@@ -155,8 +160,6 @@ export function BulkAssignModal({
     setError(null);
     setSaveProgress(0);
 
-    console.log('[BulkAssign] Starting to save', assignmentsToSave.length, 'assignments');
-
     let successCount = 0;
     const errors: string[] = [];
 
@@ -164,9 +167,8 @@ export function BulkAssignModal({
       // Process assignments sequentially to avoid rate limiting
       for (let i = 0; i < assignmentsToSave.length; i++) {
         const [shiftId, staffMemberId] = assignmentsToSave[i];
-        
+
         try {
-          console.log('[BulkAssign] Saving assignment', i + 1, 'of', assignmentsToSave.length);
           // IMPORTANT: For cp365_shifts, navigation property names MUST be PascalCase for @odata.bind
           await updateShiftMutation.mutateAsync({
             shiftId,
@@ -175,19 +177,16 @@ export function BulkAssignModal({
             },
           });
           successCount++;
-          console.log('[BulkAssign] Assignment', i + 1, 'saved successfully');
         } catch (err) {
           console.error('[BulkAssign] Failed to save assignment', i + 1, ':', err);
           errors.push(`Shift ${i + 1}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
-        
+
         // Update progress only if still mounted
         if (isMountedRef.current) {
           setSaveProgress(Math.round(((i + 1) / assignmentsToSave.length) * 100));
         }
       }
-
-      console.log('[BulkAssign] Save complete. Success:', successCount, 'Errors:', errors.length);
 
       // Only update state if still mounted
       if (isMountedRef.current) {
@@ -214,13 +213,6 @@ export function BulkAssignModal({
     }
   };
 
-  // Get staff name by ID
-  const getStaffName = (staffId: string | null): string => {
-    if (!staffId) return '';
-    const staffMember = staff.find(s => s['Staff Member ID'] === staffId);
-    return staffMember?.['Staff Member Name'] ?? 'Unknown';
-  };
-
   // Sort shifts by date and time
   const sortedShifts = useMemo(() => {
     return [...unassignedShifts].sort((a, b) => {
@@ -235,11 +227,8 @@ export function BulkAssignModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative z-10 w-full max-w-3xl max-h-[80vh] rounded-lg bg-white shadow-xl flex flex-col">
         {/* Header */}
@@ -251,7 +240,8 @@ export function BulkAssignModal({
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Bulk Assign Shifts</h2>
               <p className="text-sm text-gray-500">
-                {unassignedShifts.length} unassigned shift{unassignedShifts.length !== 1 ? 's' : ''} • {assignedCount} assigned
+                {unassignedShifts.length} unassigned shift{unassignedShifts.length !== 1 ? 's' : ''}{' '}
+                • {assignedCount} assigned
               </p>
             </div>
           </div>
@@ -277,9 +267,7 @@ export function BulkAssignModal({
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="mb-4 h-12 w-12 text-gray-300" />
               <h3 className="text-sm font-medium text-gray-900">No Unassigned Shifts</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                All shifts have been assigned.
-              </p>
+              <p className="mt-1 text-sm text-gray-500">All shifts have been assigned.</p>
             </div>
           ) : (
             <table className="w-full">
@@ -295,7 +283,7 @@ export function BulkAssignModal({
                 {sortedShifts.map((shift) => {
                   const shiftId = shift['Shift ID'];
                   const assignedStaffId = assignments.get(shiftId) ?? null;
-                  
+
                   return (
                     <tr key={shiftId} className="hover:bg-gray-50">
                       <td className="py-3 pr-4">
@@ -304,7 +292,7 @@ export function BulkAssignModal({
                         </span>
                       </td>
                       <td className="py-3 pr-4 text-sm text-gray-600">
-                        {shift['Shift Date'] 
+                        {shift['Shift Date']
                           ? format(new Date(shift['Shift Date']), 'EEE, d MMM')
                           : '-'}
                       </td>
@@ -342,7 +330,8 @@ export function BulkAssignModal({
               </button>
               {/* Tooltip */}
               <div className="pointer-events-none absolute bottom-full left-0 mb-2 w-56 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                Distributes shifts evenly across all staff members. Each person gets one shift before anyone gets a second.
+                Distributes shifts evenly across all staff members. Each person gets one shift
+                before anyone gets a second.
                 <div className="absolute left-4 top-full h-2 w-2 -translate-y-1 rotate-45 bg-gray-900" />
               </div>
             </div>
@@ -397,14 +386,15 @@ function StaffDropdown({ staff, selectedStaffId, onChange }: StaffDropdownProps)
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const selectedStaff = staff.find(s => s['Staff Member ID'] === selectedStaffId);
-  
+  const selectedStaff = staff.find((s) => s['Staff Member ID'] === selectedStaffId);
+
   const filteredStaff = useMemo(() => {
     if (!search.trim()) return staff;
     const query = search.toLowerCase();
-    return staff.filter(s => 
-      s['Staff Member Name']?.toLowerCase().includes(query) ||
-      s['Job Title Name']?.toLowerCase().includes(query)
+    return staff.filter(
+      (s) =>
+        s['Staff Member Name']?.toLowerCase().includes(query) ||
+        s['Job Title Name']?.toLowerCase().includes(query)
     );
   }, [staff, search]);
 
@@ -420,28 +410,30 @@ function StaffDropdown({ staff, selectedStaffId, onChange }: StaffDropdownProps)
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`flex w-full min-w-[200px] items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${
-          selectedStaffId 
-            ? 'border-emerald-300 bg-emerald-50 text-emerald-800' 
+          selectedStaffId
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
             : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
         }`}
       >
         <span className="truncate">
           {selectedStaff ? selectedStaff['Staff Member Name'] : 'Select staff...'}
         </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {isOpen && (
         <>
           {/* Backdrop to close dropdown */}
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => {
               setIsOpen(false);
               setSearch('');
             }}
           />
-          
+
           {/* Dropdown */}
           <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-gray-200 bg-white shadow-lg">
             {/* Search */}
@@ -468,11 +460,9 @@ function StaffDropdown({ staff, selectedStaffId, onChange }: StaffDropdownProps)
                   Unassign
                 </button>
               )}
-              
+
               {filteredStaff.length === 0 ? (
-                <div className="px-3 py-4 text-center text-sm text-gray-500">
-                  No staff found
-                </div>
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No staff found</div>
               ) : (
                 filteredStaff.map((staffMember) => (
                   <button
@@ -516,4 +506,3 @@ function getInitials(name: string): string {
 }
 
 export default BulkAssignModal;
-

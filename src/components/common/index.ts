@@ -6,5 +6,5 @@
 export * from './Loading';
 export * from './Header';
 export * from './SideNav';
-export * from './ErrorBoundary';
-
+export { ErrorBoundary, RouteErrorBoundary, FeatureErrorBoundary } from './ErrorBoundary';
+export { default as PageHeader } from './PageHeader';

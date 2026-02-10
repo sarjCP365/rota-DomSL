@@ -72,13 +72,13 @@ export function DepartmentSection({
       const height = contentRef.current.scrollHeight;
       setContentHeight(height);
       setIsAnimating(true);
-      
+
       // After animation, set to auto for dynamic content
       const timer = setTimeout(() => {
         setContentHeight('auto');
         setIsAnimating(false);
       }, 300);
-      
+
       return () => clearTimeout(timer);
     } else {
       // Collapsing: set explicit height first, then animate to 0
@@ -86,18 +86,18 @@ export function DepartmentSection({
         const height = contentRef.current.scrollHeight;
         setContentHeight(height);
         setIsAnimating(true);
-        
+
         // Force reflow then set to 0
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             setContentHeight(0);
           });
         });
-        
+
         const timer = setTimeout(() => {
           setIsAnimating(false);
         }, 300);
-        
+
         return () => clearTimeout(timer);
       }
     }
@@ -107,12 +107,15 @@ export function DepartmentSection({
   // Keyboard handling
   // -------------------------------------------------------------------------
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onToggle();
-    }
-  }, [onToggle]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggle();
+      }
+    },
+    [onToggle]
+  );
 
   // -------------------------------------------------------------------------
   // Don't render if empty and not showing when empty
@@ -127,7 +130,7 @@ export function DepartmentSection({
   // -------------------------------------------------------------------------
 
   return (
-    <div 
+    <div
       className={`overflow-hidden rounded-lg border bg-white shadow-sm transition-shadow duration-200 ${
         isExpanded ? 'shadow-md' : ''
       } ${styles.borderColour}`}
@@ -151,7 +154,9 @@ export function DepartmentSection({
           </span>
 
           {/* Department Icon - Hidden on mobile to save space */}
-          <span className={`hidden sm:flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${styles.iconBg}`}>
+          <span
+            className={`hidden sm:flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${styles.iconBg}`}
+          >
             {departmentType === 'unassigned' ? (
               <AlertCircle className={`h-4 w-4 ${styles.iconColour}`} />
             ) : departmentType === 'agency' ? (
@@ -164,7 +169,9 @@ export function DepartmentSection({
           </span>
 
           {/* Department Name */}
-          <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">{department.name}</span>
+          <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+            {department.name}
+          </span>
 
           {/* Type Badge for special sections - hidden on very small screens */}
           {departmentType === 'unassigned' && (
@@ -185,7 +192,9 @@ export function DepartmentSection({
         </div>
 
         {/* Staff Count Badge */}
-        <span className={`rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm font-medium flex-shrink-0 ${styles.badgeBg} ${styles.badgeText}`}>
+        <span
+          className={`rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm font-medium flex-shrink-0 ${styles.badgeBg} ${styles.badgeText}`}
+        >
           {staffCount}
         </span>
       </button>
@@ -212,13 +221,9 @@ export function DepartmentSection({
             <span className="ml-2 text-sm text-gray-500">Loading shifts...</span>
           </div>
         ) : staffCount === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500">
-            {emptyMessage}
-          </div>
+          <div className="px-4 py-6 text-center text-sm text-gray-500">{emptyMessage}</div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {children}
-          </div>
+          <div className="divide-y divide-gray-100">{children}</div>
         )}
       </div>
     </div>
@@ -290,4 +295,3 @@ function getDepartmentStyles(type: DepartmentType): DepartmentStyles {
 }
 
 export default DepartmentSection;
-

@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Users, Layers, Clock, Eye, List, Minus } from 'lucide-react';
-import type { ViewMode, DetailLevel } from '../../store/rotaStore';
+import type { ViewMode, DetailLevel } from '@/store/rotaStore';
 
 // =============================================================================
 // TYPES
@@ -360,4 +360,3 @@ function DetailLevelDropdown({ value, options, onChange, disabled }: DetailLevel
     </div>
   );
 }
-

@@ -5,12 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  RefreshCw,
-  Menu,
-  Bell,
-} from 'lucide-react';
+import { ArrowLeft, RefreshCw, Menu, Bell } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface HeaderProps {
@@ -86,9 +81,7 @@ export function Header({
 
           <div>
             <h1 className="text-lg font-semibold text-slate-800">{title}</h1>
-            {subtitle && (
-              <p className="text-xs text-slate-500">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
           </div>
         </div>
 
@@ -140,9 +133,7 @@ export function Header({
 
           <div>
             <h1 className="text-xl font-bold">{title}</h1>
-            {subtitle && (
-              <p className="text-sm text-emerald-100">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-emerald-100">{subtitle}</p>}
           </div>
         </div>
 
@@ -158,7 +149,7 @@ export function Header({
               <RefreshCw className="h-5 w-5" />
             </button>
           )}
-          
+
           {/* Notifications */}
           <button
             className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-emerald-500 transition-colors"
@@ -191,15 +182,9 @@ export function PageHeader({ title, subtitle, rightContent }: PageHeaderProps) {
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-        {subtitle && (
-          <p className="text-sm text-slate-500">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
       </div>
-      {rightContent && (
-        <div className="flex items-center gap-2">
-          {rightContent}
-        </div>
-      )}
+      {rightContent && <div className="flex items-center gap-2">{rightContent}</div>}
     </div>
   );
 }

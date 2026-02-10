@@ -1,9 +1,9 @@
 /**
  * UnitHeader Component
- * 
+ *
  * Displays a collapsible header for a Unit section in the hierarchical Team View.
  * Shows unit name, ward/floor info, and aggregated statistics.
- * 
+ *
  * Features:
  * - Collapsible with smooth animation
  * - Unit name and subtitle (ward + floor)
@@ -14,17 +14,16 @@
  * - Remembers collapsed state in localStorage
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Calendar, 
-  Users, 
+import { useEffect, useCallback } from 'react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Users,
   AlertCircle,
   ExternalLink,
   Building2,
 } from 'lucide-react';
-import type { UnitWithTeams, UnitTypeCode } from '../../api/dataverse/types';
+import type { UnitWithTeams, UnitTypeCode } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -54,7 +53,7 @@ interface UnitHeaderProps {
  */
 function getUnitTypeLabel(typeCode: UnitTypeCode | null): string | null {
   if (!typeCode) return null;
-  
+
   const labels: Record<number, string> = {
     1: 'Dementia',
     2: 'Residential',
@@ -62,7 +61,7 @@ function getUnitTypeLabel(typeCode: UnitTypeCode | null): string | null {
     4: 'Nursing',
     99: 'Other',
   };
-  
+
   return labels[typeCode] || null;
 }
 
@@ -71,15 +70,15 @@ function getUnitTypeLabel(typeCode: UnitTypeCode | null): string | null {
  */
 function getUnitTypeAccent(typeCode: UnitTypeCode | null): string {
   if (!typeCode) return 'border-l-primary';
-  
+
   const accents: Record<number, string> = {
-    1: 'border-l-purple-500',    // Dementia
-    2: 'border-l-green-500',     // Residential
-    3: 'border-l-orange-500',    // Complex Care
-    4: 'border-l-blue-500',      // Nursing
-    99: 'border-l-gray-500',     // Other
+    1: 'border-l-purple-500', // Dementia
+    2: 'border-l-green-500', // Residential
+    3: 'border-l-orange-500', // Complex Care
+    4: 'border-l-blue-500', // Nursing
+    99: 'border-l-gray-500', // Other
   };
-  
+
   return accents[typeCode] || 'border-l-primary';
 }
 
@@ -99,7 +98,7 @@ export function UnitHeader({
   isExpanded,
   onToggle,
   onViewOverview,
-  dateRange,
+  dateRange: _dateRange,
   persistState = true,
 }: UnitHeaderProps) {
   // Load persisted state on mount
@@ -123,12 +122,15 @@ export function UnitHeader({
   }, [isExpanded, unit.cp365_unitid, persistState]);
 
   // Handle keyboard interaction
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onToggle();
-    }
-  }, [onToggle]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggle();
+      }
+    },
+    [onToggle]
+  );
 
   // Calculate stats
   const { totalShifts, staffOnLeave, vacancies } = unit.stats;
@@ -182,18 +184,14 @@ export function UnitHeader({
           {/* Unit name and subtitle */}
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-gray-900">
-                {unit.cp365_unitname}
-              </h3>
+              <h3 className="text-base font-semibold text-gray-900">{unit.cp365_unitname}</h3>
               {typeLabel && (
                 <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
                   {typeLabel}
                 </span>
               )}
             </div>
-            {subtitle && (
-              <p className="text-sm text-gray-500">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
           </div>
         </div>
 
@@ -204,13 +202,17 @@ export function UnitHeader({
             {/* Teams count */}
             <div className="flex items-center gap-1.5 text-gray-600">
               <Users className="h-4 w-4" />
-              <span>{teamsCount} {teamsCount === 1 ? 'team' : 'teams'}</span>
+              <span>
+                {teamsCount} {teamsCount === 1 ? 'team' : 'teams'}
+              </span>
             </div>
 
             {/* Shifts count */}
             <div className="flex items-center gap-1.5 text-gray-600">
               <Calendar className="h-4 w-4" />
-              <span>{totalShifts} {totalShifts === 1 ? 'shift' : 'shifts'}</span>
+              <span>
+                {totalShifts} {totalShifts === 1 ? 'shift' : 'shifts'}
+              </span>
             </div>
 
             {/* Staff on leave */}
@@ -225,7 +227,9 @@ export function UnitHeader({
             {hasVacancies && (
               <div className="flex items-center gap-1.5 text-red-600">
                 <AlertCircle className="h-4 w-4" />
-                <span>{vacancies} {vacancies === 1 ? 'vacancy' : 'vacancies'}</span>
+                <span>
+                  {vacancies} {vacancies === 1 ? 'vacancy' : 'vacancies'}
+                </span>
               </div>
             )}
           </div>
@@ -295,9 +299,7 @@ export function UnitEmptyState({ unitName, onHideEmptyUnits }: UnitEmptyStatePro
         </div>
         <div>
           <p className="text-sm font-medium text-gray-600">No shifts scheduled</p>
-          <p className="text-xs text-gray-500">
-            {unitName} has no shifts for this period
-          </p>
+          <p className="text-xs text-gray-500">{unitName} has no shifts for this period</p>
         </div>
       </div>
       {onHideEmptyUnits && (
@@ -317,4 +319,3 @@ export function UnitEmptyState({ unitName, onHideEmptyUnits }: UnitEmptyStatePro
 // =============================================================================
 
 export type { UnitHeaderProps, UnitEmptyStateProps };
-

@@ -1,25 +1,21 @@
 /**
  * Power Automate Flow Triggers
- * 
+ *
  * High-level functions to trigger specific Power Automate flows.
- * 
+ *
  * IMPORTANT: Power Apps V2 Trigger Architecture
  * =============================================
  * The existing CarePoint 365 Power Automate flows use "Power Apps V2" triggers,
  * which cannot be called directly from a web application via HTTP.
- * 
+ *
  * Current Status:
  * - BuildNewRotaView: Using direct Dataverse queries (see shifts.ts)
  * - Other flows: Need HTTP triggers added to work from this React app
- * 
+ *
  * See client.ts for detailed architecture notes and options.
  */
 
-import { 
-  getFlowClient, 
-  type ParsedRotaViewData,
-  FlowError,
-} from './client';
+import { getFlowClient, type ParsedRotaViewData, FlowError } from './client';
 import type { ShiftViewData, StaffAbsenceLog } from '../dataverse/types';
 
 // Re-export types from client
@@ -31,10 +27,10 @@ export type { ParsedRotaViewData, FlowError };
 
 /**
  * Build the rota grid data
- * 
+ *
  * @deprecated Use getRotaGridData() from src/api/dataverse/shifts.ts instead.
  * This function is kept for reference in case HTTP triggers are added to the flow.
- * 
+ *
  * The BuildNewRotaView flow uses a Power Apps V2 trigger and cannot be called
  * from a web app. The shifts.ts implementation uses direct Dataverse queries.
  */
@@ -45,11 +41,11 @@ export async function buildRotaView(params: {
   rotaId?: string;
 }): Promise<ParsedRotaViewData | null> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('buildRotaView')) {
     console.warn(
       '[flows] buildRotaView flow not configured. ' +
-      'Use getRotaGridData() from shifts.ts instead.'
+        'Use getRotaGridData() from shifts.ts instead.'
     );
     return null;
   }
@@ -73,7 +69,7 @@ export async function buildRotaView(params: {
 
 /**
  * Get Time Away From Work (absences) for staff members
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to GetTAFWforstaffmember flow
  */
 export async function getTAFW(params: {
@@ -82,7 +78,7 @@ export async function getTAFW(params: {
   endDate: string;
 }): Promise<StaffAbsenceLog[]> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('getTAFW')) {
     console.warn('[flows] getTAFW flow not configured');
     return [];
@@ -102,7 +98,7 @@ export async function getTAFW(params: {
 
 /**
  * Get shifts from other rotas for the same staff (dual-location visibility)
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to GetOtherShiftsbyStaffMemberandDate flow
  */
 export async function getOtherShifts(params: {
@@ -112,7 +108,7 @@ export async function getOtherShifts(params: {
   excludeRotaId: string;
 }): Promise<ShiftViewData[]> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('getOtherShifts')) {
     console.warn('[flows] getOtherShifts flow not configured');
     return [];
@@ -166,7 +162,7 @@ export interface AssignedPerson {
 
 /**
  * Create multiple shifts based on pattern/recurrence settings
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to Rostering-CreateBulkShift flow.
  * Alternative: Use createShift() from shifts.ts for single shift creation.
  */
@@ -176,15 +172,15 @@ export async function createBulkShift(params: {
   staffMembersXml: string;
 }): Promise<boolean> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('createBulkShift')) {
     console.error(
       '[flows] createBulkShift flow not configured. ' +
-      'Add HTTP trigger to the flow or use createShift() from shifts.ts.'
+        'Add HTTP trigger to the flow or use createShift() from shifts.ts.'
     );
     throw new Error(
       'Bulk shift creation is not available. The Power Automate flow needs an HTTP trigger. ' +
-      'Please contact your administrator or create shifts individually.'
+        'Please contact your administrator or create shifts individually.'
     );
   }
 
@@ -207,7 +203,7 @@ export async function createBulkShift(params: {
 
 /**
  * Validate and handle shift time conflicts
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to HandleClashingShifts flow
  */
 export async function handleClashingShifts(params: {
@@ -218,7 +214,7 @@ export async function handleClashingShifts(params: {
   excludeShiftIds?: string[];
 }): Promise<{ hasClash: boolean; clashingShifts: string[] }> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('handleClashingShifts')) {
     console.warn('[flows] handleClashingShifts flow not configured');
     // Return no clash as fallback - validation should happen server-side
@@ -235,16 +231,16 @@ export async function handleClashingShifts(params: {
 
 /**
  * Remove staff assignment from a shift
- * 
+ *
  * NOTE: Requires HTTP trigger or use updateShift() from shifts.ts
  */
 export async function unassignShift(shiftId: string): Promise<boolean> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('unassignStaff')) {
     console.warn(
       '[flows] unassignStaff flow not configured. ' +
-      'Use updateShift() from shifts.ts to clear staff assignment.'
+        'Use updateShift() from shifts.ts to clear staff assignment.'
     );
     return false;
   }
@@ -260,12 +256,12 @@ export async function unassignShift(shiftId: string): Promise<boolean> {
 
 /**
  * Remove agency worker from a shift
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to flow
  */
 export async function removeAgencyWorker(shiftId: string): Promise<boolean> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('removeAgency')) {
     console.warn('[flows] removeAgency flow not configured');
     return false;
@@ -286,7 +282,7 @@ export async function removeAgencyWorker(shiftId: string): Promise<boolean> {
 
 /**
  * Send notifications for published shifts
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to SendRotaNotifications flow
  */
 export async function sendRotaNotifications(params: {
@@ -296,7 +292,7 @@ export async function sendRotaNotifications(params: {
   endDate: string;
 }): Promise<boolean> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('sendNotifications')) {
     console.warn('[flows] sendNotifications flow not configured');
     return false;
@@ -317,7 +313,7 @@ export async function sendRotaNotifications(params: {
 
 /**
  * Generate PDF export of rota
- * 
+ *
  * NOTE: Requires HTTP trigger to be added to GeneratePDF flow
  */
 export async function generatePDF(params: {
@@ -327,7 +323,7 @@ export async function generatePDF(params: {
   sublocationName: string;
 }): Promise<Blob | null> {
   const client = getFlowClient();
-  
+
   if (!client.isFlowConfigured('generatePDF')) {
     console.warn('[flows] generatePDF flow not configured');
     return null;
@@ -347,7 +343,7 @@ export async function generatePDF(params: {
 
 /**
  * Log application errors
- * 
+ *
  * NOTE: Falls back to console logging if flow not configured
  */
 export async function logError(error: {
@@ -357,7 +353,7 @@ export async function logError(error: {
   userId?: string;
 }): Promise<void> {
   const client = getFlowClient();
-  
+
   try {
     await client.logError({
       message: error.message,

@@ -1,9 +1,9 @@
 /**
  * UnassignedShiftsRow Component
- * 
+ *
  * Displays unassigned/vacant shifts within each team section in the Team View.
  * Appears at the bottom of each team's staff rows.
- * 
+ *
  * Features:
  * - Warning icon and count badge
  * - Vacant shift cards with "VACANT" label
@@ -14,10 +14,10 @@
  * - Quick assign suggestions (future)
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
-import { AlertTriangle, UserPlus, Clock, Plus } from 'lucide-react';
-import type { Shift, StaffMember } from '../../api/dataverse/types';
+import { AlertTriangle, UserPlus } from 'lucide-react';
+import type { Shift, StaffMember } from '@/api/dataverse/types';
 
 // =============================================================================
 // TYPES
@@ -53,12 +53,12 @@ interface ProcessedVacantShift {
 
 function getShiftType(shift: Shift): 'day' | 'night' | 'sleepIn' {
   if (shift.cp365_sleepin) return 'sleepIn';
-  
+
   if (shift.cp365_shiftstarttime) {
     const startHour = new Date(shift.cp365_shiftstarttime).getHours();
     if (startHour >= 20 || startHour < 6) return 'night';
   }
-  
+
   return 'day';
 }
 
@@ -93,24 +93,24 @@ function calculateDuration(shift: Shift): number {
 // =============================================================================
 
 export function UnassignedShiftsRow({
-  teamId,
+  teamId: _teamId,
   vacantShifts,
   dateRange,
   onAssign,
   onShiftClick,
-  availableStaff = [],
+  availableStaff: _availableStaff = [],
   showWhenEmpty = false,
 }: UnassignedShiftsRowProps) {
   // Process and group shifts by date
   const shiftsByDate = useMemo(() => {
     const map = new Map<string, ProcessedVacantShift[]>();
-    
+
     for (const shift of vacantShifts) {
       const dateKey = shift.cp365_shiftdate;
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
-      
+
       map.get(dateKey)!.push({
         shift,
         shiftType: getShiftType(shift),
@@ -118,7 +118,7 @@ export function UnassignedShiftsRow({
         duration: calculateDuration(shift),
       });
     }
-    
+
     return map;
   }, [vacantShifts]);
 
@@ -136,16 +136,22 @@ export function UnassignedShiftsRow({
       <td className="sticky left-0 z-10 w-52 min-w-52 border-b-2 border-b-red-300 border-r border-border-grey bg-[#FFF5F5] px-3 py-2">
         <div className="flex items-center gap-2">
           {/* Warning icon */}
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-            hasVacancies ? 'bg-red-100' : 'bg-gray-100'
-          }`}>
-            <AlertTriangle className={`h-5 w-5 ${hasVacancies ? 'text-red-500' : 'text-gray-400'}`} />
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+              hasVacancies ? 'bg-red-100' : 'bg-gray-100'
+            }`}
+          >
+            <AlertTriangle
+              className={`h-5 w-5 ${hasVacancies ? 'text-red-500' : 'text-gray-400'}`}
+            />
           </div>
-          
+
           {/* Label and count */}
           <div>
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-semibold ${hasVacancies ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span
+                className={`text-sm font-semibold ${hasVacancies ? 'text-gray-900' : 'text-gray-500'}`}
+              >
                 Unassigned Shifts
               </span>
               {hasVacancies && (
@@ -155,10 +161,9 @@ export function UnassignedShiftsRow({
               )}
             </div>
             <span className="text-xs text-gray-500">
-              {hasVacancies 
+              {hasVacancies
                 ? `${totalVacancies} unassigned ${totalVacancies === 1 ? 'shift' : 'shifts'}`
-                : 'No vacancies'
-              }
+                : 'No vacancies'}
             </span>
           </div>
         </div>
@@ -170,7 +175,6 @@ export function UnassignedShiftsRow({
         const dayShifts = shiftsByDate.get(dateKey) || [];
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
         const isToday = isSameDay(date, new Date());
-        const hasShiftsToday = dayShifts.length > 0;
 
         return (
           <td
@@ -190,7 +194,7 @@ export function UnassignedShiftsRow({
                   remainingCount={idx === 2 ? dayShifts.length - 3 : 0}
                 />
               ))}
-              
+
               {/* Show condensed view for many shifts */}
               {dayShifts.length > 3 && (
                 <button
@@ -222,14 +226,14 @@ interface VacantShiftCardProps {
   remainingCount?: number;
 }
 
-function VacantShiftCard({ 
-  processedShift, 
-  onAssign, 
+function VacantShiftCard({
+  processedShift,
+  onAssign,
   onClick,
   showMore,
   remainingCount,
 }: VacantShiftCardProps) {
-  const { shift, shiftType, timeLabel, duration } = processedShift;
+  const { shift: _shift, shiftType, timeLabel, duration } = processedShift;
 
   // Don't render if this is a "show more" placeholder
   if (showMore && remainingCount && remainingCount > 0) {
@@ -263,12 +267,8 @@ function VacantShiftCard({
         }}
         className="block w-full text-left"
       >
-        <div className="text-sm font-semibold text-gray-800">
-          {timeLabel}
-        </div>
-        <div className="text-xs text-gray-600">
-          {duration}h
-        </div>
+        <div className="text-sm font-semibold text-gray-800">{timeLabel}</div>
+        <div className="text-xs text-gray-600">{duration}h</div>
       </button>
 
       {/* Assign button */}
@@ -320,13 +320,13 @@ export function GlobalUnassignedRow({
   // Group by date
   const shiftsByDate = useMemo(() => {
     const map = new Map<string, ProcessedVacantShift[]>();
-    
+
     for (const shift of vacantShifts) {
       const dateKey = shift.cp365_shiftdate;
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
-      
+
       map.get(dateKey)!.push({
         shift,
         shiftType: getShiftType(shift),
@@ -334,7 +334,7 @@ export function GlobalUnassignedRow({
         duration: calculateDuration(shift),
       });
     }
-    
+
     return map;
   }, [vacantShifts]);
 
@@ -344,19 +344,25 @@ export function GlobalUnassignedRow({
   return (
     <tr className={`bg-[#f5f5f5] ${hasVacancies ? '' : ''}`}>
       {/* Row header */}
-      <td className={`sticky left-0 z-10 w-56 min-w-56 border-b border-r ${
-        hasVacancies ? 'border-b-warning border-b-2' : 'border-border-grey'
-      } bg-[#f5f5f5] px-3 py-2`}>
+      <td
+        className={`sticky left-0 z-10 w-56 min-w-56 border-b border-r ${
+          hasVacancies ? 'border-b-warning border-b-2' : 'border-border-grey'
+        } bg-[#f5f5f5] px-3 py-2`}
+      >
         <div className="flex items-center gap-2">
-          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-            hasVacancies ? 'bg-warning/20' : 'bg-gray-200'
-          }`}>
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+              hasVacancies ? 'bg-warning/20' : 'bg-gray-200'
+            }`}
+          >
             <span className="text-lg" role="img" aria-label="unassigned">
               {hasVacancies ? '⚠️' : '📋'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${hasVacancies ? 'text-gray-900' : 'text-gray-600'}`}>
+            <span
+              className={`text-sm font-medium ${hasVacancies ? 'text-gray-900' : 'text-gray-600'}`}
+            >
               Unassigned
             </span>
             {hasVacancies && (
@@ -369,9 +375,11 @@ export function GlobalUnassignedRow({
       </td>
 
       {/* Total hours cell (for People View alignment) */}
-      <td className={`w-16 min-w-16 border-b border-r ${
-        hasVacancies ? 'border-b-warning border-b-2' : 'border-border-grey'
-      } border-r-border-grey bg-[#f5f5f5] px-2 py-2`} />
+      <td
+        className={`w-16 min-w-16 border-b border-r ${
+          hasVacancies ? 'border-b-warning border-b-2' : 'border-border-grey'
+        } border-r-border-grey bg-[#f5f5f5] px-2 py-2`}
+      />
 
       {/* Shift cells */}
       {dateRange.map((date, index) => {
@@ -399,7 +407,7 @@ export function GlobalUnassignedRow({
                   onClick={() => onShiftClick?.(ps.shift)}
                 />
               ))}
-              
+
               {dayShifts.length > 3 && (
                 <div className="rounded border border-dashed border-gray-400 bg-gray-100 px-2 py-0.5 text-center text-xs text-gray-600">
                   +{dayShifts.length - 3} more
@@ -424,7 +432,7 @@ interface CompactVacantCardProps {
 }
 
 function CompactVacantCard({ processedShift, onAssign, onClick }: CompactVacantCardProps) {
-  const { shift, shiftType, timeLabel } = processedShift;
+  const { shift: _shift, shiftType, timeLabel } = processedShift;
   const iconEmoji = shiftType === 'night' ? '🌙' : shiftType === 'sleepIn' ? '🛏️' : '☀️';
 
   return (
@@ -443,9 +451,9 @@ function CompactVacantCard({ processedShift, onAssign, onClick }: CompactVacantC
         <span className="text-sm">{iconEmoji}</span>
         <span className="text-xs font-semibold text-gray-700">{timeLabel}</span>
       </div>
-      
+
       {/* Assign button appears on hover */}
-      <div 
+      <div
         onClick={(e) => {
           e.stopPropagation();
           onAssign();
@@ -469,4 +477,3 @@ function CompactVacantCard({ processedShift, onAssign, onClick }: CompactVacantC
 // =============================================================================
 
 export type { UnassignedShiftsRowProps, GlobalUnassignedRowProps };
-

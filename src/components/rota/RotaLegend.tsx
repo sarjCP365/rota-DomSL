@@ -1,9 +1,9 @@
 /**
  * RotaLegend Component
- * 
+ *
  * Displays a legend explaining the visual indicators on the rota grid.
  * Shows shift types, badges, and special states with colour coding.
- * 
+ *
  * Features:
  * - Horizontal bar layout below filters
  * - Colour-coded shift type indicators
@@ -14,24 +14,13 @@
  */
 
 import { useState } from 'react';
-import { 
-  Flame, 
-  Heart, 
-  Sun, 
-  Moon, 
-  Bed,
-  User, 
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Info,
-} from 'lucide-react';
+import { Flame, Heart, User, AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type LegendItemType = 
+export type LegendItemType =
   | 'fireWarden'
   | 'firstAider'
   | 'dayShift'
@@ -107,7 +96,7 @@ const LEGEND_ITEMS: LegendItem[] = [
     textColor: 'text-white',
     tooltip: 'Additional hours beyond contracted time',
   },
-  
+
   // Leave Types
   {
     type: 'annualLeave',
@@ -133,7 +122,7 @@ const LEGEND_ITEMS: LegendItem[] = [
     borderStyle: 'border border-blue-300',
     tooltip: 'Staff member attending training',
   },
-  
+
   // Special States
   {
     type: 'unassigned',
@@ -150,7 +139,7 @@ const LEGEND_ITEMS: LegendItem[] = [
     bgColor: 'bg-gray-100',
     tooltip: 'Shift not yet published to staff',
   },
-  
+
   // Qualifications/Badges
   {
     type: 'fireWarden',
@@ -197,21 +186,19 @@ const LEGEND_ITEMS: LegendItem[] = [
 ];
 
 // Group items by category for organised display
-const SHIFT_TYPES = LEGEND_ITEMS.filter(i => 
+const SHIFT_TYPES = LEGEND_ITEMS.filter((i) =>
   ['dayShift', 'nightShift', 'sleepIn', 'overtime'].includes(i.type)
 );
 
-const LEAVE_TYPES = LEGEND_ITEMS.filter(i => 
+const LEAVE_TYPES = LEGEND_ITEMS.filter((i) =>
   ['annualLeave', 'sickLeave', 'training'].includes(i.type)
 );
 
-const BADGES = LEGEND_ITEMS.filter(i => 
+const BADGES = LEGEND_ITEMS.filter((i) =>
   ['fireWarden', 'firstAider', 'shiftLeader', 'actUp', 'senior'].includes(i.type)
 );
 
-const SPECIAL_STATES = LEGEND_ITEMS.filter(i => 
-  ['unassigned', 'unpublished'].includes(i.type)
-);
+const SPECIAL_STATES = LEGEND_ITEMS.filter((i) => ['unassigned', 'unpublished'].includes(i.type));
 
 // =============================================================================
 // MAIN COMPONENT
@@ -267,20 +254,14 @@ export function RotaLegend({
             </span>
           )}
           {item.icon && !item.emoji && item.icon}
-          
+
           {/* Badge */}
           {item.badge && !item.emoji && !item.icon && (
-            <span className={`font-bold ${item.textColor || ''}`}>
-              {item.badge}
-            </span>
+            <span className={`font-bold ${item.textColor || ''}`}>{item.badge}</span>
           )}
-          
+
           {/* Label */}
-          {!compact && (
-            <span className="whitespace-nowrap font-medium">
-              {item.label}
-            </span>
-          )}
+          {!compact && <span className="whitespace-nowrap font-medium">{item.label}</span>}
         </button>
 
         {/* Tooltip */}
@@ -293,18 +274,6 @@ export function RotaLegend({
       </div>
     );
   };
-
-  // Render a category section
-  const renderCategory = (title: string, items: LegendItem[]) => (
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-        {title}:
-      </span>
-      <div className="flex flex-wrap items-center gap-1.5">
-        {items.map(renderItem)}
-      </div>
-    </div>
-  );
 
   return (
     <div className="border-b border-border-grey bg-gray-50">
@@ -338,19 +307,15 @@ export function RotaLegend({
           <div className="hidden items-center gap-2 md:flex">
             <span className="text-xs font-semibold text-gray-600">Legend:</span>
           </div>
-          
+
           {/* Shift Types */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {SHIFT_TYPES.map(renderItem)}
-          </div>
+          <div className="flex flex-wrap items-center gap-1.5">{SHIFT_TYPES.map(renderItem)}</div>
 
           {/* Separator */}
           <div className="hidden h-4 w-px bg-gray-300 md:block" />
 
           {/* Leave Types */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {LEAVE_TYPES.map(renderItem)}
-          </div>
+          <div className="flex flex-wrap items-center gap-1.5">{LEAVE_TYPES.map(renderItem)}</div>
 
           {/* Separator */}
           <div className="hidden h-4 w-px bg-gray-300 md:block" />
@@ -364,9 +329,7 @@ export function RotaLegend({
           <div className="hidden h-4 w-px bg-gray-300 md:block" />
 
           {/* Badges */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {BADGES.map(renderItem)}
-          </div>
+          <div className="flex flex-wrap items-center gap-1.5">{BADGES.map(renderItem)}</div>
         </div>
       </div>
     </div>
@@ -412,4 +375,3 @@ export function RotaLegendCompact() {
 // =============================================================================
 
 export type { RotaLegendProps, LegendItem };
-

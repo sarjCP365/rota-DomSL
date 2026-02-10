@@ -4,7 +4,7 @@
  * Based on CURSOR-DAILY-VIEW-PROMPTS.md Prompt 7
  */
 
-import type { ShiftViewData } from '../api/dataverse/types';
+import type { ShiftViewData } from '@/api/dataverse/types';
 
 // =============================================================================
 // Types
@@ -59,7 +59,7 @@ export const ShiftStatusCodes = {
 
 /**
  * Calculate the attendance status for a shift
- * 
+ *
  * Status logic:
  * - Absent: Shift has absent status flag
  * - Worked: Clocked in AND clocked out
@@ -74,7 +74,7 @@ export function getAttendanceStatus(
   const shiftStart = parseShiftTime(shift['Shift Start Time']);
   const clockedIn = shift['Clocked In'] ? new Date(shift['Clocked In']) : null;
   const clockedOut = shift['Clocked Out'] ? new Date(shift['Clocked Out']) : null;
-  
+
   // Check for absent status (if status code indicates absent)
   const statusCode = shift['Shift Status Code'] ?? shift['Shift Status'];
   if (statusCode === ShiftStatusCodes.Absent) {
@@ -112,9 +112,9 @@ export function getAttendanceDetails(
   const shiftEnd = parseShiftTime(shift['Shift End Time']);
   const clockedIn = shift['Clocked In'] ? new Date(shift['Clocked In']) : null;
   const clockedOut = shift['Clocked Out'] ? new Date(shift['Clocked Out']) : null;
-  
+
   const status = getAttendanceStatus(shift, referenceTime);
-  
+
   // Calculate minutes late
   let minutesLate = 0;
   if (status === 'late' && shiftStart) {
@@ -155,13 +155,16 @@ export function getStatusConfig(status: AttendanceStatus): {
   dotColour: string;
   icon: string;
 } {
-  const configs: Record<AttendanceStatus, {
-    label: string;
-    colour: string;
-    bgColour: string;
-    dotColour: string;
-    icon: string;
-  }> = {
+  const configs: Record<
+    AttendanceStatus,
+    {
+      label: string;
+      colour: string;
+      bgColour: string;
+      dotColour: string;
+      icon: string;
+    }
+  > = {
     present: {
       label: 'Present',
       colour: 'text-green-800',
@@ -257,16 +260,16 @@ export function isShiftActive(
 ): boolean {
   const shiftStart = parseShiftTime(shift['Shift Start Time']);
   const shiftEnd = parseShiftTime(shift['Shift End Time']);
-  
+
   if (!shiftStart || !shiftEnd) return false;
-  
+
   // Handle overnight shifts
   let effectiveEnd = shiftEnd;
   if (shiftEnd < shiftStart) {
     effectiveEnd = new Date(shiftEnd);
     effectiveEnd.setDate(effectiveEnd.getDate() + 1);
   }
-  
+
   return referenceTime >= shiftStart && referenceTime <= effectiveEnd;
 }
 
@@ -279,16 +282,16 @@ export function hasShiftEnded(
 ): boolean {
   const shiftEnd = parseShiftTime(shift['Shift End Time']);
   const shiftStart = parseShiftTime(shift['Shift Start Time']);
-  
+
   if (!shiftEnd) return false;
-  
+
   // Handle overnight shifts
   let effectiveEnd = shiftEnd;
   if (shiftStart && shiftEnd < shiftStart) {
     effectiveEnd = new Date(shiftEnd);
     effectiveEnd.setDate(effectiveEnd.getDate() + 1);
   }
-  
+
   return referenceTime > effectiveEnd;
 }
 
@@ -324,8 +327,8 @@ export function filterByStatus(
   referenceTime: Date = new Date()
 ): ShiftWithAttendance[] {
   if (status === 'all') return shifts;
-  
-  return shifts.filter(shift => getAttendanceStatus(shift, referenceTime) === status);
+
+  return shifts.filter((shift) => getAttendanceStatus(shift, referenceTime) === status);
 }
 
 export default {
@@ -340,4 +343,3 @@ export default {
   countByStatus,
   filterByStatus,
 };
-

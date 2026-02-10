@@ -5,30 +5,24 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import {
-  ChevronLeft,
-  Save,
-  Loader2,
-  CalendarClock,
-  AlertTriangle,
-  Check,
-  X,
-  Users,
-  Settings2,
-} from 'lucide-react';
+import { ChevronLeft, Save, Loader2, AlertTriangle, Users, Settings2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { usePatternTemplate, useCreatePatternTemplate, useUpdatePatternTemplate } from '../hooks/usePatternTemplates';
+import {
+  usePatternTemplate,
+  useCreatePatternTemplate,
+  useUpdatePatternTemplate,
+} from '../hooks/usePatternTemplates';
 import { bulkCreatePatternDays, replacePatternDays } from '../api/patternDays';
 import type { PatternFormData, PatternDayFormData, DayOfWeek } from '../types';
-import { PatternPublishStatus, GenerationWindow, DayOfWeek as DayOfWeekEnum, DayOfWeekShortLabels } from '../types';
-import { SideNav, useSideNav } from '../../../components/common/SideNav';
+import { PatternPublishStatus, GenerationWindow } from '../types';
+import { SideNav, useSideNav } from '@/components/common/SideNav';
 import { WeekGrid, PatternSummary, PatternValidation } from '../components/PatternBuilder';
 import { PatternAssignedStaff } from '../components/PatternDetails';
-import { useShiftReferences, useShiftActivities } from '../../../hooks/useShifts';
-import { useLocationSettings } from '../../../store/settingsStore';
-import { useLocations } from '../../../hooks/useLocations';
+import { useShiftReferences, useShiftActivities } from '@/hooks/useShifts';
+import { useLocationSettings } from '@/store/settingsStore';
+import { useLocations } from '@/hooks/useLocations';
 import { MapPin } from 'lucide-react';
 
 type TabType = 'details' | 'assigned';
@@ -53,17 +47,22 @@ export function PatternBuilderPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id && id !== 'new';
-  const { isOpen: isSideNavOpen, toggle: toggleSideNav, close: closeSideNav } = useSideNav();
+  const { isOpen: isSideNavOpen, close: closeSideNav } = useSideNav();
 
   // Location data
   const { data: locations = [], isLoading: isLoadingLocations } = useLocations();
-  
+
   // Get location settings for fetching shift references and default location
   const { selectedLocationId, selectedSublocationId } = useLocationSettings();
-  
+
   // Queries
-  const { data: existingPattern, isLoading: isLoadingPattern } = usePatternTemplate(isEditMode ? id : undefined);
-  const { data: shiftReferences = [] } = useShiftReferences(selectedSublocationId, selectedLocationId);
+  const { data: existingPattern, isLoading: isLoadingPattern } = usePatternTemplate(
+    isEditMode ? id : undefined
+  );
+  const { data: shiftReferences = [] } = useShiftReferences(
+    selectedSublocationId,
+    selectedLocationId
+  );
   const { data: shiftActivities = [] } = useShiftActivities();
 
   // Mutations
@@ -77,7 +76,7 @@ export function PatternBuilderPage() {
     control,
     watch,
     reset,
-    formState: { errors, isDirty, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<PatternFormValues>({
     resolver: zodResolver(patternFormSchema),
     defaultValues: {
@@ -96,7 +95,7 @@ export function PatternBuilderPage() {
   // Pattern days state
   const [patternDays, setPatternDays] = useState<PatternDayFormData[]>([]);
   const [selectedWeek, setSelectedWeek] = useState(1);
-  
+
   // Tab state (only show tabs in edit mode)
   const [activeTab, setActiveTab] = useState<TabType>('details');
 
@@ -115,7 +114,7 @@ export function PatternBuilderPage() {
 
       // Initialize pattern days from loaded data
       const loadedDays = existingPattern.cp365_shiftpatterntemplate_days || [];
-      
+
       if (loadedDays.length > 0) {
         // Use loaded days from Dataverse
         setPatternDays(
@@ -157,9 +156,7 @@ export function PatternBuilderPage() {
       for (let week = 1; week <= rotationCycleWeeks; week++) {
         for (let day = 1; day <= 7; day++) {
           // Check if day already exists
-          const existing = patternDays.find(
-            (d) => d.weekNumber === week && d.dayOfWeek === day
-          );
+          const existing = patternDays.find((d) => d.weekNumber === week && d.dayOfWeek === day);
           if (existing) {
             newDays.push(existing);
           } else {
@@ -196,44 +193,23 @@ export function PatternBuilderPage() {
         days: patternDays,
       };
 
-      // Debug: Log pattern days being saved
-      console.log('[PatternBuilder] Saving pattern with', patternDays.length, 'days');
-      console.log('[PatternBuilder] Days summary:', patternDays.map(d => ({
-        week: d.weekNumber,
-        day: d.dayOfWeek,
-        isRestDay: d.isRestDay,
-        shiftRef: d.shiftReferenceId,
-        startTime: d.startTime,
-        endTime: d.endTime,
-      })));
-
       if (isEditMode && existingPattern) {
         // Update existing pattern
-        console.log('[PatternBuilder] Updating pattern:', existingPattern.cp365_shiftpatterntemplatenewid);
         await updatePattern.mutateAsync({
           id: existingPattern.cp365_shiftpatterntemplatenewid,
           data: formData,
         });
 
         // Replace pattern days
-        console.log('[PatternBuilder] Replacing pattern days...');
-        const createdDays = await replacePatternDays(existingPattern.cp365_shiftpatterntemplatenewid, patternDays);
-        console.log('[PatternBuilder] Created', createdDays.length, 'days');
-
-        console.log('[PatternBuilder] Pattern updated successfully');
+        await replacePatternDays(existingPattern.cp365_shiftpatterntemplatenewid, patternDays);
       } else {
         // Create new pattern
         const newPattern = await createPattern.mutateAsync(formData);
-        console.log('[PatternBuilder] Created pattern:', newPattern.cp365_shiftpatterntemplatenewid);
 
         // Create pattern days
         if (patternDays.length > 0) {
-          console.log('[PatternBuilder] Creating pattern days...');
-          const createdDays = await bulkCreatePatternDays(newPattern.cp365_shiftpatterntemplatenewid, patternDays);
-          console.log('[PatternBuilder] Created', createdDays.length, 'days');
+          await bulkCreatePatternDays(newPattern.cp365_shiftpatterntemplatenewid, patternDays);
         }
-
-        console.log('[PatternBuilder] Pattern created successfully');
       }
 
       navigate('/patterns');
@@ -244,39 +220,43 @@ export function PatternBuilderPage() {
   };
 
   // Handle individual day change
-  const handleDayChange = useCallback((dayOfWeek: DayOfWeek, data: PatternDayFormData) => {
-    setPatternDays((prev) => {
-      const index = prev.findIndex(
-        (d) => d.weekNumber === selectedWeek && d.dayOfWeek === dayOfWeek
-      );
-      if (index >= 0) {
-        const newDays = [...prev];
-        newDays[index] = { ...data, weekNumber: selectedWeek, dayOfWeek };
-        return newDays;
-      } else {
-        return [...prev, { ...data, weekNumber: selectedWeek, dayOfWeek }];
-      }
-    });
-  }, [selectedWeek]);
-  
+  const handleDayChange = useCallback(
+    (dayOfWeek: DayOfWeek, data: PatternDayFormData) => {
+      setPatternDays((prev) => {
+        const index = prev.findIndex(
+          (d) => d.weekNumber === selectedWeek && d.dayOfWeek === dayOfWeek
+        );
+        if (index >= 0) {
+          const newDays = [...prev];
+          newDays[index] = { ...data, weekNumber: selectedWeek, dayOfWeek };
+          return newDays;
+        } else {
+          return [...prev, { ...data, weekNumber: selectedWeek, dayOfWeek }];
+        }
+      });
+    },
+    [selectedWeek]
+  );
+
   // Handle copy week functionality
-  const handleCopyWeek = useCallback((targetWeek: number) => {
-    // Get days from current selected week
-    const sourceDays = patternDays.filter((d) => d.weekNumber === selectedWeek);
-    
-    setPatternDays((prev) => {
-      // Remove existing days for target week
-      const otherDays = prev.filter((d) => d.weekNumber !== targetWeek);
-      // Copy source days to target week
-      const copiedDays = sourceDays.map((d) => ({
-        ...d,
-        weekNumber: targetWeek,
-      }));
-      return [...otherDays, ...copiedDays];
-    });
-    
-    console.log(`[PatternBuilder] Copied week ${selectedWeek} to week ${targetWeek}`);
-  }, [selectedWeek, patternDays]);
+  const handleCopyWeek = useCallback(
+    (targetWeek: number) => {
+      // Get days from current selected week
+      const sourceDays = patternDays.filter((d) => d.weekNumber === selectedWeek);
+
+      setPatternDays((prev) => {
+        // Remove existing days for target week
+        const otherDays = prev.filter((d) => d.weekNumber !== targetWeek);
+        // Copy source days to target week
+        const copiedDays = sourceDays.map((d) => ({
+          ...d,
+          weekNumber: targetWeek,
+        }));
+        return [...otherDays, ...copiedDays];
+      });
+    },
+    [selectedWeek, patternDays]
+  );
 
   if (isEditMode && isLoadingPattern) {
     return (
@@ -311,10 +291,7 @@ export function PatternBuilderPage() {
         <header className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                to="/patterns"
-                className="rounded-lg p-2 hover:bg-white/10"
-              >
+              <Link to="/patterns" className="rounded-lg p-2 hover:bg-white/10">
                 <ChevronLeft className="h-5 w-5" />
               </Link>
               <div>
@@ -339,7 +316,7 @@ export function PatternBuilderPage() {
                 disabled={isSubmitting || createPattern.isPending || updatePattern.isPending}
                 className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-600 shadow-sm hover:bg-emerald-50 disabled:opacity-50"
               >
-                {(isSubmitting || createPattern.isPending || updatePattern.isPending) ? (
+                {isSubmitting || createPattern.isPending || updatePattern.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Save className="h-4 w-4" />
@@ -388,212 +365,212 @@ export function PatternBuilderPage() {
           {isEditMode && activeTab === 'assigned' ? (
             <div className="mx-auto max-w-5xl">
               <PatternAssignedStaff
-                patternTemplateId={id!}
+                patternTemplateId={id}
                 patternName={existingPattern?.cp365_name || 'Pattern'}
               />
             </div>
           ) : (
-          /* Pattern Details Tab / Create Mode */
-          <div className="mx-auto max-w-5xl">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Pattern Details Card */}
-              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-200 px-6 py-4">
-                  <h2 className="font-semibold text-slate-900">Pattern Details</h2>
-                </div>
-                <div className="p-6 space-y-4">
-                  {/* Location */}
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-emerald-600" />
-                        Location <span className="text-red-500">*</span>
-                      </span>
-                    </label>
-                    <Controller
-                      name="locationId"
-                      control={control}
-                      render={({ field }) => (
-                        <select
-                          {...field}
-                          disabled={isLoadingLocations}
-                          className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
-                        >
-                          <option value="">Select location...</option>
-                          {locations.map((location) => (
-                            <option key={location.cp365_locationid} value={location.cp365_locationid}>
-                              {location.cp365_locationname}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    />
-                    {errors.locationId && (
-                      <p className="mt-1 text-sm text-red-500">{errors.locationId.message}</p>
-                    )}
-                    <p className="mt-1 text-xs text-slate-500">
-                      This pattern will be available for staff at this location
-                    </p>
+            /* Pattern Details Tab / Create Mode */
+            <div className="mx-auto max-w-5xl">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Pattern Details Card */}
+                <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-6 py-4">
+                    <h2 className="font-semibold text-slate-900">Pattern Details</h2>
                   </div>
-
-                  {/* Name */}
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Pattern Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      {...register('name')}
-                      type="text"
-                      placeholder="e.g., 4-on-4-off Day Shifts"
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                    {errors.name && (
-                      <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
-                    )}
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Description
-                    </label>
-                    <textarea
-                      {...register('description')}
-                      rows={3}
-                      placeholder="Describe this pattern..."
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  {/* Settings Row */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    {/* Rotation Cycle */}
+                  <div className="p-6 space-y-4">
+                    {/* Location */}
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Rotation Cycle (Weeks) <span className="text-red-500">*</span>
+                        <span className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-emerald-600" />
+                          Location <span className="text-red-500">*</span>
+                        </span>
                       </label>
                       <Controller
-                        name="rotationCycleWeeks"
+                        name="locationId"
                         control={control}
                         render={({ field }) => (
                           <select
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                            className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            disabled={isLoadingLocations}
+                            className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
                           >
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                              <option key={n} value={n}>
-                                {n} {n === 1 ? 'Week' : 'Weeks'}
+                            <option value="">Select location...</option>
+                            {locations.map((location) => (
+                              <option
+                                key={location.cp365_locationid}
+                                value={location.cp365_locationid}
+                              >
+                                {location.cp365_locationname}
                               </option>
                             ))}
                           </select>
                         )}
                       />
+                      {errors.locationId && (
+                        <p className="mt-1 text-sm text-red-500">{errors.locationId.message}</p>
+                      )}
+                      <p className="mt-1 text-xs text-slate-500">
+                        This pattern will be available for staff at this location
+                      </p>
                     </div>
 
-                    {/* Default Publish Status */}
+                    {/* Name */}
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Default Publish Status
+                        Pattern Name <span className="text-red-500">*</span>
                       </label>
-                      <Controller
-                        name="defaultPublishStatus"
-                        control={control}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                            className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                          >
-                            <option value={PatternPublishStatus.Published}>Published</option>
-                            <option value={PatternPublishStatus.Unpublished}>Unpublished</option>
-                          </select>
-                        )}
+                      <input
+                        {...register('name')}
+                        type="text"
+                        placeholder="e.g., 4-on-4-off Day Shifts"
+                        className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Description
+                      </label>
+                      <textarea
+                        {...register('description')}
+                        rows={3}
+                        placeholder="Describe this pattern..."
+                        className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
 
-                    {/* Generation Window */}
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Generation Window
-                      </label>
-                      <Controller
-                        name="generationWindowWeeks"
-                        control={control}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                            className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                          >
-                            <option value={GenerationWindow.OneWeek}>1 Week Ahead</option>
-                            <option value={GenerationWindow.TwoWeeks}>2 Weeks Ahead</option>
-                            <option value={GenerationWindow.FourWeeks}>4 Weeks Ahead</option>
-                          </select>
-                        )}
-                      />
+                    {/* Settings Row */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      {/* Rotation Cycle */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Rotation Cycle (Weeks) <span className="text-red-500">*</span>
+                        </label>
+                        <Controller
+                          name="rotationCycleWeeks"
+                          control={control}
+                          render={({ field }) => (
+                            <select
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                <option key={n} value={n}>
+                                  {n} {n === 1 ? 'Week' : 'Weeks'}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        />
+                      </div>
+
+                      {/* Default Publish Status */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Default Publish Status
+                        </label>
+                        <Controller
+                          name="defaultPublishStatus"
+                          control={control}
+                          render={({ field }) => (
+                            <select
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                              <option value={PatternPublishStatus.Published}>Published</option>
+                              <option value={PatternPublishStatus.Unpublished}>Unpublished</option>
+                            </select>
+                          )}
+                        />
+                      </div>
+
+                      {/* Generation Window */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Generation Window
+                        </label>
+                        <Controller
+                          name="generationWindowWeeks"
+                          control={control}
+                          render={({ field }) => (
+                            <select
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            >
+                              <option value={GenerationWindow.OneWeek}>1 Week Ahead</option>
+                              <option value={GenerationWindow.TwoWeeks}>2 Weeks Ahead</option>
+                              <option value={GenerationWindow.FourWeeks}>4 Weeks Ahead</option>
+                            </select>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Week Tabs */}
-              {rotationCycleWeeks > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {Array.from({ length: rotationCycleWeeks }, (_, i) => i + 1).map((week) => (
-                    <button
-                      key={week}
-                      type="button"
-                      onClick={() => setSelectedWeek(week)}
-                      className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                        selectedWeek === week
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-white text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      Week {week}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {/* Week Tabs */}
+                {rotationCycleWeeks > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {Array.from({ length: rotationCycleWeeks }, (_, i) => i + 1).map((week) => (
+                      <button
+                        key={week}
+                        type="button"
+                        onClick={() => setSelectedWeek(week)}
+                        className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                          selectedWeek === week
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-white text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        Week {week}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-              {/* Main Content - Two Column Layout */}
-              <div className="grid gap-6 lg:grid-cols-3">
-                {/* Left Column - Week Grid */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Week Grid */}
-                  <WeekGrid
-                    weekNumber={selectedWeek}
-                    days={selectedWeekDays}
-                    rotationCycleWeeks={rotationCycleWeeks}
-                    shiftReferences={shiftReferences}
-                    shiftActivities={shiftActivities}
-                    onDayChange={handleDayChange}
-                    onCopyWeek={handleCopyWeek}
-                  />
+                {/* Main Content - Two Column Layout */}
+                <div className="grid gap-6 lg:grid-cols-3">
+                  {/* Left Column - Week Grid */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Week Grid */}
+                    <WeekGrid
+                      weekNumber={selectedWeek}
+                      days={selectedWeekDays}
+                      rotationCycleWeeks={rotationCycleWeeks}
+                      shiftReferences={shiftReferences}
+                      shiftActivities={shiftActivities}
+                      onDayChange={handleDayChange}
+                      onCopyWeek={handleCopyWeek}
+                    />
+                  </div>
+
+                  {/* Right Column - Summary & Validation */}
+                  <div className="space-y-6">
+                    {/* Pattern Summary */}
+                    <PatternSummary days={patternDays} rotationCycleWeeks={rotationCycleWeeks} />
+
+                    {/* Pattern Validation */}
+                    <PatternValidation
+                      days={patternDays}
+                      rotationCycleWeeks={rotationCycleWeeks}
+                      onNavigateToDay={(weekNumber, _dayOfWeek) => {
+                        setSelectedWeek(weekNumber);
+                        // Could also highlight the day in the grid
+                      }}
+                    />
+                  </div>
                 </div>
-                
-                {/* Right Column - Summary & Validation */}
-                <div className="space-y-6">
-                  {/* Pattern Summary */}
-                  <PatternSummary
-                    days={patternDays}
-                    rotationCycleWeeks={rotationCycleWeeks}
-                  />
-                  
-                  {/* Pattern Validation */}
-                  <PatternValidation
-                    days={patternDays}
-                    rotationCycleWeeks={rotationCycleWeeks}
-                    onNavigateToDay={(weekNumber, dayOfWeek) => {
-                      setSelectedWeek(weekNumber);
-                      // Could also highlight the day in the grid
-                    }}
-                  />
-                </div>
-              </div>
-            </form>
-          </div>
+              </form>
+            </div>
           )}
         </div>
       </main>
@@ -614,4 +591,3 @@ function extractTime(dateTime: string): string {
     return '00:00';
   }
 }
-

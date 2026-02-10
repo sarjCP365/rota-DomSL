@@ -12,4 +12,3 @@ export * from './DailyShiftFlyout';
 export * from './ShiftLeaderModal';
 export * from './LastUpdatedIndicator';
 export * from './ExportModal';
-

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Cache
+.cache/
+.eslintcache
+
+# Generated files
+rota-types.ts
+
+# Config files that shouldn't be reformatted
+package-lock.json
+*.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.md
+*.mdx

@@ -16,9 +16,9 @@ import {
   assignTeamToUnit,
   assignUnitToShift,
   getUnitsWithStats,
-} from '../api/dataverse/units';
-import { useAuthStore } from '../store/authStore';
-import type { Unit } from '../api/dataverse/types';
+} from '@/api/dataverse/units';
+import { useAuthStore } from '@/store/authStore';
+import type { Unit } from '@/api/dataverse/types';
 
 // =============================================================================
 // UNIT QUERY HOOKS
@@ -29,7 +29,7 @@ import type { Unit } from '../api/dataverse/types';
  */
 export function useUnitsByLocation(locationId: string | undefined) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['units', 'byLocation', locationId],
     queryFn: () => (locationId ? getUnitsByLocation(locationId) : []),
@@ -43,7 +43,7 @@ export function useUnitsByLocation(locationId: string | undefined) {
  */
 export function useAllUnits() {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['units', 'all'],
     queryFn: getAllUnits,
@@ -57,7 +57,7 @@ export function useAllUnits() {
  */
 export function useUnit(unitId: string | undefined) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['unit', unitId],
     queryFn: () => (unitId ? getUnitById(unitId) : null),
@@ -75,9 +75,16 @@ export function useUnitsWithStats(
   endDate: Date | undefined
 ) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
-    queryKey: ['units', 'withStats', locationId, sublocationId, startDate?.toISOString(), endDate?.toISOString()],
+    queryKey: [
+      'units',
+      'withStats',
+      locationId,
+      sublocationId,
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+    ],
     queryFn: () => {
       if (!locationId || !sublocationId || !startDate || !endDate) {
         return [];
@@ -98,16 +105,15 @@ export function useUnitsWithStats(
  */
 export function useCreateUnit() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (unit: Partial<Unit>) => createUnit(unit),
-    onSuccess: (newUnit) => {
+    onSuccess: () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['units'] });
-      console.log('[useCreateUnit] Unit created successfully:', newUnit.cp365_unitid);
     },
     onError: (error) => {
-      console.error('[useCreateUnit] Failed to create unit:', error);
+      console.error('[Units] Failed to create unit:', error);
     },
   });
 }
@@ -117,7 +123,7 @@ export function useCreateUnit() {
  */
 export function useUpdateUnit() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ unitId, unit }: { unitId: string; unit: Partial<Unit> }) =>
       updateUnit(unitId, unit),
@@ -125,10 +131,9 @@ export function useUpdateUnit() {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['units'] });
       queryClient.invalidateQueries({ queryKey: ['unit', variables.unitId] });
-      console.log('[useUpdateUnit] Unit updated successfully:', variables.unitId);
     },
     onError: (error) => {
-      console.error('[useUpdateUnit] Failed to update unit:', error);
+      console.error('[Units] Failed to update unit:', error);
     },
   });
 }
@@ -138,17 +143,16 @@ export function useUpdateUnit() {
  */
 export function useDeactivateUnit() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (unitId: string) => deactivateUnit(unitId),
     onSuccess: (_, unitId) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['units'] });
       queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-      console.log('[useDeactivateUnit] Unit deactivated successfully:', unitId);
     },
     onError: (error) => {
-      console.error('[useDeactivateUnit] Failed to deactivate unit:', error);
+      console.error('[Units] Failed to deactivate unit:', error);
     },
   });
 }
@@ -162,7 +166,7 @@ export function useDeactivateUnit() {
  */
 export function useTeamsForUnit(unitId: string | undefined) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['teams', 'byUnit', unitId],
     queryFn: () => (unitId ? getTeamsForUnit(unitId) : []),
@@ -176,7 +180,7 @@ export function useTeamsForUnit(unitId: string | undefined) {
  */
 export function useUnassignedTeams(locationId: string | undefined) {
   const isDataverseReady = useAuthStore((state) => state.isDataverseReady);
-  
+
   return useQuery({
     queryKey: ['teams', 'unassigned', locationId],
     queryFn: () => (locationId ? getUnassignedTeams(locationId) : []),
@@ -190,7 +194,7 @@ export function useUnassignedTeams(locationId: string | undefined) {
  */
 export function useAssignTeamToUnit() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ teamId, unitId }: { teamId: string; unitId: string | null }) =>
       assignTeamToUnit(teamId, unitId),
@@ -201,10 +205,9 @@ export function useAssignTeamToUnit() {
       if (variables.unitId) {
         queryClient.invalidateQueries({ queryKey: ['units', 'withStats'] });
       }
-      console.log('[useAssignTeamToUnit] Team assignment updated successfully');
     },
     onError: (error) => {
-      console.error('[useAssignTeamToUnit] Failed to assign team to unit:', error);
+      console.error('[Units] Failed to assign team to unit:', error);
     },
   });
 }
@@ -218,7 +221,7 @@ export function useAssignTeamToUnit() {
  */
 export function useAssignUnitToShift() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ shiftId, unitId }: { shiftId: string; unitId: string | null }) =>
       assignUnitToShift(shiftId, unitId),
@@ -227,11 +230,9 @@ export function useAssignUnitToShift() {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['rotaData'] });
       queryClient.invalidateQueries({ queryKey: ['units', 'withStats'] });
-      console.log('[useAssignUnitToShift] Shift unit assignment updated successfully');
     },
     onError: (error) => {
-      console.error('[useAssignUnitToShift] Failed to assign unit to shift:', error);
+      console.error('[Units] Failed to assign unit to shift:', error);
     },
   });
 }
-
