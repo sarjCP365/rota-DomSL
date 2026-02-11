@@ -127,7 +127,7 @@ export function useCreateStaffMember() {
   return useMutation({
     mutationFn: (data: Partial<StaffMember>) => createStaffMember(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      void queryClient.invalidateQueries({ queryKey: ['staff'] });
     },
   });
 }
@@ -143,8 +143,8 @@ export function useUpdateStaffMember() {
     mutationFn: ({ staffId, data }: { staffId: string; data: Partial<StaffMember> }) =>
       updateStaffMember(staffId, data),
     onSuccess: (_, { staffId }) => {
-      queryClient.invalidateQueries({ queryKey: ['staff'] });
-      queryClient.invalidateQueries({ queryKey: ['staff', 'member', staffId] });
+      void queryClient.invalidateQueries({ queryKey: ['staff'] });
+      void queryClient.invalidateQueries({ queryKey: ['staff', 'member', staffId] });
     },
   });
 }

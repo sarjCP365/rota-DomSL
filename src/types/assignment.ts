@@ -222,9 +222,7 @@ export function visitToAssignment(
   return {
     id: visit.cp365_visitid,
     type: 'visit',
-    date: typeof visit.cp365_visitdate === 'string'
-      ? visit.cp365_visitdate.split('T')[0]
-      : visit.cp365_visitdate.toISOString().split('T')[0],
+    date: visit.cp365_visitdate.split('T')[0],
     startTime: visit.cp365_scheduledstarttime,
     endTime: visit.cp365_scheduledendtime,
     durationMinutes: visit.cp365_durationminutes,

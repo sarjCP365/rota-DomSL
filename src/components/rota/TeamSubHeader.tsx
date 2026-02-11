@@ -76,10 +76,12 @@ export function TeamSubHeader({
   const hasIssues = onLeaveCount > 0 || unassignedCount > 0;
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover highlight container
     <div
       className="ml-6 mb-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="group"
     >
       <div
         className={`

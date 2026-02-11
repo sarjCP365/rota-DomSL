@@ -63,18 +63,18 @@ import type {
  * If the flows only have Power Apps V2 triggers, these URLs won't work
  * and you'll need to add HTTP triggers to the flows first.
  */
-const FLOW_URLS = {
-  buildRotaView: import.meta.env.VITE_FLOW_BUILD_ROTA_VIEW,
-  createBulkShift: import.meta.env.VITE_FLOW_CREATE_BULK_SHIFT,
-  getTAFW: import.meta.env.VITE_FLOW_GET_TAFW,
-  getOtherShifts: import.meta.env.VITE_FLOW_GET_OTHER_SHIFTS,
-  handleClashingShifts: import.meta.env.VITE_FLOW_HANDLE_CLASHING,
-  sendNotifications: import.meta.env.VITE_FLOW_SEND_NOTIFICATIONS,
-  unassignStaff: import.meta.env.VITE_FLOW_UNASSIGN_STAFF,
-  removeAgency: import.meta.env.VITE_FLOW_REMOVE_AGENCY,
-  generatePDF: import.meta.env.VITE_FLOW_GENERATE_PDF,
-  errorHandler: import.meta.env.VITE_FLOW_ERROR_HANDLER,
-} as const;
+const FLOW_URLS: Record<string, string | undefined> = {
+  buildRotaView: import.meta.env.VITE_FLOW_BUILD_ROTA_VIEW as string | undefined,
+  createBulkShift: import.meta.env.VITE_FLOW_CREATE_BULK_SHIFT as string | undefined,
+  getTAFW: import.meta.env.VITE_FLOW_GET_TAFW as string | undefined,
+  getOtherShifts: import.meta.env.VITE_FLOW_GET_OTHER_SHIFTS as string | undefined,
+  handleClashingShifts: import.meta.env.VITE_FLOW_HANDLE_CLASHING as string | undefined,
+  sendNotifications: import.meta.env.VITE_FLOW_SEND_NOTIFICATIONS as string | undefined,
+  unassignStaff: import.meta.env.VITE_FLOW_UNASSIGN_STAFF as string | undefined,
+  removeAgency: import.meta.env.VITE_FLOW_REMOVE_AGENCY as string | undefined,
+  generatePDF: import.meta.env.VITE_FLOW_GENERATE_PDF as string | undefined,
+  errorHandler: import.meta.env.VITE_FLOW_ERROR_HANDLER as string | undefined,
+};
 
 // =============================================================================
 // ERROR TYPES
@@ -185,7 +185,7 @@ export class FlowClient {
    * If the flow only has a Power Apps V2 trigger, this will fail.
    */
   private async callFlow<T>(
-    flowName: keyof typeof FLOW_URLS,
+    flowName: string,
     payload: Record<string, unknown>,
     options?: { authenticated?: boolean }
   ): Promise<T> {
@@ -235,7 +235,7 @@ export class FlowClient {
         return undefined as T;
       }
 
-      return response.json();
+      return response.json() as Promise<T>;
     } catch (error) {
       clearTimeout(timeoutId);
 

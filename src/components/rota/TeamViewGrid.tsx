@@ -974,6 +974,9 @@ function ShiftBlock({
           e.stopPropagation();
           onClick?.(e);
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>); } }}
+        role="button"
+        tabIndex={0}
         title={
           isUnpublished
             ? isSelectionMode
@@ -999,6 +1002,9 @@ function ShiftBlock({
         e.stopPropagation();
         onClick?.(e);
       }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>); } }}
+      role="button"
+      tabIndex={0}
       title={`${isUnpublished ? (isSelectionMode ? 'Click to select for publishing' : 'Unpublished shift') : ''}${isLeader ? ' (Shift Leader)' : ''}${isActUp ? ' (Act Up)' : ''}`}
       className={`mb-1 rounded border px-1 py-0.5 text-[10px] cursor-pointer hover:opacity-80 ${getBgColor()} ${getSelectionStyle()}`}
     >

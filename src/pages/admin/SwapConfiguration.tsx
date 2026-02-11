@@ -4,7 +4,7 @@
  * Admin page for configuring shift swap settings and rules.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Save, RefreshCw, Info, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { SideNav, useSideNav } from '@/components/common/SideNav';
 import PageHeader from '@/components/common/PageHeader';
@@ -43,18 +43,18 @@ export default function SwapConfigurationPage() {
   const [config, setConfig] = useState<SwapConfiguration>(DEFAULT_CONFIG);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Update form when config loads
-  useEffect(() => {
-    if (swapConfig) {
-      setConfig(swapConfig);
-    }
-  }, [swapConfig]);
+  // Update form when config loads (adjust state during render)
+  const [lastSyncedConfig, setLastSyncedConfig] = useState(swapConfig);
+  if (swapConfig && swapConfig !== lastSyncedConfig) {
+    setLastSyncedConfig(swapConfig);
+    setConfig(swapConfig);
+  }
 
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: updateSwapConfiguration,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['swapConfiguration'] });
+      void queryClient.invalidateQueries({ queryKey: ['swapConfiguration'] });
       setIsDirty(false);
     },
   });
@@ -110,11 +110,12 @@ export default function SwapConfigurationPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="swap-min-notice" className="block text-sm font-medium text-slate-700 mb-1">
                       Minimum Notice Period (hours)
                     </label>
                     <input
                       type="number"
+                      id="swap-min-notice"
                       min={0}
                       max={168}
                       value={config.minNoticeHours}
@@ -127,11 +128,12 @@ export default function SwapConfigurationPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="swap-max-per-week" className="block text-sm font-medium text-slate-700 mb-1">
                       Max Swaps Per Week
                     </label>
                     <input
                       type="number"
+                      id="swap-max-per-week"
                       min={0}
                       max={20}
                       value={config.maxSwapsPerWeek}
@@ -144,11 +146,12 @@ export default function SwapConfigurationPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="swap-shift-expiry" className="block text-sm font-medium text-slate-700 mb-1">
                       Open Shift Expiry (hours)
                     </label>
                     <input
                       type="number"
+                      id="swap-shift-expiry"
                       min={1}
                       max={168}
                       value={config.openShiftExpiryHours}
@@ -177,14 +180,14 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('requireManagerApproval', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Require Manager Approval
                       </span>
                       <span className="text-xs text-slate-500">
                         All swap requests must be approved by a manager.
                       </span>
-                    </div>
+                    </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -194,23 +197,24 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('autoApproveHighScore', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Auto-Approve High Score Matches
                       </span>
                       <span className="text-xs text-slate-500">
                         Automatically approve swaps when the replacement staff has a high match score.
                       </span>
-                    </div>
+                    </span>
                   </label>
 
                   {config.autoApproveHighScore && (
                     <div className="ml-7">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                      <label htmlFor="swap-auto-approve-threshold" className="block text-sm font-medium text-slate-700 mb-1">
                         Auto-Approve Threshold Score
                       </label>
                       <input
                         type="number"
+                        id="swap-auto-approve-threshold"
                         min={50}
                         max={100}
                         value={config.autoApproveThreshold}
@@ -230,14 +234,14 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('allowCrossTeamSwaps', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Allow Cross-Team Swaps
                       </span>
                       <span className="text-xs text-slate-500">
                         Staff can swap with colleagues from other teams/regions.
                       </span>
-                    </div>
+                    </span>
                   </label>
                 </div>
               </section>
@@ -257,14 +261,14 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('allowOpenShifts', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Allow Open Shifts
                       </span>
                       <span className="text-xs text-slate-500">
                         Staff can request to give up shifts without a direct swap.
                       </span>
-                    </div>
+                    </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -274,22 +278,23 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('notifyAllSuitableStaff', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Notify All Suitable Staff
                       </span>
                       <span className="text-xs text-slate-500">
                         Automatically notify all staff who match open shift criteria.
                       </span>
-                    </div>
+                    </span>
                   </label>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="swap-min-match-score" className="block text-sm font-medium text-slate-700 mb-1">
                       Minimum Match Score for Open Shifts
                     </label>
                     <input
                       type="number"
+                      id="swap-min-match-score"
                       min={0}
                       max={100}
                       value={config.minimumMatchScore}
@@ -308,14 +313,14 @@ export default function SwapConfigurationPage() {
                       onChange={(e) => handleChange('considerContinuity', e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <div>
+                    <span>
                       <span className="block text-sm font-medium text-slate-700">
                         Prioritise Continuity of Care
                       </span>
                       <span className="text-xs text-slate-500">
                         Give preference to staff who have previously worked with the service user.
                       </span>
-                    </div>
+                    </span>
                   </label>
                 </div>
               </section>

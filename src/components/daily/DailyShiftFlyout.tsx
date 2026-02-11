@@ -436,6 +436,7 @@ export function DailyShiftFlyout({
 
   // Quick action: Toggle shift leader
   const handleToggleLeader = () => {
+    // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form's watch() API
     setValue('isShiftLeader', !watch('isShiftLeader'), { shouldDirty: true });
   };
 
@@ -557,11 +558,12 @@ export function DailyShiftFlyout({
 
               {/* Shift Reference */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="daily-shift-reference" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Shift Reference
                 </label>
                 <div className="relative">
                   <select
+                    id="daily-shift-reference"
                     {...register('shiftReferenceId')}
                     disabled={isPastOrStarted}
                     className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
@@ -587,10 +589,11 @@ export function DailyShiftFlyout({
                 <div className="grid grid-cols-2 gap-4">
                   {/* Start Time */}
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500">Start</label>
+                    <label htmlFor="daily-shift-start-hour" className="mb-1.5 block text-xs font-medium text-gray-500">Start</label>
                     <div className="flex gap-1">
                       <div className="relative flex-1">
                         <select
+                          id="daily-shift-start-hour"
                           {...register('startHour')}
                           disabled={isPastOrStarted}
                           className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
@@ -621,10 +624,11 @@ export function DailyShiftFlyout({
 
                   {/* End Time */}
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500">End</label>
+                    <label htmlFor="daily-shift-end-hour" className="mb-1.5 block text-xs font-medium text-gray-500">End</label>
                     <div className="flex gap-1">
                       <div className="relative flex-1">
                         <select
+                          id="daily-shift-end-hour"
                           {...register('endHour')}
                           disabled={isPastOrStarted}
                           className="w-full appearance-none rounded-lg border border-border-grey bg-white px-2 py-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
@@ -657,9 +661,10 @@ export function DailyShiftFlyout({
 
               {/* Activity */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Activity</label>
+                <label htmlFor="daily-shift-activity" className="mb-1.5 block text-sm font-medium text-gray-700">Activity</label>
                 <div className="relative">
                   <select
+                    id="daily-shift-activity"
                     {...register('shiftActivityId')}
                     disabled={isPastOrStarted}
                     className="w-full appearance-none rounded-lg border border-border-grey bg-white px-3 py-2.5 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
@@ -680,7 +685,7 @@ export function DailyShiftFlyout({
 
               {/* Break Duration */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="daily-shift-break-duration" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Break Duration (minutes)
                 </label>
                 <Controller
@@ -689,6 +694,7 @@ export function DailyShiftFlyout({
                   render={({ field }) => (
                     <input
                       type="number"
+                      id="daily-shift-break-duration"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       disabled={isPastOrStarted}
@@ -748,8 +754,9 @@ export function DailyShiftFlyout({
 
               {/* Notes */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Notes</label>
+                <label htmlFor="daily-shift-notes" className="mb-1.5 block text-sm font-medium text-gray-700">Notes</label>
                 <textarea
+                  id="daily-shift-notes"
                   {...register('notes')}
                   rows={3}
                   disabled={isPastOrStarted}

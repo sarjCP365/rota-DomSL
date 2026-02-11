@@ -310,6 +310,9 @@ function AssignmentRow({
       <div
         className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+        role="button"
+        tabIndex={0}
       >
         {/* Avatar */}
         <div className="flex-shrink-0">

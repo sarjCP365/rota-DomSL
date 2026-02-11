@@ -200,7 +200,7 @@ export function UnpublishedShiftsPage() {
 
       if (sublocationId) {
         // Navigate to the rota view with the shift's date
-        navigate(`/rota/7?date=${format(weekStart, 'yyyy-MM-dd')}`);
+        void navigate(`/rota/7?date=${format(weekStart, 'yyyy-MM-dd')}`);
       }
     },
     [navigate]
@@ -357,10 +357,11 @@ export function UnpublishedShiftsPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Location */}
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">
+                      <label htmlFor="unpublished-location" className="mb-1 block text-xs font-medium text-slate-600">
                         Location
                       </label>
                       <select
+                        id="unpublished-location"
                         value={selectedLocationId}
                         onChange={(e) => {
                           setSelectedLocationId(e.target.value);
@@ -380,10 +381,11 @@ export function UnpublishedShiftsPage() {
 
                     {/* Sublocation */}
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">
+                      <label htmlFor="unpublished-sublocation" className="mb-1 block text-xs font-medium text-slate-600">
                         Sublocation
                       </label>
                       <select
+                        id="unpublished-sublocation"
                         value={selectedSublocationId}
                         onChange={(e) => {
                           setSelectedSublocationId(e.target.value);
@@ -403,11 +405,12 @@ export function UnpublishedShiftsPage() {
 
                     {/* Date from */}
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">
+                      <label htmlFor="unpublished-date-from" className="mb-1 block text-xs font-medium text-slate-600">
                         From Date
                       </label>
                       <input
                         type="date"
+                        id="unpublished-date-from"
                         value={dateFrom}
                         onChange={(e) => {
                           setDateFrom(e.target.value);
@@ -419,11 +422,12 @@ export function UnpublishedShiftsPage() {
 
                     {/* Date to */}
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">
+                      <label htmlFor="unpublished-date-to" className="mb-1 block text-xs font-medium text-slate-600">
                         To Date
                       </label>
                       <input
                         type="date"
+                        id="unpublished-date-to"
                         value={dateTo}
                         onChange={(e) => {
                           setDateTo(e.target.value);

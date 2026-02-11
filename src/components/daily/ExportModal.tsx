@@ -436,12 +436,14 @@ export function ExportModal({
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog stopPropagation is a standard modal pattern */}
         <div
           className="w-full max-w-md rounded-xl bg-white shadow-2xl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="export-modal-title"
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border-grey px-5 py-4">

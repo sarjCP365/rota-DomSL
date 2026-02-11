@@ -7,7 +7,7 @@
  * PROMPT 5 from CURSOR-SHIFT-SWAP-DESKTOP-PROMPTS.md
  */
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   X,
@@ -213,7 +213,7 @@ export function SwapDetailsPanel({
   onApprove,
   onReject,
 }: SwapDetailsPanelProps) {
-  const [impactChecks, setImpactChecks] = useState<ImpactCheck[]>([]);
+  // Derive impact checks from swap (no effect needed)
 
   // Fetch configuration for monthly limit
   const { data: swapConfig } = useQuery({
@@ -221,11 +221,11 @@ export function SwapDetailsPanel({
     queryFn: getSwapConfiguration,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
-  const monthlyLimit = swapConfig?.monthlyLimitPerStaff ?? DEFAULT_SWAP_CONFIGURATION.monthlyLimitPerStaff;
+  const monthlyLimit: number = (swapConfig as Record<string, unknown>)?.monthlyLimitPerStaff as number ?? DEFAULT_SWAP_CONFIGURATION.monthlyLimitPerStaff;
 
-  // Calculate impact checks when swap changes
-  useEffect(() => {
-    if (!swap) return;
+  // Derive impact checks from swap data
+  const impactChecks = useMemo<ImpactCheck[]>(() => {
+    if (!swap) return [];
 
     const checks: ImpactCheck[] = [];
 
@@ -284,7 +284,7 @@ export function SwapDetailsPanel({
       });
     }
 
-    setImpactChecks(checks);
+    return checks;
   }, [swap]);
 
   if (!swap) return null;

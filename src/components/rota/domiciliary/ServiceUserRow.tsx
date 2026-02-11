@@ -137,6 +137,9 @@ export const ServiceUserRow = memo(function ServiceUserRow({
       <div
         className="w-56 min-w-56 flex-shrink-0 p-3 border-r border-gray-200 cursor-pointer hover:bg-blue-50"
         onClick={() => onServiceUserClick(serviceUser)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onServiceUserClick(serviceUser); } }}
+        role="button"
+        tabIndex={0}
       >
         <div className="flex items-start gap-3">
           {/* Avatar */}

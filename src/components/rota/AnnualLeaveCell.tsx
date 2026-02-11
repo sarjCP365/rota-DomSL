@@ -221,10 +221,12 @@ export function AnnualLeaveCell({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- tooltip hover container
     <div
       className="relative"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      role="group"
     >
       <button
         onClick={onClick}
@@ -334,6 +336,7 @@ export function LeaveBlock({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- tooltip hover container
     <div
       className="relative col-span-full"
       style={{
@@ -341,6 +344,7 @@ export function LeaveBlock({
       }}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      role="group"
     >
       <button
         onClick={onClick}

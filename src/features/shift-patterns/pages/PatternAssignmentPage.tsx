@@ -36,7 +36,7 @@ import { usePatternTemplates } from '../hooks/usePatternTemplates';
 import { useStaffMembers } from '@/hooks/useStaff';
 import { useBulkAssignPattern } from '../hooks/usePatternAssignments';
 import { useLocationSettings } from '@/store/settingsStore';
-import type { BulkAssignmentOptions } from '../types';
+import type { BulkAssignmentOptions, ShiftPatternTemplate } from '../types';
 import { PatternStatus, PatternPublishStatus } from '../types';
 import type { StaffMember } from '@/api/dataverse/types';
 
@@ -53,8 +53,18 @@ interface StaffSelection {
   hasExistingPattern: boolean;
 }
 
+interface SelectedPattern {
+  cp365_shiftpatterntemplatenewid: string;
+  cp365_name: string;
+  cp365_sp_description?: string;
+  cp365_sp_rotationcycleweeks: number;
+  cp365_sp_averageweeklyhours?: number;
+  cp365_sp_defaultpublishstatus: number;
+  [key: string]: unknown;
+}
+
 interface WizardState {
-  selectedPattern: ShiftPatternTemplate | null;
+  selectedPattern: SelectedPattern | null;
   selectedStaff: Map<string, StaffSelection>;
   startDate: string;
   staggerType: 'same' | 'stagger' | 'custom';
@@ -94,7 +104,7 @@ function Step1PatternSelection({ state, setState, onNext: _onNext }: StepProps) 
   }, [patterns, searchTerm]);
 
   const handleSelectPattern = (pattern: ShiftPatternTemplate) => {
-    setState((prev) => ({ ...prev, selectedPattern: pattern }));
+    setState((prev) => ({ ...prev, selectedPattern: pattern as unknown as SelectedPattern }));
   };
 
   return (
@@ -426,10 +436,10 @@ function Step3Configuration({ state, setState }: StepProps) {
                   onChange={() => handleStaggerChange(option.value)}
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
                 />
-                <div>
-                  <p className="font-medium text-slate-700">{option.label}</p>
-                  <p className="text-xs text-slate-500">{option.desc}</p>
-                </div>
+                <span>
+                  <span className="block font-medium text-slate-700">{option.label}</span>
+                  <span className="block text-xs text-slate-500">{option.desc}</span>
+                </span>
               </label>
             ))}
           </div>
@@ -522,10 +532,10 @@ function Step3Configuration({ state, setState }: StepProps) {
                 onChange={() => setState((prev) => ({ ...prev, publishStatus: option.value }))}
                 className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
               />
-              <div>
-                <p className="font-medium text-slate-700">{option.label}</p>
-                <p className="text-xs text-slate-500">{option.desc}</p>
-              </div>
+              <span>
+                <span className="block font-medium text-slate-700">{option.label}</span>
+                <span className="block text-xs text-slate-500">{option.desc}</span>
+              </span>
             </label>
           ))}
         </div>

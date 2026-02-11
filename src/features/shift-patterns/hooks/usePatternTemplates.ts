@@ -73,7 +73,7 @@ export function useCreatePatternTemplate() {
     mutationFn: (data: PatternFormData) => createPatternTemplate(data),
     onSuccess: (newTemplate) => {
       // Invalidate the templates list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
 
       // Add the new template to the cache
       queryClient.setQueryData(
@@ -98,8 +98,8 @@ export function useUpdatePatternTemplate() {
       updatePatternTemplate(id, data),
     onSuccess: (_, { id }) => {
       // Invalidate the specific template and the list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
     },
     onError: (error) => {
       console.error('[PatternTemplates] Failed to update:', error);
@@ -120,7 +120,7 @@ export function useDeletePatternTemplate() {
       queryClient.removeQueries({ queryKey: patternTemplateKeys.detail(id) });
 
       // Invalidate the list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
     },
     onError: (error) => {
       console.error('[PatternTemplates] Failed to delete:', error);
@@ -139,7 +139,7 @@ export function useClonePatternTemplate() {
       clonePatternTemplate(sourceId, newName),
     onSuccess: (newTemplate) => {
       // Invalidate the list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
 
       // Add the new template to the cache
       queryClient.setQueryData(
@@ -163,8 +163,8 @@ export function useArchivePatternTemplate() {
     mutationFn: (id: string) => archivePatternTemplate(id),
     onSuccess: (_, id) => {
       // Invalidate both the specific template and the list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
     },
     onError: (error) => {
       console.error('[PatternTemplates] Failed to archive:', error);
@@ -182,8 +182,8 @@ export function useRestorePatternTemplate() {
     mutationFn: (id: string) => restorePatternTemplate(id),
     onSuccess: (_, id) => {
       // Invalidate both the specific template and the list
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.lists() });
     },
     onError: (error) => {
       console.error('[PatternTemplates] Failed to restore:', error);

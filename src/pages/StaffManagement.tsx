@@ -21,12 +21,12 @@ export function StaffManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>(staffId ? 'detail' : 'list');
 
   const handleSelectStaff = (id: string) => {
-    navigate(`/admin/staff/${id}`);
+    void navigate(`/admin/staff/${id}`);
     setViewMode('detail');
   };
 
   const handleCreateNew = () => {
-    navigate('/admin/staff/new');
+    void navigate('/admin/staff/new');
     setViewMode('create');
   };
 
@@ -38,7 +38,7 @@ export function StaffManagement() {
     if (staffId) {
       setViewMode('detail');
     } else {
-      navigate('/admin/staff');
+      void navigate('/admin/staff');
       setViewMode('list');
     }
   };

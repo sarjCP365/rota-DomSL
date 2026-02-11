@@ -218,7 +218,7 @@ export function DailyView() {
         onClose={() => data.setShowBulkAssignModal(false)}
         onAssigned={() => {
           data.setShowBulkAssignModal(false);
-          data.refetchRota();
+          void data.refetchRota();
         }}
       />
 

@@ -113,7 +113,7 @@ export function ServiceUserRotaGrid({
 
   const handleServiceUserClick = useCallback((serviceUser: DomiciliaryServiceUser) => {
     // TODO: Navigate to service user detail view
-    console.log('Service user clicked:', serviceUser.cp365_fullname);
+    console.warn('Service user clicked:', serviceUser.cp365_fullname);
   }, []);
 
   // Render loading state

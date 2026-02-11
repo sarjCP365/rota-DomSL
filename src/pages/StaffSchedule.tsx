@@ -168,6 +168,9 @@ export function StaffSchedule() {
                   <div
                     key={staff.cp365_staffmemberid}
                     onClick={() => setSelectedStaffId(staff.cp365_staffmemberid)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedStaffId(staff.cp365_staffmemberid); } }}
+                    role="button"
+                    tabIndex={0}
                     className={`flex items-center gap-3 p-3 cursor-pointer border-b border-gray-50 transition-colors ${
                       isSelected
                         ? 'bg-emerald-50 border-l-4 border-l-emerald-500'

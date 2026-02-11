@@ -265,6 +265,10 @@ export function IndividualAssignment({
   // Track previous pattern ID to detect when pattern changes
   const prevPatternIdRef = useRef<string | undefined>(undefined);
 
+  // Track local sublocation ID via ref to avoid dependency loop
+  const localSublocationIdRef = useRef(localSublocationId);
+  localSublocationIdRef.current = localSublocationId;
+
   // Update local sublocation when pattern CHANGES (not on every render)
   useEffect(() => {
     const currentPatternId = selectedPatternWithDays?.cp365_shiftpatterntemplatenewid;
@@ -274,11 +278,11 @@ export function IndividualAssignment({
       prevPatternIdRef.current = currentPatternId;
       // Pattern changed - reset sublocation selection to pick from the pattern's location
       setLocalSublocationId('');
-    } else if (!currentPatternId && selectedSublocationId && !localSublocationId) {
+    } else if (!currentPatternId && selectedSublocationId && !localSublocationIdRef.current) {
       // No pattern selected yet, use global sublocation as default
       setLocalSublocationId(selectedSublocationId);
     }
-  }, [selectedPatternWithDays?.cp365_shiftpatterntemplatenewid, selectedSublocationId]); // Don't include localSublocationId to avoid loops
+  }, [selectedPatternWithDays?.cp365_shiftpatterntemplatenewid, selectedSublocationId]);
 
   // Fetch sublocations for the pattern's location (or selected location)
   const { data: sublocations = [], isLoading: isLoadingSublocations } =
@@ -716,7 +720,7 @@ export function IndividualAssignment({
         <div className="p-6 space-y-6">
           {/* Location Selection */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor="assign-sublocation" className="mb-1.5 block text-sm font-medium text-slate-700">
               Sublocation <span className="text-red-500">*</span>
             </label>
             {patternLocationName && (
@@ -734,6 +738,7 @@ export function IndividualAssignment({
               </div>
             ) : (
               <select
+                id="assign-sublocation"
                 value={localSublocationId}
                 onChange={(e) => {
                   setLocalSublocationId(e.target.value);
@@ -779,7 +784,7 @@ export function IndividualAssignment({
 
           {/* Staff Selection */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor="assign-staff-member" className="mb-1.5 block text-sm font-medium text-slate-700">
               Staff Member <span className="text-red-500">*</span>
             </label>
             {initialStaffId && staffMember ? (
@@ -832,6 +837,7 @@ export function IndividualAssignment({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
+                    id="assign-staff-member"
                     value={staffSearchTerm}
                     onChange={(e) => {
                       setStaffSearchTerm(e.target.value);
@@ -892,7 +898,7 @@ export function IndividualAssignment({
 
           {/* Pattern Selection */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor="assign-pattern-template" className="mb-1.5 block text-sm font-medium text-slate-700">
               Pattern Template <span className="text-red-500">*</span>
             </label>
 
@@ -905,6 +911,7 @@ export function IndividualAssignment({
             )}
 
             <select
+              id="assign-pattern-template"
               value={selectedPatternId}
               onChange={(e) => setSelectedPatternId(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -974,11 +981,12 @@ export function IndividualAssignment({
           {/* Dates */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label htmlFor="assign-start-date" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Start Date <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
+                id="assign-start-date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -986,11 +994,12 @@ export function IndividualAssignment({
               <p className="mt-1 text-xs text-slate-500">Recommended: Start on a Monday</p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label htmlFor="assign-end-date" className="mb-1.5 block text-sm font-medium text-slate-700">
                 End Date <span className="text-slate-400">(optional)</span>
               </label>
               <input
                 type="date"
+                id="assign-end-date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
@@ -1003,10 +1012,11 @@ export function IndividualAssignment({
           {/* Rotation Start Week */}
           {selectedPattern && selectedPattern.cp365_sp_rotationcycleweeks > 1 && (
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label htmlFor="assign-rotation-week" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Rotation Start Week
               </label>
               <select
+                id="assign-rotation-week"
                 value={rotationStartWeek}
                 onChange={(e) => setRotationStartWeek(Number(e.target.value))}
                 className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -1025,9 +1035,10 @@ export function IndividualAssignment({
 
           {/* Priority */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Priority</label>
+            <label htmlFor="assign-priority" className="mb-1.5 block text-sm font-medium text-slate-700">Priority</label>
             <input
               type="number"
+              id="assign-priority"
               value={priority}
               onChange={(e) => setPriority(Math.max(1, Math.min(99, Number(e.target.value))))}
               min={1}

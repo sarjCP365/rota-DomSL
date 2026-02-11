@@ -143,6 +143,9 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      role="button"
+      tabIndex={0}
     >
       <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
         {/* Header */}
@@ -284,7 +287,7 @@ export function UnitForm({ unit, locationId, onClose, onSuccess }: UnitFormProps
                   Inactive units are hidden from the rota view
                 </p>
               </div>
-              <label className="relative inline-flex cursor-pointer items-center">
+              <label htmlFor="isActive" aria-label="Active" className="relative inline-flex cursor-pointer items-center">
                 <input
                   type="checkbox"
                   id="isActive"

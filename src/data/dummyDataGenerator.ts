@@ -541,8 +541,8 @@ function generateVisits(
   const startDate = startOfWeek(subDays(today, weeksBehind * 7), { weekStartsOn: 1 });
   const endDate = addWeeks(startDate, weeksAhead + weeksBehind);
   
-  console.log('📅 Visit generation date range:', format(startDate, 'yyyy-MM-dd'), 'to', format(endDate, 'yyyy-MM-dd'));
-  console.log('📅 Today is:', format(today, 'yyyy-MM-dd'));
+  console.warn('📅 Visit generation date range:', format(startDate, 'yyyy-MM-dd'), 'to', format(endDate, 'yyyy-MM-dd'));
+  console.warn('📅 Today is:', format(today, 'yyyy-MM-dd'));
 
   // Determine visit patterns for each service user
   for (const serviceUser of serviceUsers) {
@@ -842,7 +842,7 @@ export interface DummyDataSet {
  * Generate a complete set of dummy data for testing
  */
 export async function generateDummyData(): Promise<DummyDataSet> {
-  console.log('Generating dummy data...');
+  console.warn('Generating dummy data...');
 
   // Generate base entities
   const serviceUsers = generateServiceUsers(18);
@@ -863,7 +863,7 @@ export async function generateDummyData(): Promise<DummyDataSet> {
   // Generate geographic areas
   const areas = generateGeographicAreas();
 
-  console.log(`Generated:
+  console.warn(`Generated:
   - ${serviceUsers.length} service users
   - ${staffMembers.length} staff members
   - ${visits.length} visits
@@ -913,7 +913,7 @@ export async function getDummyData(): Promise<DummyDataSet> {
   
   if (typeof window !== 'undefined') {
     window.__CAREPOINT_DUMMY_DATA_PROMISE__ = promise;
-    promise.then(data => {
+    void promise.then(data => {
       window.__CAREPOINT_DUMMY_DATA__ = data;
       window.__CAREPOINT_DUMMY_DATA_PROMISE__ = undefined;
     });

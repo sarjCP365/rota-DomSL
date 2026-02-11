@@ -180,12 +180,12 @@ export function ShiftLeaderModal({ isOpen, onClose, shift, onSave }: ShiftLeader
                   onChange={(e) => setIsShiftLeader(e.target.checked)}
                   className="mt-0.5 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
                 />
-                <div>
-                  <div className="font-medium text-gray-900">Make Shift Leader</div>
-                  <div className="text-sm text-gray-500">
+                <span>
+                  <span className="font-medium text-gray-900">Make Shift Leader</span>
+                  <span className="block text-sm text-gray-500">
                     This person will be responsible for the shift
-                  </div>
-                </div>
+                  </span>
+                </span>
               </label>
 
               <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-grey p-4 transition-colors hover:bg-gray-50">
@@ -195,12 +195,12 @@ export function ShiftLeaderModal({ isOpen, onClose, shift, onSave }: ShiftLeader
                   onChange={(e) => setIsActUp(e.target.checked)}
                   className="mt-0.5 h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
-                <div>
-                  <div className="font-medium text-gray-900">Act Up (temporary manager)</div>
-                  <div className="text-sm text-gray-500">
+                <span>
+                  <span className="font-medium text-gray-900">Act Up (temporary manager)</span>
+                  <span className="block text-sm text-gray-500">
                     Temporarily taking on management responsibilities
-                  </div>
-                </div>
+                  </span>
+                </span>
               </label>
             </div>
 

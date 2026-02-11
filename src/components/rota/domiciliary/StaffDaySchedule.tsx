@@ -340,6 +340,9 @@ export function StaffDaySchedule({
               {/* Visit card */}
               <div
                 onClick={() => onVisitClick?.(item.visit)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onVisitClick?.(item.visit); } }}
+                role="button"
+                tabIndex={0}
                 className={`flex gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${getStatusColour(
                   item.visit.cp365_visitstatus
                 )}`}
@@ -453,13 +456,13 @@ export function StaffDaySchedule({
               {Math.floor(stats.totalMinutes / 60)}h {stats.totalMinutes % 60}m
             </strong>
           </span>
-          <a
-            href="#"
+          <button
+            type="button"
             className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium"
           >
             <Navigation className="w-4 h-4" />
             View on map
-          </a>
+          </button>
         </div>
       </div>
     </div>

@@ -64,16 +64,16 @@ export function useGenerateShifts() {
     mutationFn: (options: GenerateShiftsOptions) => generateShiftsFromPattern(options),
     onSuccess: (result, options) => {
       // Invalidate shift queries
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
 
       // Invalidate the assignment (lastGeneratedDate has changed)
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: patternAssignmentKeys.detail(options.assignmentId),
       });
 
       // Invalidate generation logs
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: patternGenerationKeys.logs(options.assignmentId),
       });
 
@@ -136,12 +136,12 @@ export function useRegenerateShifts() {
     },
     onSuccess: (result, options) => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({
         queryKey: patternAssignmentKeys.detail(options.assignmentId),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: patternGenerationKeys.logs(options.assignmentId),
       });
     },

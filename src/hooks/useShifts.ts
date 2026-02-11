@@ -79,8 +79,8 @@ export function useCreateShift() {
   return useMutation({
     mutationFn: (data: Partial<Shift>) => createShift(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
     },
   });
 }
@@ -95,9 +95,9 @@ export function useUpdateShift() {
     mutationFn: ({ shiftId, data }: { shiftId: string; data: Partial<Shift> }) =>
       updateShift(shiftId, data),
     onSuccess: (_, { shiftId }) => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shift', shiftId] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['shift', shiftId] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
     },
   });
 }
@@ -111,8 +111,8 @@ export function useDeleteShift() {
   return useMutation({
     mutationFn: (shiftId: string) => deleteShift(shiftId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
     },
   });
 }
@@ -126,10 +126,10 @@ export function usePublishShifts() {
   return useMutation({
     mutationFn: (shiftIds: string[]) => publishShifts(shiftIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
-      queryClient.invalidateQueries({ queryKey: ['allUnpublishedShifts'] });
-      queryClient.invalidateQueries({ queryKey: ['totalUnpublishedCount'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['allUnpublishedShifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['totalUnpublishedCount'] });
     },
   });
 }
@@ -143,8 +143,8 @@ export function useUnpublishShifts() {
   return useMutation({
     mutationFn: (shiftIds: string[]) => unpublishShifts(shiftIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
     },
   });
 }
@@ -158,9 +158,9 @@ export function useUnassignShift() {
   return useMutation({
     mutationFn: (shiftId: string) => unassignShift(shiftId),
     onSuccess: (_, shiftId) => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shift', shiftId] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['shift', shiftId] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
     },
   });
 }
@@ -200,10 +200,10 @@ export function useBulkDeleteShifts() {
   return useMutation({
     mutationFn: (shiftIds: string[]) => bulkDeleteShifts(shiftIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['rotaData'] });
-      queryClient.invalidateQueries({ queryKey: ['allUnpublishedShifts'] });
-      queryClient.invalidateQueries({ queryKey: ['totalUnpublishedCount'] });
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['allUnpublishedShifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['totalUnpublishedCount'] });
     },
   });
 }

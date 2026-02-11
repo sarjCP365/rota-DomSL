@@ -67,14 +67,14 @@ function initializeMsal(): Promise<void> {
     })
     .catch((error) => {
       console.error('[AuthProvider] MSAL initialization error:', error);
-      msalInitError = error;
+      msalInitError = error instanceof Error ? error : new Error(String(error));
     });
 
   return msalInitPromise;
 }
 
 // Start initialization immediately
-initializeMsal();
+void initializeMsal();
 
 /**
  * Props for AuthProvider
@@ -98,8 +98,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setInitError(msalInitError);
         }
       })
-      .catch((error) => {
-        setInitError(error);
+      .catch((error: unknown) => {
+        setInitError(error instanceof Error ? error : new Error(String(error)));
         setIsInitialised(true);
       });
   }, []);

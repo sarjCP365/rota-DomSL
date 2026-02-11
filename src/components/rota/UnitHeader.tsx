@@ -144,8 +144,8 @@ export function UnitHeader({
   const subtitle = subtitleParts.join(' - ');
 
   // Unit type label
-  const typeLabel = getUnitTypeLabel(unit.cp365_unittypecode);
-  const accentClass = getUnitTypeAccent(unit.cp365_unittypecode);
+  const typeLabel = getUnitTypeLabel(unit.cp365_unittypecode as UnitTypeCode | null);
+  const accentClass = getUnitTypeAccent(unit.cp365_unittypecode as UnitTypeCode | null);
 
   return (
     <div

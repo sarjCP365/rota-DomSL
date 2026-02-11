@@ -151,13 +151,14 @@ export async function getStaffSwapUsage(
   month: Date
 ): Promise<StaffSwapUsage[]> {
   const repository = getShiftSwapRepository();
-  const [allSwaps, config] = await Promise.all([
+  const [allSwaps, configResult] = await Promise.all([
     repository.getAll(),
-    getSwapConfiguration().catch(() => DEFAULT_SWAP_CONFIGURATION),
+    getSwapConfiguration().catch((): typeof DEFAULT_SWAP_CONFIGURATION => DEFAULT_SWAP_CONFIGURATION),
   ]);
 
+  const config = configResult as { monthlyLimitPerStaff: number; [key: string]: unknown };
   const { ShiftSwapStatus } = await import('../types/shiftSwap');
-  const monthlyLimit = config.monthlyLimitPerStaff;
+  const monthlyLimit: number = config.monthlyLimitPerStaff;
 
   const monthStart = startOfMonth(month);
   const monthEnd = endOfMonth(month);

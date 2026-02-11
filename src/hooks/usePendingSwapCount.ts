@@ -78,7 +78,7 @@ export function usePendingSwapCount(
     summary: summary ?? null,
     isLoading,
     error: error,
-    refetch,
+    refetch: () => { void refetch(); },
   };
 }
 

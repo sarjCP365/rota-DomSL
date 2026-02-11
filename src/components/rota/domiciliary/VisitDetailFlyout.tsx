@@ -5,7 +5,7 @@
  * Slides in from the right when a visit is selected.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import {
   X,
@@ -124,7 +124,7 @@ export function VisitDetailFlyout({
     mutationFn: (data: Partial<Visit>) =>
       visitRepository.update(visit!.cp365_visitid, data),
     onSuccess: (updatedVisit) => {
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
       onSave?.(updatedVisit);
       setIsEditing(false);
     },
@@ -135,7 +135,7 @@ export function VisitDetailFlyout({
     mutationFn: (reason: string) =>
       visitRepository.cancelVisit(visit!.cp365_visitid, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
       setShowCancelConfirm(false);
       onClose();
     },
@@ -151,19 +151,22 @@ export function VisitDetailFlyout({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['visitActivities', visit?.cp365_visitid] });
+      void queryClient.invalidateQueries({ queryKey: ['visitActivities', visit?.cp365_visitid] });
     },
   });
 
-  // Reset state when visit changes
-  useEffect(() => {
+  // Reset state when visit changes (derived state from props, not via effect)
+  const prevVisitIdRef = useRef<string | undefined>();
+  const visitId = visit?.cp365_visitid;
+  if (visitId !== prevVisitIdRef.current) {
+    prevVisitIdRef.current = visitId;
     if (visit) {
       setEditedNotes(visit.cp365_visitnotes || '');
       setIsEditing(false);
       setShowCancelConfirm(false);
       setCancelReason('');
     }
-  }, [visit?.cp365_visitid]);
+  }
 
   // Handle escape key
   useEffect(() => {

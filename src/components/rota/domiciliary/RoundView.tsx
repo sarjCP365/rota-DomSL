@@ -43,7 +43,7 @@ import { dataSource } from '@/services/dataSource';
 // =============================================================================
 
 // Fix Leaflet default icon issue with bundlers
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
@@ -148,11 +148,14 @@ function RoundCard({
       className={`border rounded-lg overflow-hidden transition-all ${
         isSelected ? 'ring-2 ring-offset-1' : ''
       }`}
-      style={{ borderColor: isSelected ? colour : '#e5e7eb', '--tw-ring-color': colour } as any}
+      style={{ borderColor: isSelected ? colour : '#e5e7eb', '--tw-ring-color': colour } as React.CSSProperties}
     >
       {/* Header */}
       <div
         onClick={onSelect}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+        role="button"
+        tabIndex={0}
         className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50"
       >
         <div
@@ -217,6 +220,9 @@ function RoundCard({
               <div
                 key={visit.cp365_visitid}
                 onClick={() => onVisitClick(visit)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onVisitClick(visit); } }}
+                role="button"
+                tabIndex={0}
                 className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0"
               >
                 <div
@@ -282,7 +288,7 @@ export function RoundView({ initialDate = new Date(), onVisitSelect }: RoundView
   const dateVisits = useMemo(() => {
     if (!dataQuery.data) return [];
     const filtered = dataQuery.data.visits.filter(v => v.cp365_visitdate === selectedDate);
-    console.log(`📅 RoundView: ${dataQuery.data.visits.length} total visits, ${filtered.length} on ${selectedDate}`);
+    console.warn(`📅 RoundView: ${dataQuery.data.visits.length} total visits, ${filtered.length} on ${selectedDate}`);
     return filtered;
   }, [dataQuery.data, selectedDate]);
 
@@ -290,16 +296,16 @@ export function RoundView({ initialDate = new Date(), onVisitSelect }: RoundView
   const roundsQuery = useQuery({
     queryKey: ['rounds', selectedDate, selectedVisitType, dateVisits.length],
     queryFn: async () => {
-      console.log(`🔄 Creating rounds for ${dateVisits.length} visits, type ${selectedVisitType}`);
+      console.warn(`🔄 Creating rounds for ${dateVisits.length} visits, type ${selectedVisitType}`);
       return createRoundsFromVisits(dateVisits, selectedVisitType, selectedDate);
     },
     enabled: dateVisits.length > 0,
     staleTime: 30 * 1000,
   });
 
-  const rounds = roundsQuery.data || [];
+  const rounds = useMemo(() => roundsQuery.data || [], [roundsQuery.data]);
   
-  console.log(`📊 RoundView: roundsQuery status=${roundsQuery.status}, rounds=${rounds.length}`, roundsQuery.error);
+  console.warn(`📊 RoundView: roundsQuery status=${roundsQuery.status}, rounds=${rounds.length}`, roundsQuery.error);
 
   // Get bounds for map
   const mapBounds = useMemo(() => {

@@ -113,17 +113,17 @@ export function useCreatePatternAssignment() {
     mutationFn: (data: AssignmentFormData) => createPatternAssignment(data),
     onSuccess: (newAssignment, data) => {
       // Invalidate staff assignments
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: patternAssignmentKeys.byStaff(data.staffMemberId),
       });
 
       // Invalidate pattern assignments
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: patternAssignmentKeys.byPattern(data.patternTemplateId),
       });
 
       // Invalidate pattern summaries
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
 
       // Add to cache
       queryClient.setQueryData(
@@ -148,10 +148,10 @@ export function useUpdatePatternAssignment() {
       updatePatternAssignment(id, data),
     onSuccess: (_, { id }) => {
       // Invalidate the specific assignment
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
 
       // Invalidate all assignment lists (we don't know which staff/pattern this belongs to)
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
     },
     onError: (error) => {
       console.error('[PatternAssignments] Failed to update:', error);
@@ -170,13 +170,13 @@ export function useEndPatternAssignment() {
       endPatternAssignment(id, endDate),
     onSuccess: (_, { id }) => {
       // Invalidate the specific assignment
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.detail(id) });
 
       // Invalidate all assignment lists
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
 
       // Invalidate pattern summaries
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
     },
     onError: (error) => {
       console.error('[PatternAssignments] Failed to end:', error);
@@ -197,10 +197,10 @@ export function useDeletePatternAssignment() {
       queryClient.removeQueries({ queryKey: patternAssignmentKeys.detail(id) });
 
       // Invalidate all assignment lists
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
 
       // Invalidate pattern summaries
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
     },
     onError: (error) => {
       console.error('[PatternAssignments] Failed to delete:', error);
@@ -218,8 +218,8 @@ export function useBulkAssignPattern() {
     mutationFn: (options: BulkAssignmentOptions) => bulkAssignPattern(options),
     onSuccess: (result, _options) => {
       // Invalidate all relevant queries
-      queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
+      void queryClient.invalidateQueries({ queryKey: patternAssignmentKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: patternTemplateKeys.summaries() });
 
       if (result.errors.length > 0) {
         console.warn(

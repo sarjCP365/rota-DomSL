@@ -177,10 +177,10 @@ export function Dashboard() {
   }, []);
 
   const handleRefresh = useCallback(() => {
-    refetchToday();
-    refetchPeriod();
-    refetchOvertime();
-    refetchCoverage();
+    void refetchToday();
+    void refetchPeriod();
+    void refetchOvertime();
+    void refetchCoverage();
   }, [refetchToday, refetchPeriod, refetchOvertime, refetchCoverage]);
 
   // Show loading while locations are loading

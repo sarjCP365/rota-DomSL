@@ -169,6 +169,7 @@ export function CreateVisitModal({
   });
 
   // Watch form values
+  // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form's watch() API
   const selectedServiceUserId = watch('serviceUserId');
   const selectedVisitType = watch('visitType');
   const startTime = watch('startTime');
@@ -341,7 +342,7 @@ export function CreateVisitModal({
       return createdVisits;
     },
     onSuccess: (visits) => {
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
       onCreate?.(visits);
       onClose();
     },
@@ -400,12 +401,16 @@ export function CreateVisitModal({
           <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Service User Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="visit-service-user" className="block text-sm font-medium text-gray-700 mb-2">
                 Service User <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div
+                  id="visit-service-user"
                   onClick={() => setShowServiceUserDropdown(!showServiceUserDropdown)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowServiceUserDropdown(!showServiceUserDropdown); } }}
+                  role="button"
+                  tabIndex={0}
                   className={`
                     w-full p-3 border rounded-lg cursor-pointer flex items-center gap-3
                     ${selectedServiceUser ? 'border-gray-300' : 'border-gray-300'}
@@ -464,6 +469,9 @@ export function CreateVisitModal({
                               setShowServiceUserDropdown(false);
                               setSearchTerm('');
                             }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setValue('serviceUserId', su.cp365_serviceuserid); setShowServiceUserDropdown(false); setSearchTerm(''); } }}
+                            role="button"
+                            tabIndex={0}
                             className={`
                               p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50
                               ${su.cp365_serviceuserid === selectedServiceUserId ? 'bg-teal-50' : ''}
@@ -491,10 +499,10 @@ export function CreateVisitModal({
 
             {/* Visit Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="visit-type-group" className="block text-sm font-medium text-gray-700 mb-2">
                 Visit Type <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div id="visit-type-group" className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {Object.entries(VisitType)
                   .filter(([key]) => isNaN(Number(key)))
                   .map(([key, value]) => (
@@ -524,13 +532,14 @@ export function CreateVisitModal({
             {/* Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="visit-date" className="block text-sm font-medium text-gray-700 mb-2">
                   Date <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="date"
+                    id="visit-date"
                     {...register('date', { required: true })}
                     min={format(new Date(), 'yyyy-MM-dd')}
                     className={`
@@ -544,17 +553,19 @@ export function CreateVisitModal({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Start</label>
+                  <label htmlFor="visit-start-time" className="block text-sm font-medium text-gray-700 mb-2">Start</label>
                   <input
                     type="time"
+                    id="visit-start-time"
                     {...register('startTime', { required: true })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End</label>
+                  <label htmlFor="visit-end-time" className="block text-sm font-medium text-gray-700 mb-2">End</label>
                   <input
                     type="time"
+                    id="visit-end-time"
                     {...register('endTime', { required: true })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
@@ -570,7 +581,7 @@ export function CreateVisitModal({
 
             {/* Staff Assignment (Optional) with Suitability Scores */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="visit-staff-member" className="block text-sm font-medium text-gray-700 mb-2">
                 Assign Carer (optional)
               </label>
               <Controller
@@ -585,7 +596,11 @@ export function CreateVisitModal({
                       return (
                         <>
                           <div
+                            id="visit-staff-member"
                             onClick={() => setShowStaffDropdown(!showStaffDropdown)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowStaffDropdown(!showStaffDropdown); } }}
+                            role="button"
+                            tabIndex={0}
                             className={`
                               w-full p-3 border rounded-lg cursor-pointer flex items-center gap-3
                               border-gray-300 hover:border-teal-500 transition-colors
@@ -630,6 +645,9 @@ export function CreateVisitModal({
                             field.onChange('');
                             setShowStaffDropdown(false);
                           }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); field.onChange(''); setShowStaffDropdown(false); } }}
+                          role="button"
+                          tabIndex={0}
                           className={`
                             p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100
                             ${!field.value ? 'bg-teal-50' : ''}
@@ -670,6 +688,9 @@ export function CreateVisitModal({
                                   field.onChange(match.staffMember.cp365_staffmemberid);
                                   setShowStaffDropdown(false);
                                 }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); field.onChange(match.staffMember.cp365_staffmemberid); setShowStaffDropdown(false); } }}
+                                role="button"
+                                tabIndex={0}
                                 className={`
                                   p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 border-b border-gray-50 last:border-0
                                   ${match.staffMember.cp365_staffmemberid === field.value ? 'bg-teal-50' : ''}
@@ -704,6 +725,9 @@ export function CreateVisitModal({
                                   field.onChange(staff.cp365_staffmemberid);
                                   setShowStaffDropdown(false);
                                 }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); field.onChange(staff.cp365_staffmemberid); setShowStaffDropdown(false); } }}
+                                role="button"
+                                tabIndex={0}
                                 className={`
                                   p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50
                                   ${staff.cp365_staffmemberid === field.value ? 'bg-teal-50' : ''}
@@ -735,10 +759,10 @@ export function CreateVisitModal({
 
             {/* Activities */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="visit-activities" className="block text-sm font-medium text-gray-700 mb-2">
                 Care Activities
               </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+              <div id="visit-activities" className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
                 {ALL_ACTIVITIES.map((activity) => (
                   <label
                     key={activity}
@@ -795,8 +819,9 @@ export function CreateVisitModal({
                 <div className="mt-4 space-y-4 pl-7">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Repeat</label>
+                      <label htmlFor="visit-recurrence-pattern" className="block text-xs text-gray-500 mb-1">Repeat</label>
                       <select
+                        id="visit-recurrence-pattern"
                         {...register('recurrencePattern')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500"
                       >
@@ -806,9 +831,10 @@ export function CreateVisitModal({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Until</label>
+                      <label htmlFor="visit-recurrence-end" className="block text-xs text-gray-500 mb-1">Until</label>
                       <input
                         type="date"
+                        id="visit-recurrence-end"
                         {...register('recurrenceEndDate')}
                         min={selectedDate}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500"
@@ -840,10 +866,11 @@ export function CreateVisitModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="visit-notes" className="block text-sm font-medium text-gray-700 mb-2">
                 Notes (optional)
               </label>
               <textarea
+                id="visit-notes"
                 {...register('notes')}
                 placeholder="Add any special instructions or notes..."
                 rows={3}

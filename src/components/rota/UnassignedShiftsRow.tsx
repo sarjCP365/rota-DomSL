@@ -458,6 +458,9 @@ function CompactVacantCard({ processedShift, onAssign, onClick }: CompactVacantC
           e.stopPropagation();
           onAssign();
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onAssign(); } }}
+        role="button"
+        tabIndex={0}
         className="
           absolute inset-0 flex items-center justify-center rounded-md 
           bg-primary/90 opacity-0 transition-opacity group-hover:opacity-100

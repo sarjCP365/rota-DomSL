@@ -276,20 +276,22 @@ export function AssignStaffModal({
       await visitRepository.assignStaff(visit.cp365_visitid, staffMemberId);
     },
     onSuccess: (_, staffMemberId) => {
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
       onAssign?.(staffMemberId);
       onClose();
     },
   });
 
-  // Reset state when modal opens
-  useEffect(() => {
+  // Reset state when modal opens (adjust state during render)
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setSearchTerm('');
       setExpandedCardId(null);
       setShowAllStaff(false);
     }
-  }, [isOpen]);
+  }
 
   // Handle escape key
   useEffect(() => {

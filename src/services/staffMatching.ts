@@ -448,7 +448,7 @@ export async function findMatchingStaff(
     const continuityScore = calculateContinuityScore(relationship);
 
     // Staff capabilities (simplified - would come from staff record)
-    const staffCapabilities = (staff as any).capabilities || [];
+    const staffCapabilities = (staff as unknown as Record<string, unknown>).capabilities as string[] ?? [];
     const skillsResult = calculateSkillsScore(staffCapabilities, requiredSkills);
 
     const preferenceResult = calculatePreferenceScore(
@@ -473,8 +473,8 @@ export async function findMatchingStaff(
     let travelResult = { score: 5, distanceMiles: null as number | null };
     if (shouldConsiderTravel && serviceUser.cp365_latitude && serviceUser.cp365_longitude) {
       // For now, use a dummy staff location (would come from staff record or home address)
-      const staffLat = (staff as any).latitude || 51.5074; // Default to London
-      const staffLng = (staff as any).longitude || -0.1278;
+      const staffLat = ((staff as unknown as Record<string, unknown>).latitude as number) || 51.5074; // Default to London
+      const staffLng = ((staff as unknown as Record<string, unknown>).longitude as number) || -0.1278;
       travelResult = calculateTravelScore(
         { lat: staffLat, lng: staffLng },
         { lat: serviceUser.cp365_latitude, lng: serviceUser.cp365_longitude },

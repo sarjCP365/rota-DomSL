@@ -157,7 +157,7 @@ export function StaffAvailability() {
                   staffMember={selectedStaff}
                   onSave={() => {
                     // Refresh data after save
-                    staffQuery.refetch();
+                    void staffQuery.refetch();
                   }}
                   onCancel={() => setSelectedStaff(null)}
                 />

@@ -172,8 +172,8 @@ export function getRotationWeek(
 export function parseAppliesToDays(appliesTo?: string | null): string[] {
   if (!appliesTo) return [];
   try {
-    const parsed = JSON.parse(appliesTo);
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = JSON.parse(appliesTo);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
   } catch {
     return [];
   }
@@ -311,7 +311,7 @@ export async function generateShiftsFromPattern(
     patternDays,
     startDate,
     endDate,
-    conflictResolutions = new Map(),
+    conflictResolutions = new Map<string, 'keep' | 'override' | 'skip'>(),
     existingShifts = [],
     existingLeave = [],
     dryRun: _dryRun = false,
@@ -462,7 +462,7 @@ export async function generateShiftsFromPattern(
         result.conflicts.push(conflict);
 
         // Check resolution
-        const resolution = conflictResolutions.get(dateStr);
+        const resolution: string | undefined = conflictResolutions.get(dateStr);
 
         if (!resolution || resolution === 'keep' || resolution === 'skip') {
           result.shiftsSkipped.push({

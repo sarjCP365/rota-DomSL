@@ -455,9 +455,9 @@ export function parseAppliesToDays(json: string | null | undefined): string[] {
     return [];
   }
   try {
-    const parsed = JSON.parse(json);
+    const parsed: unknown = JSON.parse(json);
     if (Array.isArray(parsed)) {
-      return parsed.filter((day): day is string => typeof day === 'string');
+      return (parsed as unknown[]).filter((day): day is string => typeof day === 'string');
     }
     return [];
   } catch {

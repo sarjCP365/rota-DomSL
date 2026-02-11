@@ -15,7 +15,7 @@ import type { MatchResult, MatchScoreBreakdown, MatchingOptions } from './staffM
 import { getDummyData } from '@/data/dummyDataGenerator';
 import { createCareContext, type MatchScoreWeights, DEFAULT_MATCHING_WEIGHTS } from './careContext';
 import { getMatchingConfiguration } from './configurationService';
-import { AvailabilityType } from '@/types/domiciliary';
+import { AvailabilityType, type StaffAvailability } from '@/types/domiciliary';
 
 // =============================================================================
 // TYPES
@@ -289,7 +289,7 @@ export async function findMatchingStaffForShift(
     );
 
     // Calculate skills score
-    const staffCapabilities = (staff as any).capabilities || [];
+    const staffCapabilities = (staff as unknown as Record<string, unknown>).capabilities as string[] ?? [];
     const skillsResult = calculateShiftSkillsScore(staffCapabilities, requiredCapabilities);
 
     // Calculate preference score

@@ -47,7 +47,7 @@ export function Header({
     if (onBack) {
       onBack();
     } else {
-      navigate(-1);
+      void navigate(-1);
     }
   };
 

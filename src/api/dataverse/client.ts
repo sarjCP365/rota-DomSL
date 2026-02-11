@@ -11,7 +11,7 @@ import type { DataverseResponse } from './types';
 // CONFIGURATION
 // =============================================================================
 
-const DATAVERSE_URL = import.meta.env.VITE_DATAVERSE_URL;
+const DATAVERSE_URL = import.meta.env.VITE_DATAVERSE_URL as string;
 const API_VERSION = 'v9.2';
 
 // =============================================================================

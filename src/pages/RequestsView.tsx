@@ -73,9 +73,9 @@ export default function RequestsView() {
       return repository.approve(swapId, notes);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingSwaps'] });
-      queryClient.invalidateQueries({ queryKey: ['pendingSwapsSummary'] });
-      queryClient.invalidateQueries({ queryKey: ['awaitingApprovalSwaps'] });
+      void queryClient.invalidateQueries({ queryKey: ['pendingSwaps'] });
+      void queryClient.invalidateQueries({ queryKey: ['pendingSwapsSummary'] });
+      void queryClient.invalidateQueries({ queryKey: ['awaitingApprovalSwaps'] });
       setShowApprovalModal(false);
       setSelectedSwapId(null);
       
@@ -96,9 +96,9 @@ export default function RequestsView() {
       return repository.reject(swapId, reason);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingSwaps'] });
-      queryClient.invalidateQueries({ queryKey: ['pendingSwapsSummary'] });
-      queryClient.invalidateQueries({ queryKey: ['awaitingApprovalSwaps'] });
+      void queryClient.invalidateQueries({ queryKey: ['pendingSwaps'] });
+      void queryClient.invalidateQueries({ queryKey: ['pendingSwapsSummary'] });
+      void queryClient.invalidateQueries({ queryKey: ['awaitingApprovalSwaps'] });
       setShowRejectionModal(false);
       setSelectedSwapId(null);
       

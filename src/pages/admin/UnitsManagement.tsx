@@ -129,9 +129,10 @@ export function UnitsManagement() {
           <div className="mb-6 flex flex-wrap items-center gap-4">
             {/* Location Selector */}
             <div className="relative min-w-[250px]">
-              <label className="mb-1 block text-sm font-medium text-gray-700">Location</label>
+              <label htmlFor="units-location" className="mb-1 block text-sm font-medium text-gray-700">Location</label>
               <div className="relative">
                 <select
+                  id="units-location"
                   value={selectedLocationId}
                   onChange={(e) => setSelectedLocationId(e.target.value)}
                   disabled={isLoadingLocations}
@@ -150,11 +151,12 @@ export function UnitsManagement() {
 
             {/* Search */}
             <div className="relative flex-1 min-w-[200px] max-w-md">
-              <label className="mb-1 block text-sm font-medium text-gray-700">Search</label>
+              <label htmlFor="units-search" className="mb-1 block text-sm font-medium text-gray-700">Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
+                  id="units-search"
                   placeholder="Search units..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

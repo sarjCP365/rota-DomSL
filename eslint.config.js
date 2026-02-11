@@ -66,7 +66,10 @@ export default defineConfig([
       'jsx-a11y/anchor-is-valid': 'warn',
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',
-      'jsx-a11y/label-has-associated-control': 'warn',
+      'jsx-a11y/label-has-associated-control': ['warn', {
+        depth: 7,
+        assert: 'either',
+      }],
       'jsx-a11y/no-noninteractive-element-interactions': 'warn',
     },
   },

@@ -152,24 +152,26 @@ export function PatternBuilderPage() {
   // Initialize empty pattern days when rotation cycle changes
   useEffect(() => {
     if (!isEditMode || !existingPattern) {
-      const newDays: PatternDayFormData[] = [];
-      for (let week = 1; week <= rotationCycleWeeks; week++) {
-        for (let day = 1; day <= 7; day++) {
-          // Check if day already exists
-          const existing = patternDays.find((d) => d.weekNumber === week && d.dayOfWeek === day);
-          if (existing) {
-            newDays.push(existing);
-          } else {
-            newDays.push({
-              weekNumber: week,
-              dayOfWeek: day as DayOfWeek,
-              isRestDay: true,
-              isOvernight: false,
-            });
+      setPatternDays((prevDays) => {
+        const newDays: PatternDayFormData[] = [];
+        for (let week = 1; week <= rotationCycleWeeks; week++) {
+          for (let day = 1; day <= 7; day++) {
+            // Check if day already exists
+            const existing = prevDays.find((d) => d.weekNumber === week && d.dayOfWeek === day);
+            if (existing) {
+              newDays.push(existing);
+            } else {
+              newDays.push({
+                weekNumber: week,
+                dayOfWeek: day as DayOfWeek,
+                isRestDay: true,
+                isOvernight: false,
+              });
+            }
           }
         }
-      }
-      setPatternDays(newDays);
+        return newDays;
+      });
     }
   }, [rotationCycleWeeks, isEditMode, existingPattern]);
 
@@ -212,7 +214,7 @@ export function PatternBuilderPage() {
         }
       }
 
-      navigate('/patterns');
+      void navigate('/patterns');
     } catch (error) {
       console.error('[PatternBuilder] Error saving pattern:', error);
       // Error is already handled by the mutation
@@ -381,7 +383,7 @@ export function PatternBuilderPage() {
                   <div className="p-6 space-y-4">
                     {/* Location */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                      <label htmlFor="pattern-location" className="mb-1 block text-sm font-medium text-slate-700">
                         <span className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-emerald-600" />
                           Location <span className="text-red-500">*</span>
@@ -392,6 +394,7 @@ export function PatternBuilderPage() {
                         control={control}
                         render={({ field }) => (
                           <select
+                            id="pattern-location"
                             {...field}
                             disabled={isLoadingLocations}
                             className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
@@ -418,10 +421,11 @@ export function PatternBuilderPage() {
 
                     {/* Name */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                      <label htmlFor="pattern-name" className="mb-1 block text-sm font-medium text-slate-700">
                         Pattern Name <span className="text-red-500">*</span>
                       </label>
                       <input
+                        id="pattern-name"
                         {...register('name')}
                         type="text"
                         placeholder="e.g., 4-on-4-off Day Shifts"
@@ -434,10 +438,11 @@ export function PatternBuilderPage() {
 
                     {/* Description */}
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                      <label htmlFor="pattern-description" className="mb-1 block text-sm font-medium text-slate-700">
                         Description
                       </label>
                       <textarea
+                        id="pattern-description"
                         {...register('description')}
                         rows={3}
                         placeholder="Describe this pattern..."
@@ -449,7 +454,7 @@ export function PatternBuilderPage() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       {/* Rotation Cycle */}
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                        <label htmlFor="pattern-rotation-cycle" className="mb-1 block text-sm font-medium text-slate-700">
                           Rotation Cycle (Weeks) <span className="text-red-500">*</span>
                         </label>
                         <Controller
@@ -457,6 +462,7 @@ export function PatternBuilderPage() {
                           control={control}
                           render={({ field }) => (
                             <select
+                              id="pattern-rotation-cycle"
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value))}
                               className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -473,7 +479,7 @@ export function PatternBuilderPage() {
 
                       {/* Default Publish Status */}
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                        <label htmlFor="pattern-publish-status" className="mb-1 block text-sm font-medium text-slate-700">
                           Default Publish Status
                         </label>
                         <Controller
@@ -481,6 +487,7 @@ export function PatternBuilderPage() {
                           control={control}
                           render={({ field }) => (
                             <select
+                              id="pattern-publish-status"
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value))}
                               className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -494,7 +501,7 @@ export function PatternBuilderPage() {
 
                       {/* Generation Window */}
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                        <label htmlFor="pattern-gen-window" className="mb-1 block text-sm font-medium text-slate-700">
                           Generation Window
                         </label>
                         <Controller
@@ -502,6 +509,7 @@ export function PatternBuilderPage() {
                           control={control}
                           render={({ field }) => (
                             <select
+                              id="pattern-gen-window"
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value))}
                               className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"

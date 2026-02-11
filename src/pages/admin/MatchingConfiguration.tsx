@@ -4,7 +4,7 @@
  * Admin page for configuring staff matching algorithm weights by care type.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Save, RefreshCw, Info, BarChart3 } from 'lucide-react';
 import { SideNav, useSideNav } from '@/components/common/SideNav';
 import PageHeader from '@/components/common/PageHeader';
@@ -55,9 +55,10 @@ function WeightEditor({ careType, weights, onChange, showTravel }: WeightEditorP
       <div className="space-y-3">
         {/* Availability */}
         <div className="flex items-center gap-4">
-          <label className="w-32 text-sm text-slate-600">Availability</label>
+          <label htmlFor="weight-availability" className="w-32 text-sm text-slate-600">Availability</label>
           <input
             type="range"
+            id="weight-availability"
             min={0}
             max={50}
             value={weights.availability}
@@ -76,9 +77,10 @@ function WeightEditor({ careType, weights, onChange, showTravel }: WeightEditorP
 
         {/* Continuity */}
         <div className="flex items-center gap-4">
-          <label className="w-32 text-sm text-slate-600">Continuity</label>
+          <label htmlFor="weight-continuity" className="w-32 text-sm text-slate-600">Continuity</label>
           <input
             type="range"
+            id="weight-continuity"
             min={0}
             max={50}
             value={weights.continuity}
@@ -97,9 +99,10 @@ function WeightEditor({ careType, weights, onChange, showTravel }: WeightEditorP
 
         {/* Skills */}
         <div className="flex items-center gap-4">
-          <label className="w-32 text-sm text-slate-600">Skills</label>
+          <label htmlFor="weight-skills" className="w-32 text-sm text-slate-600">Skills</label>
           <input
             type="range"
+            id="weight-skills"
             min={0}
             max={50}
             value={weights.skills}
@@ -118,9 +121,10 @@ function WeightEditor({ careType, weights, onChange, showTravel }: WeightEditorP
 
         {/* Preference */}
         <div className="flex items-center gap-4">
-          <label className="w-32 text-sm text-slate-600">Preference</label>
+          <label htmlFor="weight-preference" className="w-32 text-sm text-slate-600">Preference</label>
           <input
             type="range"
+            id="weight-preference"
             min={0}
             max={50}
             value={weights.preference}
@@ -239,12 +243,12 @@ export default function MatchingConfigurationPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [selectedCareType, setSelectedCareType] = useState<CareType>('domiciliary');
 
-  // Update form when config loads
-  useEffect(() => {
-    if (matchingConfig) {
-      setWeightsByCareType(matchingConfig.weightsByCareType);
-    }
-  }, [matchingConfig]);
+  // Update form when config loads (adjust state during render)
+  const [lastSyncedConfig, setLastSyncedConfig] = useState(matchingConfig);
+  if (matchingConfig && matchingConfig !== lastSyncedConfig) {
+    setLastSyncedConfig(matchingConfig);
+    setWeightsByCareType(matchingConfig.weightsByCareType);
+  }
 
   // Save mutation
   const saveMutation = useMutation({
@@ -256,7 +260,7 @@ export default function MatchingConfigurationPage() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['matchingConfiguration'] });
+      void queryClient.invalidateQueries({ queryKey: ['matchingConfiguration'] });
       setIsDirty(false);
     },
   });

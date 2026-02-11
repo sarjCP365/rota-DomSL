@@ -102,8 +102,8 @@ export function useServiceUserRota(options: UseServiceUserRotaOptions): UseServi
         return visitDateStr >= startStr && visitDateStr <= endStr;
       });
       
-      console.log('📅 Date range:', startStr, 'to', endStr);
-      console.log('📊 Total visits:', allVisits.length, '| Filtered:', filtered.length);
+      console.warn('📅 Date range:', startStr, 'to', endStr);
+      console.warn('📊 Total visits:', allVisits.length, '| Filtered:', filtered.length);
       
       return filtered;
     },
@@ -216,7 +216,7 @@ export function useServiceUserRota(options: UseServiceUserRotaOptions): UseServi
     },
     onSuccess: () => {
       // Invalidate visits query to refetch
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
     },
   });
 
@@ -226,7 +226,7 @@ export function useServiceUserRota(options: UseServiceUserRotaOptions): UseServi
       await visitRepository.unassignStaff(visitId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
+      void queryClient.invalidateQueries({ queryKey: ['domiciliary', 'visits'] });
     },
   });
 
@@ -236,9 +236,9 @@ export function useServiceUserRota(options: UseServiceUserRotaOptions): UseServi
     isLoading: serviceUsersQuery.isLoading || visitsQuery.isLoading,
     error: serviceUsersQuery.error || visitsQuery.error,
     refetch: () => {
-      serviceUsersQuery.refetch();
-      visitsQuery.refetch();
-      staffQuery.refetch();
+      void serviceUsersQuery.refetch();
+      void visitsQuery.refetch();
+      void staffQuery.refetch();
     },
     ...stats,
     assignStaff: async (visitId, staffMemberId) => {

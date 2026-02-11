@@ -38,6 +38,7 @@ interface AvailabilityGridProps {
 /** Days of the week */
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+type DayKey = typeof DAY_KEYS[number];
 
 /** Time slots from 06:00 to 22:00 */
 const TIME_SLOTS: { hour: number; minute: number; label: string }[] = [];
@@ -155,7 +156,7 @@ export function AvailabilityGrid({
     };
     
     setSlotAvailability(
-      dayKey as any,
+      dayKey as DayKey,
       hour,
       minute,
       toolToType[selectedTool],
@@ -354,6 +355,7 @@ export function AvailabilityGrid({
                   `}
                   onMouseEnter={() => setHoveredDay(dayData.day)}
                   onMouseLeave={() => setHoveredDay(null)}
+                  role="columnheader"
                 >
                   <div className={`font-semibold ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
                     {DAYS_OF_WEEK[index]}
@@ -369,7 +371,7 @@ export function AvailabilityGrid({
                   {hoveredDay === dayData.day && (
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <button
-                        onClick={() => clearDay(dayData.day as any)}
+                        onClick={() => clearDay(dayData.day)}
                         className="p-1 hover:bg-gray-200 rounded"
                         title="Clear day"
                       >
@@ -377,7 +379,7 @@ export function AvailabilityGrid({
                       </button>
                       {index > 0 && (
                         <button
-                          onClick={() => copyDay(DAY_KEYS[index - 1], dayData.day as any)}
+                          onClick={() => copyDay(DAY_KEYS[index - 1], dayData.day)}
                           className="p-1 hover:bg-gray-200 rounded"
                           title="Copy from previous day"
                         >
@@ -419,6 +421,9 @@ export function AvailabilityGrid({
                       ${isWeekend ? 'bg-gray-50' : ''}
                     `}
                     onClick={() => handleSlotClick(dayData.day, timeSlot.hour, timeSlot.minute)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSlotClick(dayData.day, timeSlot.hour, timeSlot.minute); } }}
+                    role="button"
+                    tabIndex={0}
                     title={tooltip}
                   >
                     <div className={`h-full ${slotStyle} transition-colors`}>

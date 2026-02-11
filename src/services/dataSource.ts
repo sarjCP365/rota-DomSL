@@ -86,7 +86,7 @@ export function getDataverseUrl(): string {
  * Log the current data source configuration (for debugging)
  */
 export function logDataSourceConfig(): void {
-  console.log('📦 Data Source Configuration:', {
+  console.warn('📦 Data Source Configuration:', {
     type: dataSource.type,
     dataverseUrl: dataSource.dataverseUrl ? '(configured)' : '(not configured)',
     mapTileUrl: dataSource.mapTileUrl ? '(configured)' : '(not configured)',

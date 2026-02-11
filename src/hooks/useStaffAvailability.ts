@@ -270,33 +270,33 @@ export function useStaffAvailability(options: UseStaffAvailabilityOptions): UseS
     type: AvailabilityType | null,
     isPreferred = false
   ) => {
-    console.log('Set slot availability:', { day, hour, minute, type, isPreferred });
+    console.warn('Set slot availability:', { day, hour, minute, type, isPreferred });
     // TODO: Implement local state management for unsaved changes
   }, []);
 
   const clearDay = useCallback((day: DayOfWeek) => {
-    console.log('Clear day:', day);
+    console.warn('Clear day:', day);
     // TODO: Implement
   }, []);
 
   const copyDay = useCallback((fromDay: DayOfWeek, toDay: DayOfWeek) => {
-    console.log('Copy day:', fromDay, 'to', toDay);
+    console.warn('Copy day:', fromDay, 'to', toDay);
     // TODO: Implement
   }, []);
 
   const saveChangesMutation = useMutation({
     mutationFn: async () => {
       // TODO: Implement save logic
-      console.log('Saving changes...');
+      console.warn('Saving changes...');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['staffAvailability', staffMemberId] });
+      void queryClient.invalidateQueries({ queryKey: ['staffAvailability', staffMemberId] });
     },
   });
 
   const resetChanges = useCallback(() => {
     // TODO: Implement reset
-    console.log('Reset changes');
+    console.warn('Reset changes');
   }, []);
 
   return {

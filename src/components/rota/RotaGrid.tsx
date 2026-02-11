@@ -539,7 +539,7 @@ export function RotaGrid({
 
             {showSortMenu && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowSortMenu(false); }} role="button" tabIndex={0} aria-label="Close sort menu" />
                 <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-lg border border-border-grey bg-white py-1 shadow-lg">
                   {sortOptions.map((option) => (
                     <button

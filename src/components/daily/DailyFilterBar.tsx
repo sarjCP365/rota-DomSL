@@ -276,8 +276,9 @@ export function DailyFilterBar({
           <div className="mt-3 space-y-3 rounded-lg border border-border-grey bg-gray-50 p-3">
             {/* Location */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Location</label>
+              <label htmlFor="mobile-location-filter" className="mb-1 block text-xs font-medium text-gray-600">Location</label>
               <select
+                id="mobile-location-filter"
                 value={selectedLocationId}
                 onChange={(e) => onLocationChange(e.target.value)}
                 disabled={isLoadingLocations}
@@ -294,8 +295,9 @@ export function DailyFilterBar({
 
             {/* Sublocation */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Sublocation</label>
+              <label htmlFor="mobile-sublocation-filter" className="mb-1 block text-xs font-medium text-gray-600">Sublocation</label>
               <select
+                id="mobile-sublocation-filter"
                 value={selectedSublocationId}
                 onChange={(e) => onSublocationChange(e.target.value)}
                 disabled={isLoadingSublocations || !selectedLocationId}
@@ -314,8 +316,9 @@ export function DailyFilterBar({
             <div className="grid grid-cols-2 gap-3">
               {/* Department */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Department</label>
+                <label htmlFor="mobile-department-filter" className="mb-1 block text-xs font-medium text-gray-600">Department</label>
                 <select
+                  id="mobile-department-filter"
                   value={filters.department}
                   onChange={(e) => handleDepartmentChange(e.target.value)}
                   className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
@@ -330,8 +333,9 @@ export function DailyFilterBar({
 
               {/* Status */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Status</label>
+                <label htmlFor="mobile-status-filter" className="mb-1 block text-xs font-medium text-gray-600">Status</label>
                 <select
+                  id="mobile-status-filter"
                   value={filters.status}
                   onChange={(e) => handleStatusChange(e.target.value as AttendanceStatus)}
                   className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
@@ -347,8 +351,9 @@ export function DailyFilterBar({
 
             {/* Shift Type */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Shift Type</label>
+              <label htmlFor="mobile-shifttype-filter" className="mb-1 block text-xs font-medium text-gray-600">Shift Type</label>
               <select
+                id="mobile-shifttype-filter"
                 value={filters.shiftType}
                 onChange={(e) => handleShiftTypeChange(e.target.value as ShiftType)}
                 className="h-10 w-full rounded-lg border border-border-grey bg-white px-3 text-sm"
@@ -447,8 +452,9 @@ export function DailyFilterBar({
 
           {/* Location Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Location:</label>
+            <label htmlFor="desktop-location-filter" className="text-sm text-gray-600">Location:</label>
             <select
+              id="desktop-location-filter"
               value={selectedLocationId}
               onChange={(e) => onLocationChange(e.target.value)}
               disabled={isLoadingLocations}
@@ -465,8 +471,9 @@ export function DailyFilterBar({
 
           {/* Sublocation Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Sublocation:</label>
+            <label htmlFor="desktop-sublocation-filter" className="text-sm text-gray-600">Sublocation:</label>
             <select
+              id="desktop-sublocation-filter"
               value={selectedSublocationId}
               onChange={(e) => onSublocationChange(e.target.value)}
               disabled={isLoadingSublocations || !selectedLocationId}
@@ -483,8 +490,9 @@ export function DailyFilterBar({
 
           {/* Department Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Department:</label>
+            <label htmlFor="desktop-department-filter" className="text-sm text-gray-600">Department:</label>
             <select
+              id="desktop-department-filter"
               value={filters.department}
               onChange={(e) => handleDepartmentChange(e.target.value)}
               className="h-9 min-w-[140px] rounded-lg border border-border-grey bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -499,8 +507,9 @@ export function DailyFilterBar({
 
           {/* Status Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Status:</label>
+            <label htmlFor="desktop-status-filter" className="text-sm text-gray-600">Status:</label>
             <select
+              id="desktop-status-filter"
               value={filters.status}
               onChange={(e) => handleStatusChange(e.target.value as AttendanceStatus)}
               className="h-9 min-w-[120px] rounded-lg border border-border-grey bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -515,8 +524,9 @@ export function DailyFilterBar({
 
           {/* Shift Type Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Type:</label>
+            <label htmlFor="desktop-shifttype-filter" className="text-sm text-gray-600">Type:</label>
             <select
+              id="desktop-shifttype-filter"
               value={filters.shiftType}
               onChange={(e) => handleShiftTypeChange(e.target.value as ShiftType)}
               className="h-9 min-w-[100px] rounded-lg border border-border-grey bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"

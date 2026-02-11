@@ -269,7 +269,7 @@ export function useDailyViewData() {
 
       // Refetch when page becomes visible again
       if (visible && isAutoRefreshEnabled) {
-        refetchRota();
+        void refetchRota();
       }
     };
 
@@ -303,7 +303,7 @@ export function useDailyViewData() {
     if (!isAutoRefreshEnabled || !isPageVisible) return;
 
     const interval = setInterval(() => {
-      refetchRota();
+      void refetchRota();
     }, AUTO_REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
@@ -593,12 +593,12 @@ export function useDailyViewData() {
 
   const handleShiftSaved = useCallback(() => {
     // Refetch data after save
-    refetchRota();
+    void refetchRota();
   }, [refetchRota]);
 
   const handleShiftDeleted = useCallback(() => {
     // Refetch data after delete
-    refetchRota();
+    void refetchRota();
   }, [refetchRota]);
 
   const handleAssignLeader = useCallback(
@@ -618,7 +618,7 @@ export function useDailyViewData() {
   }, []);
 
   const handleLeaderSaved = useCallback(() => {
-    refetchRota();
+    void refetchRota();
   }, [refetchRota]);
 
   // Handler to publish all unpublished shifts for the day
@@ -628,7 +628,7 @@ export function useDailyViewData() {
     setIsPublishing(true);
     try {
       await publishShiftsMutation.mutateAsync(unpublishedShiftIds);
-      refetchRota();
+      void refetchRota();
     } catch (error) {
       console.error('Failed to publish shifts:', error);
     } finally {

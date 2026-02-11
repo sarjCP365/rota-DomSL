@@ -247,8 +247,9 @@ export function ShiftCard({
         ${isUnpublished ? 'border-l-4 border-dashed border-l-emerald-500' : ''}
       `}
       onClick={handleClick}
-      role={onClick || onEdit ? 'button' : undefined}
-      tabIndex={onClick || onEdit ? 0 : undefined}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e as unknown as React.MouseEvent<HTMLDivElement>); } }}
+      role="button"
+      tabIndex={0}
     >
       {/* Unpublished indicator */}
       {isUnpublished && (

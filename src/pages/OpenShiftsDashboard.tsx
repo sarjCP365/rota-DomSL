@@ -83,15 +83,13 @@ async function generateDummyOpenShifts(): Promise<OpenShift[]> {
       assignmentDetails: {
         id: visit.cp365_visitid,
         type: 'visit',
-        date: typeof visit.cp365_visitdate === 'string' 
-          ? visit.cp365_visitdate.split('T')[0]
-          : visit.cp365_visitdate.toISOString().split('T')[0],
+        date: String(visit.cp365_visitdate).split('T')[0],
         startTime: visit.cp365_scheduledstarttime,
         endTime: visit.cp365_scheduledendtime,
         durationMinutes: visit.cp365_durationminutes,
         staffMemberId: null,
         locationId: '',
-        locationName: data.geographicAreas[index % data.geographicAreas.length]?.cp365_areaname || 'Central',
+        locationName: ['Central', 'North', 'South', 'East', 'West'][index % 5] || 'Central',
         activityName: ['Morning Care', 'Lunch', 'Afternoon', 'Tea', 'Evening'][index] || 'Visit',
         serviceUserId: visit.cp365_serviceuserid,
         serviceUserName: data.serviceUsers.find(su => su.cp365_serviceuserid === visit.cp365_serviceuserid)?.cp365_fullname,
@@ -110,7 +108,7 @@ async function generateDummyOpenShifts(): Promise<OpenShift[]> {
       cp365_declinedcount: offers.filter(o => o.cp365_offerstatus === OpenShiftOfferStatus.Declined).length,
       cp365_pendingcount: offers.filter(o => o.cp365_offerstatus === OpenShiftOfferStatus.Pending).length,
       offers,
-      locationName: data.geographicAreas[index % data.geographicAreas.length]?.cp365_areaname || 'Central',
+      locationName: ['Central', 'North', 'South', 'East', 'West'][index % 5] || 'Central',
       statecode: 0,
     });
   });
@@ -148,32 +146,32 @@ export default function OpenShiftsDashboard() {
   const confirmResendOffers = async () => {
     if (!selectedOpenShift) return;
     // TODO: Implement API call to resend offers
-    console.log('Resending offers for:', selectedOpenShift.cp365_openshiftid);
+    console.warn('Resending offers for:', selectedOpenShift.cp365_openshiftid);
     // In a real implementation, this would:
     // 1. Re-notify all pending candidates
     // 2. Optionally find new candidates
     // 3. Reset notification timestamps
     setResendModalOpen(false);
     setSelectedOpenShift(null);
-    refetch();
+    void refetch();
   };
 
   const confirmExtendExpiry = async (hours: number) => {
     if (!selectedOpenShift) return;
     // TODO: Implement API call to extend expiry
-    console.log('Extending expiry by', hours, 'hours for:', selectedOpenShift.cp365_openshiftid);
+    console.warn('Extending expiry by', hours, 'hours for:', selectedOpenShift.cp365_openshiftid);
     // In a real implementation, this would:
     // 1. Update cp365_expiresat on the open shift record
     // 2. Notify candidates of extended deadline
     setExtendModalOpen(false);
     setSelectedOpenShift(null);
-    refetch();
+    void refetch();
   };
 
   const confirmManualAssign = async (staffMemberId: string) => {
     if (!selectedOpenShift) return;
     // TODO: Implement API call to manually assign
-    console.log('Manually assigning', staffMemberId, 'to:', selectedOpenShift.cp365_openshiftid);
+    console.warn('Manually assigning', staffMemberId, 'to:', selectedOpenShift.cp365_openshiftid);
     // In a real implementation, this would:
     // 1. Assign the staff member to the underlying shift/visit
     // 2. Update open shift status to Filled
@@ -181,7 +179,7 @@ export default function OpenShiftsDashboard() {
     // 4. Notify the assigned staff member
     setAssignModalOpen(false);
     setSelectedOpenShift(null);
-    refetch();
+    void refetch();
   };
 
   // Fetch data

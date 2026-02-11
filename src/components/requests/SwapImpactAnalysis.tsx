@@ -98,8 +98,8 @@ export function SwapImpactAnalysis({ swap, compact = false }: SwapImpactAnalysis
     });
 
     // Check 2: Capability match
-    const _initiatorCapabilities = (initiator as any)?.capabilities || [];
-    const _recipientCapabilities = (recipient as any)?.capabilities || [];
+    const _initiatorCapabilities = (initiator as Record<string, unknown>)?.capabilities as string[] ?? [];
+    const _recipientCapabilities = (recipient as Record<string, unknown>)?.capabilities as string[] ?? [];
     const allCapabilitiesMatch = true; // Simplified
     checks.push({
       id: 'capabilities',

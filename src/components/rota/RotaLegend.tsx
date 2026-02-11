@@ -229,11 +229,13 @@ export function RotaLegend({
     const isHovered = hoveredItem === item.type;
 
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- tooltip hover container
       <div
         key={item.type}
         className="relative"
         onMouseEnter={() => setHoveredItem(item.type)}
         onMouseLeave={() => setHoveredItem(null)}
+        role="group"
       >
         <button
           onClick={() => handleItemClick(item.type)}

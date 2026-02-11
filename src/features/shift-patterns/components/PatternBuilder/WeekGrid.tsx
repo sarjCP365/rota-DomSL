@@ -192,6 +192,9 @@ function DayCell({
   return (
     <div
       onClick={() => onDayClick(dayOfWeek)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick(dayOfWeek); } }}
+      role="button"
+      tabIndex={0}
       onContextMenu={(e) => onContextMenu(e, dayOfWeek)}
       className={`
         relative min-h-32 cursor-pointer rounded-lg border-2 p-3 transition-all

@@ -82,6 +82,9 @@ function PatternCard({
     <div
       className="group relative flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-pointer"
       onClick={() => onEdit(pattern.cp365_shiftpatterntemplatenewid)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(pattern.cp365_shiftpatterntemplatenewid); } }}
+      role="button"
+      tabIndex={0}
     >
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
@@ -95,7 +98,8 @@ function PatternCard({
         </div>
 
         {/* Actions Menu */}
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- event propagation boundary for menu actions */}
+        <div className="relative" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="group">
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -105,7 +109,7 @@ function PatternCard({
 
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }} role="button" tabIndex={0} aria-label="Close menu" />
               <div className="absolute right-0 top-8 z-20 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                 {!isArchived && (
                   <button
@@ -331,7 +335,7 @@ export function PatternLibraryPage() {
   // Handlers
   const handleEdit = useCallback(
     (id: string) => {
-      navigate(`/patterns/${id}`);
+      void navigate(`/patterns/${id}`);
     },
     [navigate]
   );

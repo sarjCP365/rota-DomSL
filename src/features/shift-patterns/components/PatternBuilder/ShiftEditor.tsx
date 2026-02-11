@@ -275,7 +275,7 @@ export function ShiftEditor({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="button" tabIndex={0} aria-label="Close modal" />
 
       {/* Modal */}
       <div className="relative w-full max-w-md rounded-xl bg-white shadow-2xl">
@@ -324,10 +324,11 @@ export function ShiftEditor({
             <>
               {/* Shift Reference */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label htmlFor="editor-shift-reference" className="mb-1 block text-sm font-medium text-slate-700">
                   Shift Reference
                 </label>
                 <select
+                  id="editor-shift-reference"
                   value={shiftReferenceId}
                   onChange={(e) => handleShiftReferenceChange(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -349,20 +350,22 @@ export function ShiftEditor({
               {/* Times Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label htmlFor="editor-start-time" className="mb-1 block text-sm font-medium text-slate-700">
                     Start Time
                   </label>
                   <input
                     type="time"
+                    id="editor-start-time"
                     value={startTime}
                     onChange={(e) => handleStartTimeChange(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">End Time</label>
+                  <label htmlFor="editor-end-time" className="mb-1 block text-sm font-medium text-slate-700">End Time</label>
                   <input
                     type="time"
+                    id="editor-end-time"
                     value={endTime}
                     onChange={(e) => handleEndTimeChange(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -394,11 +397,12 @@ export function ShiftEditor({
 
               {/* Break Duration */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label htmlFor="editor-break-duration" className="mb-1 block text-sm font-medium text-slate-700">
                   Break Duration (minutes)
                 </label>
                 <input
                   type="number"
+                  id="editor-break-duration"
                   min={0}
                   max={120}
                   step={5}
@@ -410,10 +414,11 @@ export function ShiftEditor({
 
               {/* Shift Activity */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label htmlFor="editor-shift-activity" className="mb-1 block text-sm font-medium text-slate-700">
                   Shift Activity
                 </label>
                 <select
+                  id="editor-shift-activity"
                   value={shiftActivityId}
                   onChange={(e) => setShiftActivityId(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"

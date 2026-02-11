@@ -64,13 +64,13 @@ export function MarkOpenShiftModal({
 
   // Form state
   const [notificationScope, setNotificationScope] = useState<NotificationScope>(
-    defaultConfig?.defaultNotificationScope || 'location'
+    (defaultConfig?.defaultNotificationScope as NotificationScope) || 'location'
   );
-  const [minimumMatchScore, setMinimumMatchScore] = useState(
-    defaultConfig?.minimumMatchScore || 70
+  const [minimumMatchScore, setMinimumMatchScore] = useState<number>(
+    (defaultConfig?.minimumMatchScore as number) || 70
   );
-  const [expiresInHours, setExpiresInHours] = useState(
-    defaultConfig?.defaultExpiryHours || 24
+  const [expiresInHours, setExpiresInHours] = useState<number>(
+    (defaultConfig?.defaultExpiryHours as number) || 24
   );
   const [includeStaffOnLeave, setIncludeStaffOnLeave] = useState(false);
   const [showCandidates, setShowCandidates] = useState(false);
@@ -215,10 +215,10 @@ export function MarkOpenShiftModal({
 
                   {/* Notification Settings */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="open-shift-notification-scope" className="block text-sm font-medium text-slate-700 mb-2">
                       Notify staff from:
                     </label>
-                    <RadioGroup value={notificationScope} onChange={setNotificationScope}>
+                    <RadioGroup id="open-shift-notification-scope" value={notificationScope} onChange={setNotificationScope}>
                       <div className="space-y-2">
                         {NOTIFICATION_SCOPES.map((scope) => (
                           <RadioGroup.Option
@@ -271,10 +271,11 @@ export function MarkOpenShiftModal({
 
                   {/* Minimum match score */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="open-shift-min-score" className="block text-sm font-medium text-slate-700 mb-1">
                       Minimum match score:
                     </label>
                     <select
+                      id="open-shift-min-score"
                       value={minimumMatchScore}
                       onChange={(e) => setMinimumMatchScore(Number(e.target.value))}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -289,10 +290,11 @@ export function MarkOpenShiftModal({
 
                   {/* Expiry */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label htmlFor="open-shift-expiry" className="block text-sm font-medium text-slate-700 mb-1">
                       Offer expires in:
                     </label>
                     <select
+                      id="open-shift-expiry"
                       value={expiresInHours}
                       onChange={(e) => setExpiresInHours(Number(e.target.value))}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"

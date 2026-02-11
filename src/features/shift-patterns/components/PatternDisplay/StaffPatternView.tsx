@@ -93,7 +93,8 @@ const PATTERN_COLOURS = [
 function parseAppliesToDays(appliesTo?: string): string[] {
   if (!appliesTo) return [];
   try {
-    return JSON.parse(appliesTo);
+    const parsed: unknown = JSON.parse(appliesTo);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
   } catch {
     return [];
   }
@@ -279,7 +280,7 @@ function AssignmentCard({
 
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }} role="button" tabIndex={0} aria-label="Close menu" />
               <div className="absolute right-0 top-full mt-1 z-20 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                 <button
                   onClick={() => {

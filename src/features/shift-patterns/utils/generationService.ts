@@ -217,8 +217,8 @@ export async function generateForAssignment(
       shiftsSkipped: [],
       conflicts: [],
       errors: ['No days to generate - generation window is empty'],
-      periodStart: format(window.startDate, 'yyyy-MM-dd'),
-      periodEnd: format(window.endDate, 'yyyy-MM-dd'),
+      periodStart: format(window.startDate as Date, 'yyyy-MM-dd'),
+      periodEnd: format(window.endDate as Date, 'yyyy-MM-dd'),
     };
   }
 
@@ -228,8 +228,8 @@ export async function generateForAssignment(
     assignment,
     template,
     patternDays,
-    startDate: window.startDate,
-    endDate: window.endDate,
+    startDate: window.startDate as Date,
+    endDate: window.endDate as Date,
     existingShifts: options?.existingShifts,
     existingLeave: options?.existingLeave,
     conflictResolutions: options?.conflictResolutions,
@@ -436,7 +436,7 @@ export function planPatternChangeRegeneration(
  * Format generation window for display
  */
 export function formatGenerationWindow(window: GenerationWindow): string {
-  return `${format(window.startDate, 'd MMM')} - ${format(window.endDate, 'd MMM yyyy')} (${window.daysToGenerate} days)`;
+  return `${format(window.startDate as Date, 'd MMM')} - ${format(window.endDate as Date, 'd MMM yyyy')} (${window.daysToGenerate} days)`;
 }
 
 /**

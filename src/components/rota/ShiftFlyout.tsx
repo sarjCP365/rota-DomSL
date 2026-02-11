@@ -147,6 +147,7 @@ export function ShiftFlyout({
   });
 
   // Watch shift reference to update times
+  // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form's watch() API
   const selectedRefId = watch('shiftReferenceId');
 
   // Reset form when shift data loads or mode changes
@@ -436,10 +437,11 @@ export function ShiftFlyout({
 
               {/* Staff Member */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-staff-member" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Staff Member
                 </label>
                 <select
+                  id="flyout-staff-member"
                   {...register('staffMemberId')}
                   disabled={isReadOnly}
                   className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -457,10 +459,11 @@ export function ShiftFlyout({
 
               {/* Shift Reference */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-shift-reference" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Shift Reference
                 </label>
                 <select
+                  id="flyout-shift-reference"
                   {...register('shiftReferenceId')}
                   disabled={isReadOnly}
                   className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -476,10 +479,11 @@ export function ShiftFlyout({
 
               {/* Shift Activity */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-shift-activity" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Shift Activity
                 </label>
                 <select
+                  id="flyout-shift-activity"
                   {...register('shiftActivityId')}
                   disabled={isReadOnly}
                   className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -498,11 +502,12 @@ export function ShiftFlyout({
 
               {/* Date */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-shift-date" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Date <span className="text-error">*</span>
                 </label>
                 <input
                   type="date"
+                  id="flyout-shift-date"
                   {...register('date')}
                   disabled={isReadOnly}
                   className="w-full rounded-lg border border-border-grey px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -513,13 +518,14 @@ export function ShiftFlyout({
               {/* Start/End Time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  <label htmlFor="flyout-start-time" className="mb-1.5 block text-sm font-medium text-gray-700">
                     Start Time <span className="text-error">*</span>
                   </label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                       type="time"
+                      id="flyout-start-time"
                       {...register('startTime')}
                       disabled={isReadOnly}
                       className="w-full rounded-lg border border-border-grey py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -530,13 +536,14 @@ export function ShiftFlyout({
                   )}
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  <label htmlFor="flyout-end-time" className="mb-1.5 block text-sm font-medium text-gray-700">
                     End Time <span className="text-error">*</span>
                   </label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                       type="time"
+                      id="flyout-end-time"
                       {...register('endTime')}
                       disabled={isReadOnly}
                       className="w-full rounded-lg border border-border-grey py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
@@ -550,7 +557,7 @@ export function ShiftFlyout({
 
               {/* Break Duration */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-break-duration" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Break Duration (minutes)
                 </label>
                 <Controller
@@ -559,6 +566,7 @@ export function ShiftFlyout({
                   render={({ field }) => (
                     <input
                       type="number"
+                      id="flyout-break-duration"
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       disabled={isReadOnly}
@@ -572,7 +580,7 @@ export function ShiftFlyout({
 
               {/* Community Hours */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="flyout-community-hours" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Community Hours
                 </label>
                 <Controller
@@ -581,6 +589,7 @@ export function ShiftFlyout({
                   render={({ field }) => (
                     <input
                       type="number"
+                      id="flyout-community-hours"
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       disabled={isReadOnly}

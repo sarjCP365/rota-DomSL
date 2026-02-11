@@ -162,7 +162,7 @@ export function clusterVisitsByLocation(
   serviceUsers: Map<string, DomiciliaryServiceUser>,
   numClusters: number = 3
 ): Visit[][] {
-  console.log(`🗺️ clusterVisitsByLocation: ${visits.length} visits, ${serviceUsers.size} service users, ${numClusters} clusters`);
+  console.warn(`🗺️ clusterVisitsByLocation: ${visits.length} visits, ${serviceUsers.size} service users, ${numClusters} clusters`);
   
   // Get visits with valid coordinates
   const visitsWithCoords = visits.filter(v => {
@@ -170,10 +170,10 @@ export function clusterVisitsByLocation(
     return user?.cp365_latitude && user?.cp365_longitude;
   });
   
-  console.log(`🗺️ Visits with valid coords: ${visitsWithCoords.length}/${visits.length}`);
+  console.warn(`🗺️ Visits with valid coords: ${visitsWithCoords.length}/${visits.length}`);
 
   if (visitsWithCoords.length === 0) {
-    console.log(`🗺️ No visits have coordinates, returning all in single cluster`);
+    console.warn(`🗺️ No visits have coordinates, returning all in single cluster`);
     return [visits];
   }
   if (visitsWithCoords.length <= numClusters) {
@@ -352,7 +352,7 @@ export async function createRoundsFromVisits(
   date: string,
   constraints: RoundConstraints = DEFAULT_ROUND_CONSTRAINTS
 ): Promise<RoundWithStats[]> {
-  console.log(`🗺️ createRoundsFromVisits called:`, {
+  console.warn(`🗺️ createRoundsFromVisits called:`, {
     inputVisitsCount: visits.length,
     visitType,
     date,
@@ -372,25 +372,25 @@ export async function createRoundsFromVisits(
     v => v.cp365_visittypecode === visitType && v.cp365_visitdate === date
   );
 
-  console.log(`🗺️ Filtered visits: ${filteredVisits.length} (looking for type ${visitType}, date ${date})`);
+  console.warn(`🗺️ Filtered visits: ${filteredVisits.length} (looking for type ${visitType}, date ${date})`);
   
   // Debug: show unique visit types in input
   const uniqueTypes = new Set(visits.map(v => v.cp365_visittypecode));
-  console.log(`🗺️ Unique visit types in input:`, Array.from(uniqueTypes));
+  console.warn(`🗺️ Unique visit types in input:`, Array.from(uniqueTypes));
 
   if (filteredVisits.length === 0) {
-    console.log(`🗺️ No visits match, returning empty array`);
+    console.warn(`🗺️ No visits match, returning empty array`);
     return [];
   }
   
-  console.log(`🗺️ Proceeding with ${filteredVisits.length} visits...`);
+  console.warn(`🗺️ Proceeding with ${filteredVisits.length} visits...`);
 
   // Determine number of clusters based on visit count and constraints
   // Use a smaller target per round for better geographic grouping (4-6 visits per round)
   const targetPerRound = Math.min(constraints.maxVisitsPerRound, 5);
   const numClusters = Math.max(2, Math.ceil(filteredVisits.length / targetPerRound));
   
-  console.log(`🗺️ Creating ${numClusters} clusters (target ${targetPerRound} per round, max ${constraints.maxVisitsPerRound})`);
+  console.warn(`🗺️ Creating ${numClusters} clusters (target ${targetPerRound} per round, max ${constraints.maxVisitsPerRound})`);
 
   // Cluster visits by location
   const clusters = clusterVisitsByLocation(filteredVisits, serviceUsersMap, numClusters);
@@ -443,7 +443,7 @@ export async function createRoundsFromVisits(
     rounds.push(round);
   }
 
-  console.log(`🗺️ Created ${rounds.length} rounds with ${rounds.reduce((sum, r) => sum + r.visits.length, 0)} total visits`);
+  console.warn(`🗺️ Created ${rounds.length} rounds with ${rounds.reduce((sum, r) => sum + r.visits.length, 0)} total visits`);
   return rounds;
 }
 

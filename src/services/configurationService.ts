@@ -6,6 +6,7 @@
  */
 
 import { type CareType, type MatchScoreWeights, DEFAULT_MATCHING_WEIGHTS } from './careContext';
+import { type OpenShiftConfiguration, DEFAULT_OPEN_SHIFT_CONFIGURATION } from '@/types/configuration';
 
 // ============================================================================
 // Swap Configuration Types
@@ -92,8 +93,17 @@ export async function updateSwapConfiguration(
 ): Promise<SwapConfiguration> {
   await delay(100);
   swapConfig = { ...swapConfig, ...config };
-  console.log('📝 Swap configuration updated:', swapConfig);
+  console.warn('📝 Swap configuration updated:', swapConfig);
   return { ...swapConfig };
+}
+
+// ============================================================================
+// Open Shift Configuration Functions
+// ============================================================================
+
+export async function getOpenShiftConfiguration(): Promise<OpenShiftConfiguration> {
+  await delay(50);
+  return { ...DEFAULT_OPEN_SHIFT_CONFIGURATION };
 }
 
 // ============================================================================
@@ -113,7 +123,7 @@ export async function updateMatchingWeights(
 ): Promise<MatchScoreWeights> {
   await delay(100);
   matchingConfig.weightsByCareType[careType] = { ...weights };
-  console.log(`📝 Matching weights updated for ${careType}:`, weights);
+  console.warn(`📝 Matching weights updated for ${careType}:`, weights);
   return { ...weights };
 }
 
@@ -135,7 +145,7 @@ export async function updateTravelThresholds(
 ): Promise<TravelThresholds> {
   await delay(100);
   travelThresholds = { ...travelThresholds, ...thresholds };
-  console.log('📝 Travel thresholds updated:', travelThresholds);
+  console.warn('📝 Travel thresholds updated:', travelThresholds);
   return { ...travelThresholds };
 }
 

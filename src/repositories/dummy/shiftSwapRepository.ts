@@ -39,7 +39,7 @@ const dummyData: DummySwapData = {
  * Generate mock shift data for shift swaps
  * These represent residential care shifts (not domiciliary visits)
  */
-function generateMockShifts(staffMembers: any[], today: Date): SwapAssignmentSummary[] {
+function generateMockShifts(staffMembers: Record<string, unknown>[], today: Date): SwapAssignmentSummary[] {
   const shiftTypes = [
     { name: 'Early Shift', start: '07:00', end: '15:00', duration: 480 },
     { name: 'Late Shift', start: '14:00', end: '22:00', duration: 480 },
@@ -252,25 +252,27 @@ async function ensureInitialized(): Promise<void> {
   dummyData.initialized = true;
   const shiftSwaps = Array.from(dummyData.swaps.values()).filter(s => s.assignmentType === 'shift').length;
   const visitSwaps = Array.from(dummyData.swaps.values()).filter(s => s.assignmentType === 'visit').length;
-  console.log(`📋 Generated ${dummyData.swaps.size} dummy swap requests (${shiftSwaps} shifts, ${visitSwaps} visits)`);
+  console.warn(`📋 Generated ${dummyData.swaps.size} dummy swap requests (${shiftSwaps} shifts, ${visitSwaps} visits)`);
 }
 
 /**
  * Convert a visit to a summary for swap display
  */
-function visitToSummary(visit: any): SwapAssignmentSummary | undefined {
+function visitToSummary(visit: Record<string, unknown> | undefined): SwapAssignmentSummary | undefined {
   if (!visit) return undefined;
+  const visitDate = visit.cp365_visitdate as string;
+  const dateStr = typeof visitDate === 'string'
+    ? visitDate.split('T')[0]
+    : String(visitDate).split('T')[0];
   return {
-    id: visit.cp365_visitid,
+    id: visit.cp365_visitid as string,
     type: 'visit',
-    date: typeof visit.cp365_visitdate === 'string'
-      ? visit.cp365_visitdate.split('T')[0]
-      : visit.cp365_visitdate.toISOString().split('T')[0],
-    startTime: visit.cp365_scheduledstarttime,
-    endTime: visit.cp365_scheduledendtime,
-    durationMinutes: visit.cp365_durationminutes,
-    activityName: getVisitTypeName(visit.cp365_visittypecode),
-    serviceUserName: visit.cp365_serviceuser?.cp365_fullname,
+    date: dateStr,
+    startTime: visit.cp365_scheduledstarttime as string,
+    endTime: visit.cp365_scheduledendtime as string,
+    durationMinutes: visit.cp365_durationminutes as number,
+    activityName: getVisitTypeName(visit.cp365_visittypecode as number),
+    serviceUserName: (visit.cp365_serviceuser as Record<string, string>)?.cp365_fullname,
   };
 }
 
@@ -472,8 +474,8 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
       staffMemberId,
       staffName: staff?.cp365_staffmembername || 'Unknown',
       swapsThisMonth,
-      monthlyLimit: config.monthlyLimitPerStaff,
-      limitReached: swapsThisMonth >= config.monthlyLimitPerStaff,
+      monthlyLimit: config.monthlyLimitPerStaff as number,
+      limitReached: swapsThisMonth >= (config.monthlyLimitPerStaff as number),
     };
   }
 
@@ -559,7 +561,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
     swap.cp365_advancenoticebreached = daysUntil < config.advanceNoticeDays;
 
     dummyData.swaps.set(swap.cp365_swaprequestid, swap);
-    console.log(`📋 Created swap request: ${swap.cp365_name}`);
+    console.warn(`📋 Created swap request: ${swap.cp365_name}`);
 
     return swap;
   }
@@ -582,7 +584,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
     swap.cp365_approveddate = new Date().toISOString();
     swap.cp365_completeddate = new Date().toISOString();
 
-    console.log(`✅ Approved swap: ${swap.cp365_name}`);
+    console.warn(`✅ Approved swap: ${swap.cp365_name}`);
 
     return { success: true, swapId, newStatus: ShiftSwapStatus.Approved };
   }
@@ -603,7 +605,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
     swap.swapStatusLabel = getSwapStatusLabel(ShiftSwapStatus.RejectedByManager);
     swap.cp365_managernotes = managerNotes;
 
-    console.log(`❌ Rejected swap: ${swap.cp365_name}`);
+    console.warn(`❌ Rejected swap: ${swap.cp365_name}`);
 
     return { success: true, swapId, newStatus: ShiftSwapStatus.RejectedByManager };
   }
@@ -622,7 +624,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
       swap.cp365_notesfrominitiator = (swap.cp365_notesfrominitiator || '') + ` [Cancelled: ${reason}]`;
     }
 
-    console.log(`🚫 Cancelled swap: ${swap.cp365_name}`);
+    console.warn(`🚫 Cancelled swap: ${swap.cp365_name}`);
 
     return { success: true, swapId, newStatus: ShiftSwapStatus.Cancelled };
   }
@@ -644,7 +646,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
     swap.cp365_notesfromrecipient = notes;
     swap.cp365_recipientrespondeddate = new Date().toISOString();
 
-    console.log(`👍 Recipient accepted swap: ${swap.cp365_name}`);
+    console.warn(`👍 Recipient accepted swap: ${swap.cp365_name}`);
 
     return { success: true, swapId, newStatus: ShiftSwapStatus.AwaitingManagerApproval };
   }
@@ -666,7 +668,7 @@ export class DummyShiftSwapRepository implements ShiftSwapRepository {
     swap.cp365_notesfromrecipient = reason;
     swap.cp365_recipientrespondeddate = new Date().toISOString();
 
-    console.log(`👎 Recipient declined swap: ${swap.cp365_name}`);
+    console.warn(`👎 Recipient declined swap: ${swap.cp365_name}`);
 
     return { success: true, swapId, newStatus: ShiftSwapStatus.RejectedByRecipient };
   }

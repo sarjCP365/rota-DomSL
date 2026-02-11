@@ -44,7 +44,7 @@ export async function generateShiftsFromPattern(
     endDate,
     rotaId,
     sublocationId: _sublocationId,
-    conflictResolutions = new Map(),
+    conflictResolutions = new Map<string, 'keep' | 'override' | 'skip'>(),
     dryRun = false,
   } = options;
 
@@ -160,7 +160,7 @@ export async function generateShiftsFromPattern(
       // Check for conflicts
       const conflict = result.conflicts.find((c) => c.date === dateStr);
       if (conflict) {
-        const resolution = conflictResolutions.get(dateStr) || 'keep';
+        const resolution: string = conflictResolutions.get(dateStr) || 'keep';
 
         if (resolution === 'keep' || resolution === 'skip') {
           result.shiftsSkipped.push({
@@ -292,8 +292,8 @@ export async function detectConflicts(
     });
 
     for (const leave of approvedLeave) {
-      const leaveStart = parseISO(leave.cp365_absencestart || leave.cp365_startdate);
-      const leaveEnd = parseISO(leave.cp365_absenceend || leave.cp365_enddate);
+      const leaveStart = parseISO(String(leave.cp365_absencestart || leave.cp365_startdate));
+      const leaveEnd = parseISO(String(leave.cp365_absenceend || leave.cp365_enddate));
 
       let currentDate = startDate;
       while (currentDate <= endDate) {

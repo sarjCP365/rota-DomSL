@@ -91,7 +91,7 @@ export function useDailyViewData({
 
       // Refetch when page becomes visible again if auto-refresh is enabled
       if (visible && isAutoRefreshEnabled) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['dailyViewData', sublocationId, format(selectedDate, 'yyyy-MM-dd')],
         });
       }
@@ -176,7 +176,7 @@ export function useDailyViewData({
   // -------------------------------------------------------------------------
 
   const refetch = useCallback(() => {
-    query.refetch();
+    void query.refetch();
   }, [query]);
 
   // -------------------------------------------------------------------------
