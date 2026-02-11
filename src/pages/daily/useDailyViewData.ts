@@ -14,7 +14,8 @@ import type { DailyFilters, ShiftType } from '@/components/daily/DailyFilterBar'
 import type { DepartmentType } from '@/components/daily/DepartmentSection';
 import { useLocations, useSublocations, useActiveRota } from '@/hooks/useLocations';
 import { useRotaData } from '@/hooks/useRotaData';
-import { usePublishShifts } from '@/hooks/useShifts';
+import { usePublishShifts, useTimesheetClocks } from '@/hooks/useShifts';
+import { mergeClockDataIntoShifts } from '@/api/dataverse/shifts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   type AttendanceStatus,
@@ -220,6 +221,22 @@ export function useDailyViewData() {
     showExternalStaff: false,
   });
 
+  // Fetch timesheet clock records for the selected date.
+  // Enabled once we have a sublocation and shifts loaded — ensures the Dataverse
+  // client is initialised and there's something to match against.
+  const { data: timesheetClocks } = useTimesheetClocks(
+    selectedDate,
+    selectedDate, // Single day — start and end are the same
+    !!selectedSublocationId && !isLoadingRota
+  );
+
+  // Merge clock data into shifts so attendance status uses real clock-in/out times
+  const shiftsWithClockData = useMemo(() => {
+    if (!rotaData?.shifts) return undefined;
+    if (!timesheetClocks || timesheetClocks.length === 0) return rotaData.shifts;
+    return mergeClockDataIntoShifts(rotaData.shifts, timesheetClocks);
+  }, [rotaData?.shifts, timesheetClocks]);
+
   // ---------------------------------------------------------------------------
   // Effects: Auto-select Location/Sublocation
   // ---------------------------------------------------------------------------
@@ -346,18 +363,18 @@ export function useDailyViewData() {
   // Computed Data
   // ---------------------------------------------------------------------------
 
-  // Filter shifts for selected date
+  // Filter shifts for selected date (uses clock-enriched data when available)
   const shiftsForDate = useMemo(() => {
-    if (!rotaData?.shifts) return [];
+    if (!shiftsWithClockData) return [];
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
-    return rotaData.shifts.filter((shift) => {
+    return shiftsWithClockData.filter((shift) => {
       const shiftDate = shift['Shift Date'];
       if (!shiftDate) return false;
       const shiftDateStr = format(new Date(shiftDate), 'yyyy-MM-dd');
       return shiftDateStr === dateStr;
     });
-  }, [rotaData?.shifts, selectedDate]);
+  }, [shiftsWithClockData, selectedDate]);
 
   // Apply filters
   const filteredShifts = useMemo(() => {

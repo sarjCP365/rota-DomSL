@@ -18,9 +18,25 @@ import {
   getTotalUnpublishedCount,
   getAllUnpublishedShifts,
   bulkDeleteShifts,
+  bulkCreateShifts,
+  getTimesheetClocks,
 } from '@/api/dataverse/shifts';
 import type { UnpublishedShiftsFilter } from '@/api/dataverse/shifts';
-import type { Shift } from '@/api/dataverse/types';
+import type { Shift, TimesheetClock } from '@/api/dataverse/types';
+
+/**
+ * Fetch timesheet clock records for a date range.
+ * Returns clock-in/out records that can be matched to shifts.
+ */
+export function useTimesheetClocks(startDate: Date, endDate: Date, enabled = true) {
+  return useQuery<TimesheetClock[]>({
+    queryKey: ['timesheetClocks', startDate.toISOString(), endDate.toISOString()],
+    queryFn: () => getTimesheetClocks(startDate, endDate),
+    enabled,
+    staleTime: 1000 * 60 * 2, // 2 minutes — clock data refreshes frequently
+    refetchOnWindowFocus: true,
+  });
+}
 
 /**
  * Fetch shifts for a rota and date range
@@ -188,6 +204,30 @@ export function useAllUnpublishedShifts(filters?: UnpublishedShiftsFilter) {
     queryFn: () => getAllUnpublishedShifts(filters),
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * Bulk create multiple shifts (used by Copy Week)
+ * Accepts an onProgress callback for real-time progress tracking.
+ */
+export function useBulkCreateShifts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      shifts,
+      onProgress,
+    }: {
+      shifts: Array<Partial<Shift>>;
+      onProgress?: (completed: number, total: number) => void;
+    }) => bulkCreateShifts(shifts, { onProgress }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['rotaData'] });
+      void queryClient.invalidateQueries({ queryKey: ['allUnpublishedShifts'] });
+      void queryClient.invalidateQueries({ queryKey: ['totalUnpublishedCount'] });
+    },
   });
 }
 

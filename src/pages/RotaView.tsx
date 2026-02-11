@@ -14,6 +14,7 @@ import { FeatureErrorBoundary } from '@/components/common/ErrorBoundary';
 import { ViewToggle } from '@/components/common/ViewToggle';
 import { RotaGrid } from '@/components/rota/RotaGrid';
 import { ShiftFlyout } from '@/components/rota/ShiftFlyout';
+import { CopyWeekDialog } from '@/components/rota/CopyWeekDialog';
 import { RotaFilterBar } from './rota/RotaFilterBar';
 import { RotaActionBar } from './rota/RotaActionBar';
 import { useRotaViewData } from './rota/useRotaViewData';
@@ -180,6 +181,16 @@ export function RotaView() {
         sublocationId={data.selectedSublocationId}
         rotaId={data.activeRota?.cp365_rotaid}
         staffList={data.rotaData?.staff || []}
+      />
+
+      {/* Copy Week Dialog */}
+      <CopyWeekDialog
+        isOpen={data.copyWeekOpen}
+        onClose={data.handleCloseCopyWeek}
+        sourceWeekStart={data.weekStart}
+        duration={data.duration}
+        shifts={data.rotaData?.shifts || []}
+        rotaId={data.activeRota?.cp365_rotaid}
       />
     </div>
   );

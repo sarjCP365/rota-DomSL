@@ -6,7 +6,18 @@
 
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { Sun, Moon, Bed, Edit2, UserCheck, MoreHorizontal, AlertCircle, Cake } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Bed,
+  Edit2,
+  UserCheck,
+  MoreHorizontal,
+  AlertCircle,
+  Cake,
+  LogIn,
+  LogOut,
+} from 'lucide-react';
 import { StatusDot } from './AttendanceStatusBadge';
 import {
   type ShiftWithAttendance,
@@ -14,6 +25,8 @@ import {
   getAttendanceDetails,
   getStatusConfig,
   formatLateBy,
+  formatEarlyBy,
+  formatAttendanceTime,
 } from '@/utils/attendanceStatus';
 import type { ShiftViewData } from '@/api/dataverse/types';
 
@@ -247,7 +260,12 @@ export function ShiftCard({
         ${isUnpublished ? 'border-l-4 border-dashed border-l-emerald-500' : ''}
       `}
       onClick={handleClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e as unknown as React.MouseEvent<HTMLDivElement>); } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+      }}
       role="button"
       tabIndex={0}
     >
@@ -369,6 +387,36 @@ export function ShiftCard({
             )}
           </div>
         </div>
+
+        {/* Clock In / Out Times (mobile) */}
+        {(attendanceDetails.clockedInTime || attendanceDetails.clockedOutTime) && (
+          <div className="mt-2 flex items-center gap-4 rounded-lg bg-slate-50 px-3 py-2">
+            <div className="flex items-center gap-1.5 text-xs">
+              <LogIn className="h-3.5 w-3.5 text-green-600" />
+              <span className="text-gray-500">In:</span>
+              <span className="font-medium text-gray-900">
+                {formatAttendanceTime(attendanceDetails.clockedInTime)}
+              </span>
+              {attendanceDetails.minutesEarly > 0 && (
+                <span className="text-[10px] text-blue-600">
+                  ({formatEarlyBy(attendanceDetails.minutesEarly)})
+                </span>
+              )}
+              {attendanceDetails.minutesLate > 0 && attendanceDetails.clockedInTime && (
+                <span className="text-[10px] text-orange-600">
+                  (+{formatLateBy(attendanceDetails.minutesLate)})
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <LogOut className="h-3.5 w-3.5 text-red-500" />
+              <span className="text-gray-500">Out:</span>
+              <span className="font-medium text-gray-900">
+                {formatAttendanceTime(attendanceDetails.clockedOutTime)}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* External Location */}
         {isExternal && shift['Sublocation Name'] && (
@@ -565,6 +613,48 @@ export function ShiftCard({
               </span>
             )}
           </div>
+        </div>
+
+        {/* Clock In / Out Times (desktop) */}
+        <div className="hidden xl:flex items-center gap-4 min-w-[200px]">
+          {attendanceDetails.clockedInTime || attendanceDetails.clockedOutTime ? (
+            <>
+              <div className="flex flex-col">
+                <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  Clock In
+                </div>
+                <div className="flex items-center gap-1">
+                  <LogIn className="h-3 w-3 text-green-600" />
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatAttendanceTime(attendanceDetails.clockedInTime)}
+                  </span>
+                  {attendanceDetails.minutesEarly > 0 && (
+                    <span className="text-[10px] text-blue-600">
+                      ({formatEarlyBy(attendanceDetails.minutesEarly)})
+                    </span>
+                  )}
+                  {attendanceDetails.minutesLate > 0 && attendanceDetails.clockedInTime && (
+                    <span className="text-[10px] text-orange-600">
+                      (+{formatLateBy(attendanceDetails.minutesLate)})
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                  Clock Out
+                </div>
+                <div className="flex items-center gap-1">
+                  <LogOut className="h-3 w-3 text-red-500" />
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatAttendanceTime(attendanceDetails.clockedOutTime)}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-xs text-gray-400 italic">No clock data</div>
+          )}
         </div>
 
         {/* Spacer */}

@@ -12,6 +12,7 @@ import type {
   SublocationStaffViewData,
   StaffAbsenceLog,
   AbsenceType,
+  TimesheetClock,
 } from './types';
 import { format, addDays } from 'date-fns';
 import { ShiftStatus } from './types';
@@ -25,7 +26,9 @@ import { getStaffViewDataForSublocation } from './staff';
 function getExpandedActivity(shift: Shift): ShiftActivity | null {
   // Dataverse returns expanded navigation properties using SchemaName casing
   // For cp365_shift, this is PascalCase: cp365_ShiftActivity
-  const activity = (shift as Record<string, unknown>)['cp365_ShiftActivity'] as ShiftActivity | undefined;
+  const activity = (shift as Record<string, unknown>)['cp365_ShiftActivity'] as
+    | ShiftActivity
+    | undefined;
   return activity || null;
 }
 
@@ -103,7 +106,9 @@ export async function getShiftsForRota(
         'cp365_sleepin',
       ],
       // Expand ShiftActivity to get the activity name and care type for display
-      expand: ['cp365_ShiftActivity($select=cp365_shiftactivityname,cp365_shiftactivitycaretype,cp365_countstowardscare)'],
+      expand: [
+        'cp365_ShiftActivity($select=cp365_shiftactivityname,cp365_shiftactivitycaretype,cp365_countstowardscare)',
+      ],
       orderby: 'cp365_shiftdate asc,cp365_shiftstarttime asc',
       top: 500,
     });
@@ -977,6 +982,66 @@ export async function getAllUnpublishedShifts(
 }
 
 /**
+ * Bulk create multiple shifts with concurrency limiting.
+ *
+ * Uses parallel creation with a configurable concurrency pool to balance
+ * performance against Dataverse API throttling limits.
+ * Dataverse allows ~6,000 requests per 5-minute window per user;
+ * a concurrency of 5 keeps well within limits while completing quickly.
+ *
+ * @param shifts - Array of partial Shift objects to create
+ * @param options - Concurrency and progress callback options
+ * @returns Summary of successes, failures, and error messages
+ */
+export async function bulkCreateShifts(
+  shifts: Array<Partial<Shift>>,
+  options?: {
+    /** Max parallel requests (default: 5) */
+    concurrency?: number;
+    /** Progress callback: (completed, total) */
+    onProgress?: (completed: number, total: number) => void;
+  }
+): Promise<{ success: number; failed: number; errors: string[] }> {
+  if (!isDataverseClientInitialised()) {
+    throw new Error('Dataverse client not initialised');
+  }
+
+  const client = getDataverseClient();
+  const concurrency = options?.concurrency ?? 5;
+  const total = shifts.length;
+  let completed = 0;
+  let success = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  // Process shifts in a concurrency-limited pool
+  const queue = [...shifts];
+
+  async function processNext(): Promise<void> {
+    while (queue.length > 0) {
+      const shiftData = queue.shift()!;
+      try {
+        await client.create<Shift>('cp365_shifts', shiftData);
+        success++;
+      } catch (error) {
+        failed++;
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(message);
+        console.error('[Shifts] Failed to create shift in bulk:', error);
+      }
+      completed++;
+      options?.onProgress?.(completed, total);
+    }
+  }
+
+  // Launch concurrent workers
+  const workers = Array.from({ length: Math.min(concurrency, total) }, () => processNext());
+  await Promise.all(workers);
+
+  return { success, failed, errors };
+}
+
+/**
  * Bulk delete multiple shifts
  */
 export async function bulkDeleteShifts(
@@ -1001,4 +1066,189 @@ export async function bulkDeleteShifts(
   }
 
   return { success, failed };
+}
+
+// =============================================================================
+// TIMESHEET CLOCKS
+// =============================================================================
+
+/**
+ * Fetch timesheet clock records for a date range.
+ *
+ * Queries cp365_timesheetclocks filtered by submitted start time falling within
+ * the given date range. Returns raw clock records that can be matched to shifts.
+ *
+ * NOTE: If the logical column names differ in your environment, update the
+ * $select and $filter values below. Use the DataverseSchemaExporter
+ * (docs/templates/) to verify exact names.
+ */
+export async function getTimesheetClocks(
+  startDate: Date,
+  endDate: Date
+): Promise<TimesheetClock[]> {
+  if (!isDataverseClientInitialised()) {
+    console.warn('[TimesheetClocks] Dataverse client not initialised');
+    return [];
+  }
+
+  const client = getDataverseClient();
+  const startStr = format(startDate, 'yyyy-MM-dd');
+  const endStr = format(endDate, 'yyyy-MM-dd');
+
+  console.warn(`[TimesheetClocks] Fetching clocks for ${startStr} to ${endStr}`);
+
+  // Try with shift lookup first; fall back without it if the column doesn't exist
+  const baseSelect = [
+    'cp365_timesheetclockid',
+    'cp365_submittedstarttime',
+    'cp365_submittedendtime',
+    '_cp365_staffmember_value',
+  ];
+
+  const filter =
+    `cp365_submittedstarttime ge ${startStr}T00:00:00Z` +
+    ` and cp365_submittedstarttime lt ${endStr}T23:59:59Z`;
+
+  try {
+    // First attempt: include shift lookup
+    const clocks = await client.get<TimesheetClock>('cp365_timesheetclocks', {
+      select: [...baseSelect, '_cp365_shift_value'],
+      filter,
+      orderby: 'cp365_submittedstarttime asc',
+    });
+
+    console.warn(`[TimesheetClocks] Fetched ${clocks.length} clock records (with shift lookup)`);
+    return clocks;
+  } catch (firstError) {
+    console.warn(
+      '[TimesheetClocks] Query with _cp365_shift_value failed, retrying without it:',
+      firstError instanceof Error ? firstError.message : firstError
+    );
+
+    try {
+      // Second attempt: without shift lookup (column may not exist)
+      const clocks = await client.get<TimesheetClock>('cp365_timesheetclocks', {
+        select: baseSelect,
+        filter,
+        orderby: 'cp365_submittedstarttime asc',
+      });
+
+      console.warn(
+        `[TimesheetClocks] Fetched ${clocks.length} clock records (without shift lookup)`
+      );
+      return clocks;
+    } catch (secondError) {
+      console.error('[TimesheetClocks] Failed to fetch timesheet clocks:', secondError);
+      return [];
+    }
+  }
+}
+
+/**
+ * Merge timesheet clock data into shift view data.
+ *
+ * Matching strategy (in priority order):
+ *  1. Direct shift lookup (_cp365_shift_value matches Shift ID) — most reliable
+ *  2. Staff member + same calendar date — fallback when no shift lookup exists
+ *
+ * If multiple clock records match a shift, the earliest clock-in is used
+ * (guards against duplicate entries).
+ */
+export function mergeClockDataIntoShifts(
+  shifts: ShiftViewData[],
+  clocks: TimesheetClock[]
+): ShiftViewData[] {
+  if (clocks.length === 0) return shifts;
+
+  // Normalise GUID to lowercase for case-insensitive matching
+  const norm = (guid: string | null | undefined): string => guid?.toLowerCase().trim() ?? '';
+
+  // Index clocks by shift ID for fast O(1) lookup
+  const clockByShiftId = new Map<string, TimesheetClock>();
+  // Index clocks by staff+date for fallback matching
+  const clockByStaffDate = new Map<string, TimesheetClock>();
+
+  for (const clock of clocks) {
+    // Index by shift lookup (priority match)
+    const shiftRef = norm(clock._cp365_shift_value);
+    if (shiftRef) {
+      const existing = clockByShiftId.get(shiftRef);
+      if (
+        !existing ||
+        (clock.cp365_submittedstarttime &&
+          (!existing.cp365_submittedstarttime ||
+            clock.cp365_submittedstarttime < existing.cp365_submittedstarttime))
+      ) {
+        clockByShiftId.set(shiftRef, clock);
+      }
+    }
+
+    // Index by staff member + date (fallback match)
+    const staffRef = norm(clock._cp365_staffmember_value);
+    if (staffRef && clock.cp365_submittedstarttime) {
+      const clockDate = clock.cp365_submittedstarttime.substring(0, 10); // 'yyyy-MM-dd'
+      const key = `${staffRef}|${clockDate}`;
+      const existing = clockByStaffDate.get(key);
+      if (
+        !existing ||
+        (clock.cp365_submittedstarttime &&
+          (!existing.cp365_submittedstarttime ||
+            clock.cp365_submittedstarttime < existing.cp365_submittedstarttime))
+      ) {
+        clockByStaffDate.set(key, clock);
+      }
+    }
+  }
+
+  let matched = 0;
+  let unmatched = 0;
+
+  const result = shifts.map((shift) => {
+    const shiftId = norm(shift['Shift ID']);
+    const staffId = norm(shift['Staff Member ID']);
+    const shiftDate = shift['Shift Date']?.substring(0, 10) ?? '';
+
+    // Priority 1: Match by shift lookup
+    let matchedClock = clockByShiftId.get(shiftId);
+
+    // Priority 2: Match by staff member + date
+    if (!matchedClock && staffId && shiftDate) {
+      matchedClock = clockByStaffDate.get(`${staffId}|${shiftDate}`);
+    }
+
+    if (!matchedClock) {
+      unmatched++;
+      return shift;
+    }
+
+    matched++;
+    return {
+      ...shift,
+      'Clocked In': matchedClock.cp365_submittedstarttime || null,
+      'Clocked Out': matchedClock.cp365_submittedendtime || null,
+    };
+  });
+
+  console.warn(
+    `[TimesheetClocks] Merge complete: ${matched} matched, ${unmatched} unmatched ` +
+      `(${clocks.length} clock records, ${shifts.length} shifts, ` +
+      `${clockByShiftId.size} indexed by shift, ${clockByStaffDate.size} indexed by staff+date)`
+  );
+
+  // Log a sample clock for debugging if no matches occurred
+  if (matched === 0 && clocks.length > 0 && shifts.length > 0) {
+    const sampleClock = clocks[0];
+    const sampleShift = shifts[0];
+    console.warn(
+      '[TimesheetClocks] No matches found. Sample data for debugging:\n' +
+        `  Clock: staff=${sampleClock._cp365_staffmember_value}, ` +
+        `shift=${sampleClock._cp365_shift_value}, ` +
+        `start=${sampleClock.cp365_submittedstarttime}\n` +
+        `  Shift: id=${sampleShift['Shift ID']}, ` +
+        `staff=${sampleShift['Staff Member ID']}, ` +
+        `date=${sampleShift['Shift Date']}`
+    );
+  }
+
+  return result;
 }

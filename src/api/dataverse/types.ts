@@ -572,6 +572,29 @@ export interface ShiftViewData {
   'Is External Staff'?: boolean;
   /** Flag indicating if this shift is from another rota (dual home staff) */
   isFromOtherRota?: boolean;
+  /** Clock-in time from cp365_timesheetclocks (Submitted Start Time) */
+  'Clocked In'?: string | null;
+  /** Clock-out time from cp365_timesheetclocks (Submitted End Time) */
+  'Clocked Out'?: string | null;
+}
+
+// =============================================================================
+// TIMESHEET CLOCKS
+// =============================================================================
+
+/**
+ * Timesheet clock record from cp365_timesheetclocks table.
+ * Stores submitted clock-in/out times for staff members.
+ *
+ * NOTE: Column logical names assumed as cp365_submittedstarttime / cp365_submittedendtime.
+ * If these differ in your environment, update the select/mapping in shifts.ts > getTimesheetClocks().
+ */
+export interface TimesheetClock {
+  cp365_timesheetclockid: string;
+  cp365_submittedstarttime: string | null; // Clock in (ISO datetime)
+  cp365_submittedendtime: string | null; // Clock out (ISO datetime)
+  _cp365_staffmember_value: string | null; // Lookup to staff member
+  _cp365_shift_value: string | null; // Lookup to shift (if available)
 }
 
 export interface SublocationStaffViewData {

@@ -405,8 +405,13 @@ export function PeopleViewGrid({
       };
     });
 
-    // Combine all processed shifts
-    const allProcessedShifts = [...processedShifts, ...processedOtherRotaShifts];
+    // Combine all processed shifts, deduplicating by Shift ID
+    // (a shift may appear in both arrays if a staff member belongs to multiple sublocations)
+    const seenShiftIds = new Set(processedShifts.map((s) => s['Shift ID']));
+    const uniqueOtherShifts = processedOtherRotaShifts.filter(
+      (s) => !seenShiftIds.has(s['Shift ID'])
+    );
+    const allProcessedShifts = [...processedShifts, ...uniqueOtherShifts];
 
     // Group by staff member
     const shiftsByStaff = new Map<string, ProcessedShift[]>();
@@ -669,7 +674,16 @@ export function PeopleViewGrid({
 
             {showFilterMenu && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowFilterMenu(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowFilterMenu(false); }} role="button" tabIndex={0} aria-label="Close filter menu" />
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowFilterMenu(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowFilterMenu(false);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Close filter menu"
+                />
                 <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-border-grey bg-white p-3 shadow-lg">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-900">Filters</span>
@@ -685,7 +699,10 @@ export function PeopleViewGrid({
 
                   {/* Job Title filter */}
                   <div className="mb-3">
-                    <label htmlFor="people-filter-job-title" className="mb-1 block text-xs font-medium text-gray-600">
+                    <label
+                      htmlFor="people-filter-job-title"
+                      className="mb-1 block text-xs font-medium text-gray-600"
+                    >
                       Job Title
                     </label>
                     <select
@@ -707,7 +724,12 @@ export function PeopleViewGrid({
 
                   {/* Team filter */}
                   <div className="mb-3">
-                    <label htmlFor="people-filter-team" className="mb-1 block text-xs font-medium text-gray-600">Team</label>
+                    <label
+                      htmlFor="people-filter-team"
+                      className="mb-1 block text-xs font-medium text-gray-600"
+                    >
+                      Team
+                    </label>
                     <select
                       id="people-filter-team"
                       value={filters.team || ''}
@@ -757,7 +779,16 @@ export function PeopleViewGrid({
 
             {showSortMenu && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowSortMenu(false); }} role="button" tabIndex={0} aria-label="Close sort menu" />
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowSortMenu(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowSortMenu(false);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Close sort menu"
+                />
                 <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-border-grey bg-white py-1 shadow-lg">
                   {sortOptions.map((option) => (
                     <button
@@ -1469,8 +1500,7 @@ function PeopleShiftCard({
             }`}
             title={`Activity: ${shift['Shift Activity']}${shift['Shift Activity Care Type'] ? ` (${shift['Shift Activity Care Type']})` : ''}`}
           >
-            {shift['Shift Activity Care Type'] === 'Non-Care' ? '○' : '●'}{' '}
-            {shift['Shift Activity']}
+            {shift['Shift Activity Care Type'] === 'Non-Care' ? '○' : '●'} {shift['Shift Activity']}
           </span>
         </div>
       )}

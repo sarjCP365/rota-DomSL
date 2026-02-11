@@ -1,7 +1,18 @@
 /**
  * Attendance Status Utilities
- * Logic for calculating and displaying staff attendance status
- * Based on CURSOR-DAILY-VIEW-PROMPTS.md Prompt 7
+ *
+ * Calculates and displays staff attendance status using real clock-in/out data
+ * from the cp365_timesheetclocks Dataverse table.
+ *
+ * Status logic:
+ *  - Absent:    Shift explicitly marked as absent (status code)
+ *  - Worked:    Has clock-in AND clock-out (shift completed)
+ *  - Present:   Has clock-in but no clock-out (currently working)
+ *  - Late:      Shift is currently active, no clock-in recorded
+ *  - Scheduled: Shift hasn't started yet, OR shift has ended with no clock data
+ *
+ * Early/late arrival annotations are computed in AttendanceDetails (minutesEarly /
+ * minutesLate) and displayed as secondary info alongside the clock-in time.
  */
 
 import type { ShiftViewData } from '@/api/dataverse/types';
@@ -12,22 +23,17 @@ import type { ShiftViewData } from '@/api/dataverse/types';
 
 /**
  * Attendance status for a shift
- * - present: Staff has clocked in but not out (currently working)
- * - scheduled: Shift hasn't started yet
- * - worked: Staff has clocked in AND out (shift completed)
- * - absent: Shift marked as absent
- * - late: Shift should have started but staff hasn't clocked in
  */
 export type AttendanceStatus = 'present' | 'scheduled' | 'worked' | 'absent' | 'late';
 
 /**
- * Extended shift data with clock-in/out times
- * These fields may be added to ShiftViewData in the future
+ * Extended shift data with clock-in/out times.
+ * These fields are populated by mergeClockDataIntoShifts() in the Daily View.
  */
 export interface ShiftWithAttendance extends ShiftViewData {
   'Clocked In'?: string | null;
   'Clocked Out'?: string | null;
-  'Shift Status Code'?: number; // For absent status - could be a specific status code
+  'Shift Status Code'?: number;
 }
 
 /**
@@ -39,65 +45,98 @@ export interface AttendanceDetails {
   clockedOutTime: Date | null;
   shiftStartTime: Date;
   shiftEndTime: Date;
+  /** Minutes the staff member clocked in after the shift start (> 0 = late arrival) */
   minutesLate: number;
+  /** Minutes the staff member clocked in before the shift start (> 0 = early arrival) */
+  minutesEarly: number;
   isOvernight: boolean;
+  /** Whether the shift has ended (past its end time) */
+  hasEnded: boolean;
 }
 
 // =============================================================================
-// Status Codes (placeholder - adjust based on actual Dataverse values)
+// Status Codes
 // =============================================================================
 
 export const ShiftStatusCodes = {
   Published: 1001,
   Unpublished: 1009,
-  Absent: 1002, // Placeholder - update with actual absent status code
+  Absent: 1002, // Placeholder — update with actual absent status code
 } as const;
+
+/** Grace period in minutes before a shift is considered "late" */
+const LATE_GRACE_MINUTES = 5;
 
 // =============================================================================
 // Core Logic
 // =============================================================================
 
 /**
- * Calculate the attendance status for a shift
+ * Calculate the effective end time for a shift, handling overnight shifts.
+ */
+function getEffectiveEndTime(shiftStart: Date | null, shiftEnd: Date | null): Date | null {
+  if (!shiftEnd) return null;
+  if (shiftStart && shiftEnd < shiftStart) {
+    const adjusted = new Date(shiftEnd);
+    adjusted.setDate(adjusted.getDate() + 1);
+    return adjusted;
+  }
+  return shiftEnd;
+}
+
+/**
+ * Calculate the attendance status for a shift.
  *
- * Status logic:
- * - Absent: Shift has absent status flag
- * - Worked: Clocked in AND clocked out
- * - Present: Clocked in but NOT clocked out
- * - Late: Shift should have started but no clock-in
- * - Scheduled: Shift hasn't started yet
+ * Requires real clock-in/out data from cp365_timesheetclocks to produce
+ * accurate results. Without clock data, past shifts show as "Scheduled"
+ * rather than incorrectly showing "Late".
  */
 export function getAttendanceStatus(
   shift: ShiftWithAttendance,
   referenceTime: Date = new Date()
 ): AttendanceStatus {
   const shiftStart = parseShiftTime(shift['Shift Start Time']);
+  const shiftEnd = parseShiftTime(shift['Shift End Time']);
   const clockedIn = shift['Clocked In'] ? new Date(shift['Clocked In']) : null;
   const clockedOut = shift['Clocked Out'] ? new Date(shift['Clocked Out']) : null;
+  const effectiveEnd = getEffectiveEndTime(shiftStart, shiftEnd);
 
-  // Check for absent status (if status code indicates absent)
+  // Check for explicit absent status
   const statusCode = shift['Shift Status Code'] ?? shift['Shift Status'];
   if (statusCode === ShiftStatusCodes.Absent) {
     return 'absent';
   }
 
-  // Worked: completed shift (clocked in AND out)
+  // Worked: has both clock-in and clock-out
   if (clockedIn && clockedOut) {
     return 'worked';
   }
 
-  // Present: currently working (clocked in, not out)
+  // Present: clocked in but not out (currently working)
   if (clockedIn && !clockedOut) {
     return 'present';
   }
 
-  // Late: should have started but hasn't clocked in
-  // Allow a small grace period of 5 minutes
-  if (!clockedIn && shiftStart && shiftStart <= referenceTime) {
-    return 'late';
+  // No clock-in recorded — determine status based on shift timing
+  if (!clockedIn) {
+    const hasStarted = shiftStart && shiftStart <= referenceTime;
+    const hasEnded = effectiveEnd && effectiveEnd <= referenceTime;
+
+    if (hasStarted && !hasEnded) {
+      // Shift is currently active with no clock-in — Late (after grace period)
+      const minutesSinceStart = shiftStart
+        ? Math.floor((referenceTime.getTime() - shiftStart.getTime()) / (1000 * 60))
+        : 0;
+      if (minutesSinceStart > LATE_GRACE_MINUTES) {
+        return 'late';
+      }
+    }
+
+    // Shift hasn't started yet, or has already ended with no clock data
+    // In both cases, "Scheduled" is the safest — we don't have attendance evidence
+    return 'scheduled';
   }
 
-  // Scheduled: shift hasn't started yet
   return 'scheduled';
 }
 
@@ -112,23 +151,31 @@ export function getAttendanceDetails(
   const shiftEnd = parseShiftTime(shift['Shift End Time']);
   const clockedIn = shift['Clocked In'] ? new Date(shift['Clocked In']) : null;
   const clockedOut = shift['Clocked Out'] ? new Date(shift['Clocked Out']) : null;
+  const effectiveEnd = getEffectiveEndTime(shiftStart, shiftEnd);
 
   const status = getAttendanceStatus(shift, referenceTime);
 
-  // Calculate minutes late
+  // Calculate early/late arrival
   let minutesLate = 0;
-  if (status === 'late' && shiftStart) {
-    minutesLate = Math.floor((referenceTime.getTime() - shiftStart.getTime()) / (1000 * 60));
-  } else if (status === 'present' && clockedIn && shiftStart) {
-    // Staff arrived but was late
-    const lateBy = Math.floor((clockedIn.getTime() - shiftStart.getTime()) / (1000 * 60));
-    if (lateBy > 0) {
-      minutesLate = lateBy;
+  let minutesEarly = 0;
+
+  if (clockedIn && shiftStart) {
+    const diffMinutes = Math.floor((clockedIn.getTime() - shiftStart.getTime()) / (1000 * 60));
+    if (diffMinutes > 0) {
+      minutesLate = diffMinutes;
+    } else if (diffMinutes < 0) {
+      minutesEarly = Math.abs(diffMinutes);
     }
+  } else if (status === 'late' && shiftStart) {
+    // Currently late — show how long since shift should have started
+    minutesLate = Math.floor((referenceTime.getTime() - shiftStart.getTime()) / (1000 * 60));
   }
 
+  // Check if shift has ended
+  const hasEnded = effectiveEnd ? effectiveEnd <= referenceTime : false;
+
   // Check if overnight shift
-  const isOvernight = shiftStart && shiftEnd && shiftEnd < shiftStart;
+  const isOvernight = !!(shiftStart && shiftEnd && shiftEnd < shiftStart);
 
   return {
     status,
@@ -137,7 +184,9 @@ export function getAttendanceDetails(
     shiftStartTime: shiftStart || new Date(),
     shiftEndTime: shiftEnd || new Date(),
     minutesLate,
-    isOvernight: isOvernight || false,
+    minutesEarly,
+    isOvernight,
+    hasEnded,
   };
 }
 
@@ -218,6 +267,18 @@ export function formatLateBy(minutes: number): string {
 }
 
 /**
+ * Format minutes early as human-readable string
+ */
+export function formatEarlyBy(minutes: number): string {
+  if (minutes < 1) return '';
+  if (minutes < 60) return `${minutes} min early`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (mins === 0) return `${hours}h early`;
+  return `${hours}h ${mins}m early`;
+}
+
+/**
  * Format time for display (HH:mm)
  */
 export function formatAttendanceTime(date: Date | null): string {
@@ -263,12 +324,7 @@ export function isShiftActive(
 
   if (!shiftStart || !shiftEnd) return false;
 
-  // Handle overnight shifts
-  let effectiveEnd = shiftEnd;
-  if (shiftEnd < shiftStart) {
-    effectiveEnd = new Date(shiftEnd);
-    effectiveEnd.setDate(effectiveEnd.getDate() + 1);
-  }
+  const effectiveEnd = getEffectiveEndTime(shiftStart, shiftEnd) || shiftEnd;
 
   return referenceTime >= shiftStart && referenceTime <= effectiveEnd;
 }
@@ -285,12 +341,7 @@ export function hasShiftEnded(
 
   if (!shiftEnd) return false;
 
-  // Handle overnight shifts
-  let effectiveEnd = shiftEnd;
-  if (shiftStart && shiftEnd < shiftStart) {
-    effectiveEnd = new Date(shiftEnd);
-    effectiveEnd.setDate(effectiveEnd.getDate() + 1);
-  }
+  const effectiveEnd = getEffectiveEndTime(shiftStart, shiftEnd) || shiftEnd;
 
   return referenceTime > effectiveEnd;
 }
@@ -336,6 +387,7 @@ export default {
   getAttendanceDetails,
   getStatusConfig,
   formatLateBy,
+  formatEarlyBy,
   formatAttendanceTime,
   formatClockTime,
   isShiftActive,

@@ -12,7 +12,11 @@ import { useRotaData } from '@/hooks/useRotaData';
 import { useShiftReferences } from '@/hooks/useShifts';
 import { useHierarchicalRotaData } from '@/hooks/useHierarchicalRotaData';
 import { useRotaStore } from '@/store/rotaStore';
-import { useLocationSettings, useViewPreferences, type NavigationView } from '@/store/settingsStore';
+import {
+  useLocationSettings,
+  useViewPreferences,
+  type NavigationView,
+} from '@/store/settingsStore';
 import type { ShiftViewData } from '@/api/dataverse/types';
 
 // =============================================================================
@@ -86,19 +90,19 @@ export function useRotaViewData() {
   const [weekStart, setWeekStartState] = useState<Date>(() =>
     parseDateFromUrl(searchParams.get('date'))
   );
-  const [duration, setDuration] = useState<7 | 14 | 28>(validDuration);
+  // Duration is derived directly from the URL — no separate state needed
+  const duration = validDuration;
 
-  // Wrapper to update date and preferences
-  const setWeekStart = useCallback(
-    (date: Date | ((prev: Date) => Date)) => {
-      setWeekStartState((prev) => {
-        const newDate = typeof date === 'function' ? date(prev) : date;
-        setLastSelectedDate(newDate);
-        return newDate;
-      });
-    },
-    [setLastSelectedDate]
-  );
+  // Simple wrapper — just updates React state.
+  // Preference syncing is handled by the useEffect below.
+  const setWeekStart = useCallback((date: Date | ((prev: Date) => Date)) => {
+    setWeekStartState(date);
+  }, []);
+
+  // Sync weekStart to the preferences store *after* render (avoids setState-during-render)
+  useEffect(() => {
+    setLastSelectedDate(weekStart);
+  }, [weekStart, setLastSelectedDate]);
 
   // Selection state
   const [selectedShiftIds, setSelectedShiftIds] = useState<Set<string>>(new Set());
@@ -188,16 +192,7 @@ export function useRotaViewData() {
     }
   }, [sublocations, selectedSublocationId, setSelectedSublocationId]);
 
-  // Derive duration from URL parameter (URL is the source of truth for view changes)
-  const parsedDuration = parseInt(durationParam || '7', 10);
-  const derivedDuration = ([7, 14, 28].includes(parsedDuration) ? parsedDuration : 7) as
-    | 7
-    | 14
-    | 28;
-  // Sync state when URL changes (outside of effect to avoid cascading renders)
-  if (derivedDuration !== duration) {
-    setDuration(derivedDuration);
-  }
+  // Duration is derived from URL in validDuration above — no sync needed
 
   // Keep URL in sync with date
   useEffect(() => {
@@ -280,8 +275,15 @@ export function useRotaViewData() {
     setCreateShiftReferenceId(undefined);
   }, []);
 
+  // Copy Week dialog state
+  const [copyWeekOpen, setCopyWeekOpen] = useState(false);
+
   const handleCopyWeek = useCallback(() => {
-    // TODO: Implement copy week
+    setCopyWeekOpen(true);
+  }, []);
+
+  const handleCloseCopyWeek = useCallback(() => {
+    setCopyWeekOpen(false);
   }, []);
 
   const handleExportPDF = useCallback(() => {
@@ -358,6 +360,10 @@ export function useRotaViewData() {
     handleOpenCreateFlyout,
     handleCloseFlyout,
     handleCopyWeek,
+    handleCloseCopyWeek,
     handleExportPDF,
+
+    // Copy Week dialog
+    copyWeekOpen,
   };
 }
