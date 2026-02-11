@@ -501,6 +501,13 @@ export function useDailyViewData() {
     setExpandedDepartments(new Set());
   }, []);
 
+  // Derived: are all departments currently expanded?
+  const isAllExpanded = useMemo(() => {
+    if (expandedDepartments.has('all')) return true;
+    if (departmentGroups.length === 0) return true;
+    return departmentGroups.every((d) => expandedDepartments.has(d.id));
+  }, [expandedDepartments, departmentGroups]);
+
   // Statistics
   const stats = useMemo((): DailyStats => {
     const uniqueStaff = new Set(filteredShifts.map((s) => s['Staff Member ID']).filter(Boolean));
@@ -687,6 +694,7 @@ export function useDailyViewData() {
     toggleDepartment,
     expandAll,
     collapseAll,
+    isAllExpanded,
 
     // Flyout
     flyoutOpen,

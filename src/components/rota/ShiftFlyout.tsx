@@ -217,10 +217,12 @@ export function ShiftFlyout({
     }
   }, [selectedRefId, shiftReferences, setValue]);
 
-  // Reset mode when prop changes
+  // Reset mode and transient UI state when the flyout opens/closes or the shift changes
   useEffect(() => {
     setMode(initialMode);
-  }, [initialMode, isOpen]);
+    setShowDeleteConfirm(false);
+    setSubmitError(null);
+  }, [initialMode, isOpen, shiftId]);
 
   // Handle form submission
   const onSubmit = async (data: ShiftFormData) => {
@@ -450,7 +452,10 @@ export function ShiftFlyout({
 
               {/* Staff Member */}
               <div>
-                <label htmlFor="flyout-staff-member" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-staff-member"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Staff Member
                 </label>
                 <select
@@ -462,6 +467,11 @@ export function ShiftFlyout({
                   <option value="">Unassigned</option>
                   {staffList
                     .filter((staff) => staff['Staff Member ID']) // Filter out staff with null/undefined IDs
+                    .filter(
+                      (staff, _idx, arr) =>
+                        arr.findIndex((s) => s['Staff Member ID'] === staff['Staff Member ID']) ===
+                        _idx
+                    ) // Deduplicate by Staff Member ID
                     .map((staff) => (
                       <option key={staff['Staff Member ID']} value={staff['Staff Member ID']}>
                         {staff['Staff Member Name']}
@@ -472,7 +482,10 @@ export function ShiftFlyout({
 
               {/* Shift Reference */}
               <div>
-                <label htmlFor="flyout-shift-reference" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-shift-reference"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Shift Reference
                 </label>
                 <select
@@ -492,7 +505,10 @@ export function ShiftFlyout({
 
               {/* Shift Activity */}
               <div>
-                <label htmlFor="flyout-shift-activity" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-shift-activity"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Shift Activity
                 </label>
                 <select
@@ -515,7 +531,10 @@ export function ShiftFlyout({
 
               {/* Date */}
               <div>
-                <label htmlFor="flyout-shift-date" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-shift-date"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Date <span className="text-error">*</span>
                 </label>
                 <input
@@ -531,7 +550,10 @@ export function ShiftFlyout({
               {/* Start/End Time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="flyout-start-time" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="flyout-start-time"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
                     Start Time <span className="text-error">*</span>
                   </label>
                   <div className="relative">
@@ -549,7 +571,10 @@ export function ShiftFlyout({
                   )}
                 </div>
                 <div>
-                  <label htmlFor="flyout-end-time" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="flyout-end-time"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
                     End Time <span className="text-error">*</span>
                   </label>
                   <div className="relative">
@@ -570,7 +595,10 @@ export function ShiftFlyout({
 
               {/* Break Duration */}
               <div>
-                <label htmlFor="flyout-break-duration" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-break-duration"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Break Duration (minutes)
                 </label>
                 <Controller
@@ -593,7 +621,10 @@ export function ShiftFlyout({
 
               {/* Community Hours */}
               <div>
-                <label htmlFor="flyout-community-hours" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="flyout-community-hours"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
                   Community Hours
                 </label>
                 <Controller

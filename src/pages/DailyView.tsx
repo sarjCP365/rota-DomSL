@@ -64,9 +64,18 @@ export function DailyView() {
               </button>
             </div>
             <div className="flex items-center justify-center">
-              <ViewToggle currentView="day" currentDate={data.selectedDate} size="sm" variant="emerald" />
+              <ViewToggle
+                currentView="day"
+                currentDate={data.selectedDate}
+                size="sm"
+                variant="emerald"
+              />
             </div>
-            <DateNavigation selectedDate={data.selectedDate} onDateChange={data.setSelectedDate} isLoading={data.isLoading} />
+            <DateNavigation
+              selectedDate={data.selectedDate}
+              onDateChange={data.setSelectedDate}
+              isLoading={data.isLoading}
+            />
           </div>
           {/* Desktop Layout: Single Row */}
           <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
@@ -77,7 +86,11 @@ export function DailyView() {
               </div>
               <ViewToggle currentView="day" currentDate={data.selectedDate} variant="emerald" />
             </div>
-            <DateNavigation selectedDate={data.selectedDate} onDateChange={data.setSelectedDate} isLoading={data.isLoading} />
+            <DateNavigation
+              selectedDate={data.selectedDate}
+              onDateChange={data.setSelectedDate}
+              isLoading={data.isLoading}
+            />
             <button
               onClick={() => data.setExportModalOpen(true)}
               className="flex items-center gap-2 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium hover:bg-white/30 transition-colors"
@@ -106,6 +119,7 @@ export function DailyView() {
           onRefresh={() => data.refetchRota()}
           onExpandAll={data.expandAll}
           onCollapseAll={data.collapseAll}
+          isAllExpanded={data.isAllExpanded}
         />
 
         {/* Statistics Row */}
@@ -148,7 +162,9 @@ export function DailyView() {
                   key={dept.id}
                   department={{ id: dept.id, name: dept.name, type: dept.type }}
                   staffCount={dept.staffCount}
-                  isExpanded={data.expandedDepartments.has(dept.id) || data.expandedDepartments.has('all')}
+                  isExpanded={
+                    data.expandedDepartments.has(dept.id) || data.expandedDepartments.has('all')
+                  }
                   onToggle={() => data.toggleDepartment(dept.id)}
                 >
                   {dept.shifts.map((shift) => (

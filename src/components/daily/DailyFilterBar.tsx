@@ -62,6 +62,8 @@ interface DailyFilterBarProps {
   onExpandAll?: () => void;
   /** Callback to collapse all departments */
   onCollapseAll?: () => void;
+  /** Whether all departments are currently expanded (drives toggle button label) */
+  isAllExpanded?: boolean;
 }
 
 // ============================================================================
@@ -104,6 +106,7 @@ export function DailyFilterBar({
   onRefresh,
   onExpandAll,
   onCollapseAll,
+  isAllExpanded = true,
 }: DailyFilterBarProps) {
   // Debounced search
   const [searchInput, setSearchInput] = useState(filters.search);
@@ -276,7 +279,12 @@ export function DailyFilterBar({
           <div className="mt-3 space-y-3 rounded-lg border border-border-grey bg-gray-50 p-3">
             {/* Location */}
             <div>
-              <label htmlFor="mobile-location-filter" className="mb-1 block text-xs font-medium text-gray-600">Location</label>
+              <label
+                htmlFor="mobile-location-filter"
+                className="mb-1 block text-xs font-medium text-gray-600"
+              >
+                Location
+              </label>
               <select
                 id="mobile-location-filter"
                 value={selectedLocationId}
@@ -295,7 +303,12 @@ export function DailyFilterBar({
 
             {/* Sublocation */}
             <div>
-              <label htmlFor="mobile-sublocation-filter" className="mb-1 block text-xs font-medium text-gray-600">Sublocation</label>
+              <label
+                htmlFor="mobile-sublocation-filter"
+                className="mb-1 block text-xs font-medium text-gray-600"
+              >
+                Sublocation
+              </label>
               <select
                 id="mobile-sublocation-filter"
                 value={selectedSublocationId}
@@ -316,7 +329,12 @@ export function DailyFilterBar({
             <div className="grid grid-cols-2 gap-3">
               {/* Department */}
               <div>
-                <label htmlFor="mobile-department-filter" className="mb-1 block text-xs font-medium text-gray-600">Department</label>
+                <label
+                  htmlFor="mobile-department-filter"
+                  className="mb-1 block text-xs font-medium text-gray-600"
+                >
+                  Department
+                </label>
                 <select
                   id="mobile-department-filter"
                   value={filters.department}
@@ -333,7 +351,12 @@ export function DailyFilterBar({
 
               {/* Status */}
               <div>
-                <label htmlFor="mobile-status-filter" className="mb-1 block text-xs font-medium text-gray-600">Status</label>
+                <label
+                  htmlFor="mobile-status-filter"
+                  className="mb-1 block text-xs font-medium text-gray-600"
+                >
+                  Status
+                </label>
                 <select
                   id="mobile-status-filter"
                   value={filters.status}
@@ -351,7 +374,12 @@ export function DailyFilterBar({
 
             {/* Shift Type */}
             <div>
-              <label htmlFor="mobile-shifttype-filter" className="mb-1 block text-xs font-medium text-gray-600">Shift Type</label>
+              <label
+                htmlFor="mobile-shifttype-filter"
+                className="mb-1 block text-xs font-medium text-gray-600"
+              >
+                Shift Type
+              </label>
               <select
                 id="mobile-shifttype-filter"
                 value={filters.shiftType}
@@ -369,22 +397,22 @@ export function DailyFilterBar({
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-2 border-t border-border-grey">
               <div className="flex gap-2">
-                {onCollapseAll && (
+                {(onExpandAll || onCollapseAll) && (
                   <button
-                    onClick={onCollapseAll}
+                    onClick={isAllExpanded ? onCollapseAll : onExpandAll}
                     className="flex items-center gap-1 rounded-lg border border-border-grey px-3 py-2 text-sm text-gray-600"
                   >
-                    <ChevronUp className="h-4 w-4" />
-                    Collapse
-                  </button>
-                )}
-                {onExpandAll && (
-                  <button
-                    onClick={onExpandAll}
-                    className="flex items-center gap-1 rounded-lg border border-border-grey px-3 py-2 text-sm text-gray-600"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                    Expand
+                    {isAllExpanded ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Collapse All
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        Expand All
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -452,7 +480,9 @@ export function DailyFilterBar({
 
           {/* Location Dropdown */}
           <div className="flex items-center gap-2">
-            <label htmlFor="desktop-location-filter" className="text-sm text-gray-600">Location:</label>
+            <label htmlFor="desktop-location-filter" className="text-sm text-gray-600">
+              Location:
+            </label>
             <select
               id="desktop-location-filter"
               value={selectedLocationId}
@@ -471,7 +501,9 @@ export function DailyFilterBar({
 
           {/* Sublocation Dropdown */}
           <div className="flex items-center gap-2">
-            <label htmlFor="desktop-sublocation-filter" className="text-sm text-gray-600">Sublocation:</label>
+            <label htmlFor="desktop-sublocation-filter" className="text-sm text-gray-600">
+              Sublocation:
+            </label>
             <select
               id="desktop-sublocation-filter"
               value={selectedSublocationId}
@@ -490,7 +522,9 @@ export function DailyFilterBar({
 
           {/* Department Dropdown */}
           <div className="flex items-center gap-2">
-            <label htmlFor="desktop-department-filter" className="text-sm text-gray-600">Department:</label>
+            <label htmlFor="desktop-department-filter" className="text-sm text-gray-600">
+              Department:
+            </label>
             <select
               id="desktop-department-filter"
               value={filters.department}
@@ -507,7 +541,9 @@ export function DailyFilterBar({
 
           {/* Status Dropdown */}
           <div className="flex items-center gap-2">
-            <label htmlFor="desktop-status-filter" className="text-sm text-gray-600">Status:</label>
+            <label htmlFor="desktop-status-filter" className="text-sm text-gray-600">
+              Status:
+            </label>
             <select
               id="desktop-status-filter"
               value={filters.status}
@@ -524,7 +560,9 @@ export function DailyFilterBar({
 
           {/* Shift Type Dropdown */}
           <div className="flex items-center gap-2">
-            <label htmlFor="desktop-shifttype-filter" className="text-sm text-gray-600">Type:</label>
+            <label htmlFor="desktop-shifttype-filter" className="text-sm text-gray-600">
+              Type:
+            </label>
             <select
               id="desktop-shifttype-filter"
               value={filters.shiftType}
@@ -542,27 +580,21 @@ export function DailyFilterBar({
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Collapse All Button */}
-          {onCollapseAll && (
+          {/* Toggle Expand/Collapse All Button */}
+          {(onExpandAll || onCollapseAll) && (
             <button
-              onClick={onCollapseAll}
+              onClick={isAllExpanded ? onCollapseAll : onExpandAll}
               className="flex items-center gap-1.5 rounded-lg border border-border-grey px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-              title="Collapse all departments"
+              title={isAllExpanded ? 'Collapse all departments' : 'Expand all departments'}
             >
-              <ChevronUp className="h-4 w-4" />
-              <span className="hidden lg:inline">Collapse All</span>
-            </button>
-          )}
-
-          {/* Expand All Button */}
-          {onExpandAll && (
-            <button
-              onClick={onExpandAll}
-              className="flex items-center gap-1.5 rounded-lg border border-border-grey px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-              title="Expand all departments"
-            >
-              <ChevronDown className="h-4 w-4" />
-              <span className="hidden lg:inline">Expand All</span>
+              {isAllExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+              <span className="hidden lg:inline">
+                {isAllExpanded ? 'Collapse All' : 'Expand All'}
+              </span>
             </button>
           )}
 
