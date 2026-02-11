@@ -1,28 +1,12 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/*.svg", "/*.ico", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.webp"]
+    "exclude": ["/assets/*", "/*.ico", "/*.png", "/*.svg", "/*.json"]
   },
-  "routes": [
-    {
-      "route": "/api/*",
-      "allowedRoles": ["authenticated"]
-    }
-  ],
   "responseOverrides": {
-    "401": {
-      "redirect": "/",
-      "statusCode": 302
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
     }
-  },
-  "globalHeaders": {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "frame-ancestors 'none'"
-  },
-  "mimeTypes": {
-    ".json": "application/json",
-    ".js": "application/javascript"
   }
 }
-
