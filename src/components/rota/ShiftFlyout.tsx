@@ -414,7 +414,17 @@ export function ShiftFlyout({
               <LoadingSpinner className="h-8 w-8 text-primary" />
             </div>
           ) : (
-            <form id="shift-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form
+              id="shift-form"
+              onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+                console.error('[ShiftFlyout] Form validation failed:', validationErrors);
+                const fields = Object.entries(validationErrors)
+                  .map(([field, err]) => `${field}: ${err?.message ?? 'invalid'}`)
+                  .join(', ');
+                setSubmitError(`Validation failed: ${fields}`);
+              })}
+              className="space-y-5"
+            >
               {/* Error Alert */}
               {submitError && (
                 <div className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3">
