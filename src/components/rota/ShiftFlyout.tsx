@@ -250,6 +250,9 @@ export function ShiftFlyout({
       cr1e2_shiftbreakduration: data.breakDuration || 0,
     };
 
+    // Community hours
+    shiftData.cp365_communityhours = data.communityHours || 0;
+
     // Boolean fields - only add if true
     if (data.isOvertime) shiftData.cp365_overtimeshift = true;
     if (data.isSleepIn) shiftData.cp365_sleepin = true;
